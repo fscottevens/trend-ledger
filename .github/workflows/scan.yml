@@ -1,0 +1,51 @@
+name: Scheduled scan
+
+on:
+  # Runs on the hour, 13:00-21:00 UTC, Mon-Fri. That's roughly 9am-5pm ET,
+  # but UTC doesn't shift for US daylight saving, so during EDT (Mar-Nov)
+  # this covers ~9:00am-5:00pm ET, and during EST (Nov-Mar) it drifts an
+  # hour later to ~8:00am-4:00pm ET. Adjust the two numbers below if you
+  # want tighter alignment for your part of the year.
+  schedule:
+    - cron: "0 13-21 * * 1-5"
+  # Lets you trigger a run manually from the Actions tab any time.
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: scheduled-scan
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run scan
+        run: python sepa_scanner.py --json-out docs/data/latest.json
+        # If Yahoo Finance rate-limits or blocks this run (shared cloud IPs
+        # occasionally get throttled), this step can fail intermittently.
+        # continue-on-error keeps the workflow green so it doesn't send you
+        # failure-email noise for a transient network issue - the site
+        # simply keeps showing the last successful scan until the next run.
+        continue-on-error: true
+
+      - name: Commit updated data
+        run: |
+          git config user.name "trend-ledger-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/data/latest.json
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+          git commit -m "Scheduled scan update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          git push

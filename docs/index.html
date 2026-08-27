@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trend Ledger — S&amp;P 500 + 400 Momentum &amp; Value Scan</title>
+<meta name="description" content="A daily-ranked screen of the S&P 500 and S&P 400 against Minervini's Trend Template, O'Neil's CANSLIM, and momentum criteria from Zanger and Qullamaggie.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F6F7F4;
+    --paper-raised: #FFFFFF;
+    --ink: #12181F;
+    --ink-soft: #4A5560;
+    --rule: #DADFE1;
+    --rule-strong: #B7BEC3;
+    --accent: #2C3A5E;      /* deep indigo — primary */
+    --accent-warm: #A9791F; /* brass gold — secondary */
+    --gain: #1E7A4C;
+    --loss: #B23B3B;
+    --gain-bg: #E7F3ED;
+    --loss-bg: #FBEBEB;
+    --radius: 3px;
+    --serif: 'Fraunces', Georgia, serif;
+    --sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+
+  /* ---------- Masthead ---------- */
+  header.masthead {
+    border-bottom: 1px solid var(--ink);
+    background: var(--paper-raised);
+  }
+  .masthead-inner {
+    display: flex; align-items: baseline; justify-content: space-between;
+    padding: 22px 0 16px; gap: 24px; flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: var(--serif); font-weight: 600; font-size: 30px;
+    letter-spacing: -0.01em; color: var(--ink); margin: 0;
+    font-optical-sizing: auto;
+  }
+  .wordmark small {
+    display: block; font-family: var(--sans); font-weight: 500;
+    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink-soft); margin-top: 4px;
+  }
+  .masthead-meta {
+    text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
+  }
+  .masthead-meta .status-pill {
+    display: inline-block; margin-top: 6px; padding: 3px 10px;
+    border-radius: 999px; font-family: var(--sans); font-weight: 600;
+    font-size: 11.5px; letter-spacing: 0.02em;
+  }
+  .status-up { background: var(--gain-bg); color: var(--gain); }
+  .status-mixed { background: #FBF3E3; color: var(--accent-warm); }
+  .status-down { background: var(--loss-bg); color: var(--loss); }
+  .status-unknown { background: #EFEFEF; color: var(--ink-soft); }
+
+  /* ---------- Notice / disclaimer ---------- */
+  .notice {
+    border: 1px solid var(--accent-warm);
+    border-left-width: 4px;
+    background: #FBF7EE;
+    padding: 12px 16px;
+    margin: 20px 0;
+    font-size: 13px;
+    color: var(--ink-soft);
+    border-radius: var(--radius);
+  }
+  .notice strong { color: var(--ink); }
+
+  /* ---------- Layout ---------- */
+  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 32px; padding: 8px 0 60px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+
+  main { min-width: 0; }
+  aside.rail { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; }
+  @media (max-width: 880px) { aside.rail { position: static; } }
+
+  /* ---------- Ad slots ---------- */
+  .ad-slot {
+    border: 1px dashed var(--rule-strong);
+    border-radius: var(--radius);
+    background: repeating-linear-gradient(45deg, #FBFBFA, #FBFBFA 10px, #F3F4F2 10px, #F3F4F2 20px);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    color: var(--ink-soft); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    margin: 0 auto;
+  }
+  .ad-slot span.dim { font-family: var(--mono); font-size: 10px; margin-top: 4px; letter-spacing: 0; text-transform: none; }
+  .ad-leaderboard { width: 100%; max-width: 728px; height: 90px; margin: 22px auto; }
+  .ad-rect { width: 300px; height: 250px; }
+  .ad-inline { width: 100%; height: 100px; margin: 28px 0; }
+
+  /* ---------- Section header ---------- */
+  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 40px 0 4px; }
+  .section-head:first-of-type { margin-top: 8px; }
+  .section-title { font-family: var(--serif); font-weight: 600; font-size: 22px; margin: 0; }
+  .section-sub { font-size: 12.5px; color: var(--ink-soft); margin: 2px 0 0; }
+  .section-eyebrow {
+    font-family: var(--mono); font-size: 11px; color: var(--accent-warm);
+    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 2px;
+  }
+
+  /* ---------- Table (ledger style) ---------- */
+  table.ledger { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
+  table.ledger thead th {
+    text-align: left; font-family: var(--sans); font-weight: 600; font-size: 11px;
+    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft);
+    border-bottom: 1px solid var(--ink); padding: 0 10px 8px;
+  }
+  table.ledger tbody tr { border-bottom: 1px solid var(--rule); cursor: pointer; }
+  table.ledger tbody tr:hover { background: #EFF1EE; }
+  table.ledger td { padding: 10px 10px; vertical-align: middle; }
+  td.num, th.num { text-align: right; font-family: var(--mono); }
+  td.rank { font-family: var(--mono); color: var(--ink-soft); width: 28px; }
+  td.ticker { font-family: var(--mono); font-weight: 600; font-size: 14px; }
+  .chg-pos { color: var(--gain); font-family: var(--mono); }
+  .chg-neg { color: var(--loss); font-family: var(--mono); }
+
+  .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
+  .badge-yes { background: var(--gain-bg); color: var(--gain); }
+  .badge-no  { background: #EFEFEF; color: var(--ink-soft); }
+
+  /* Trend Template dot indicator — the signature element: 8 ledger-punches,
+     one per Minervini criterion, filled = met. */
+  .dots { display: inline-flex; gap: 2.5px; vertical-align: middle; }
+  .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--rule); }
+  .dot.on { background: var(--accent); }
+
+  .why-row td { padding: 0 10px 16px; }
+  .why-box {
+    background: #FBFBF9; border-left: 3px solid var(--rule-strong);
+    padding: 10px 14px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6;
+  }
+  .why-row { display: none; }
+  .why-row.open { display: table-row; }
+
+  .scores-mini { display: flex; gap: 14px; margin-top: 6px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+
+  /* ---------- Rail widgets ---------- */
+  .rail-card {
+    background: var(--paper-raised); border: 1px solid var(--rule);
+    border-radius: var(--radius); padding: 16px;
+  }
+  .rail-card h3 {
+    font-family: var(--sans); font-size: 11px; text-transform: uppercase;
+    letter-spacing: 0.08em; color: var(--ink-soft); margin: 0 0 10px;
+  }
+  .rail-card p { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 8px; }
+  .glossary dt { font-family: var(--mono); font-weight: 600; font-size: 12px; color: var(--ink); margin-top: 8px; }
+  .glossary dd { margin: 2px 0 0; font-size: 12px; color: var(--ink-soft); }
+
+  /* ---------- Empty / loading states ---------- */
+  .state-msg {
+    padding: 40px 20px; text-align: center; color: var(--ink-soft);
+    border: 1px dashed var(--rule-strong); border-radius: var(--radius); margin-top: 14px;
+  }
+  .state-msg strong { display: block; color: var(--ink); font-family: var(--serif); font-size: 17px; margin-bottom: 6px; }
+
+  footer {
+    border-top: 1px solid var(--rule); padding: 24px 0 50px;
+    font-size: 11.5px; color: var(--ink-soft);
+  }
+  footer a { color: var(--ink-soft); }
+
+  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <div>
+      <p class="wordmark">Trend Ledger<small>Minervini-weighted momentum &amp; value scan · S&amp;P 500 + S&amp;P 400</small></p>
+    </div>
+    <div class="masthead-meta">
+      <div>Updated <span id="updated-at">—</span></div>
+      <div id="market-status" class="status-pill status-unknown">Market: loading…</div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="notice">
+    <strong>Educational tool, not financial advice.</strong> Rankings are generated automatically from public price data and public-domain approximations of well-known trading frameworks. They are not recommendations to buy or sell anything. Data may be delayed. Verify everything independently before acting on it.
+  </div>
+
+  <div class="ad-slot ad-leaderboard" aria-label="Advertisement placeholder">
+    Advertisement <span class="dim">728×90</span>
+  </div>
+
+  <div class="layout">
+    <main>
+
+      <div id="scan-summary" class="rail-card" style="margin-bottom: 8px;"></div>
+
+      <div class="section-head">
+        <div>
+          <p class="section-eyebrow">Section 01</p>
+          <h2 class="section-title">Today's Momentum Leaders</h2>
+          <p class="section-sub">Ranked first by Trend Template compliance, then by CANSLIM + Zanger + Qullamaggie triggers from live intraday data.</p>
+        </div>
+      </div>
+      <div id="section1-mount"></div>
+
+      <div class="ad-slot ad-inline" aria-label="Advertisement placeholder">
+        Advertisement <span class="dim">320×100</span>
+      </div>
+
+      <div class="section-head">
+        <div>
+          <p class="section-eyebrow">Section 02</p>
+          <h2 class="section-title">Fundamentals &amp; Trend-Quality Picks</h2>
+          <p class="section-sub">Same Trend Template priority, tie-broken by CANSLIM fundamentals and traditional value metrics — no intraday momentum triggers.</p>
+        </div>
+      </div>
+      <div id="section2-mount"></div>
+
+    </main>
+
+    <aside class="rail">
+      <div class="ad-slot ad-rect" aria-label="Advertisement placeholder">
+        Advertisement <span class="dim">300×250</span>
+      </div>
+
+      <div class="rail-card">
+        <h3>Trend Template</h3>
+        <p>Each dot is one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and RS Rating ≥ 70.</p>
+      </div>
+
+      <div class="rail-card glossary">
+        <h3>Reading the columns</h3>
+        <dl>
+          <dt>RS</dt><dd>Relative Strength Rating, 1–99, approximated against this scan's universe.</dd>
+          <dt>CANSLIM</dt><dd>O'Neil's per-stock factors: current &amp; annual earnings growth, new highs, demand, leadership, institutional ownership.</dd>
+          <dt>Zanger / Qullamaggie</dt><dd>Breakout, volume, and momentum triggers from today's live price action.</dd>
+          <dt>Qualifies</dt><dd>Whether the stock actually clears the Trend Template gate — unqualified names are shown as the closest available candidates.</dd>
+        </dl>
+      </div>
+
+      <div class="ad-slot ad-rect" aria-label="Advertisement placeholder">
+        Advertisement <span class="dim">300×250</span>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<footer>
+  <div class="wrap">
+    Trend Ledger refreshes automatically on a schedule during market hours. Not investment advice. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations and are not endorsed by their namesakes.
+  </div>
+</footer>
+
+<script>
+const DATA_URL = 'data/latest.json';
+const REFRESH_MS = 5 * 60 * 1000; // poll for fresh data every 5 minutes
+
+function fmtPct(v) {
+  if (v === null || v === undefined) return '—';
+  const s = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
+  return s;
+}
+
+function dotsHtml(n) {
+  let out = '<span class="dots" aria-label="' + n + ' of 8 Trend Template criteria met">';
+  for (let i = 0; i < 8; i++) out += '<span class="dot' + (i < n ? ' on' : '') + '"></span>';
+  return out + '</span>';
+}
+
+function statusClass(status) {
+  if (!status) return 'status-unknown';
+  if (status.includes('CONFIRMED UPTREND')) return 'status-up';
+  if (status.includes('UNDER PRESSURE')) return 'status-down';
+  if (status.includes('MIXED')) return 'status-mixed';
+  return 'status-unknown';
+}
+
+function renderTable(mountId, rows, scoreLabel) {
+  const mount = document.getElementById(mountId);
+  if (!rows || rows.length === 0) {
+    mount.innerHTML = '<div class="state-msg"><strong>No scan data yet.</strong>The first scheduled run will populate this automatically.</div>';
+    return;
+  }
+  let html = '<table class="ledger"><thead><tr>' +
+    '<th></th><th>Ticker</th><th class="num">Price</th><th class="num">%Chg</th>' +
+    '<th>Trend</th><th>Qualifies</th><th class="num">' + scoreLabel + '</th>' +
+    '</tr></thead><tbody>';
+
+  rows.forEach((r, i) => {
+    const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
+    const qBadge = r.qualifies ? '<span class="badge badge-yes">Yes</span>' : '<span class="badge badge-no">No</span>';
+    html += '<tr class="data-row" data-idx="' + i + '">' +
+      '<td class="rank">' + (i + 1) + '</td>' +
+      '<td class="ticker">' + r.ticker + '</td>' +
+      '<td class="num">$' + (r.price ?? '—') + '</td>' +
+      '<td class="num ' + chgClass + '">' + fmtPct(r.pct_chg) + '</td>' +
+      '<td>' + dotsHtml(r.trend_n) + ' <span style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">' + r.trend + '</span></td>' +
+      '<td>' + qBadge + '</td>' +
+      '<td class="num">' + r.score + '</td>' +
+      '</tr>';
+    html += '<tr class="why-row" id="why-' + mountId + '-' + i + '"><td colspan="7">' +
+      '<div class="why-box">' + (r.why || 'No notes.') +
+      '<div class="scores-mini"><span>CANSLIM ' + r.canslim + '</span><span>Zanger ' + r.zanger + '</span>' +
+      '<span>Qullamaggie ' + r.qullamaggie + '</span><span>Value ' + r.value + '</span><span>RS ' + (r.rs ?? '—') + '</span></div>' +
+      '</div></td></tr>';
+  });
+  html += '</tbody></table>';
+  mount.innerHTML = html;
+
+  mount.querySelectorAll('tr.data-row').forEach(row => {
+    row.addEventListener('click', () => {
+      const why = document.getElementById('why-' + mountId + '-' + row.dataset.idx);
+      why.classList.toggle('open');
+    });
+  });
+}
+
+async function loadData() {
+  try {
+    const res = await fetch(DATA_URL, { cache: 'no-store' });
+    if (!res.ok) throw new Error('no data file yet');
+    const data = await res.json();
+
+    const updated = new Date(data.generated_at);
+    document.getElementById('updated-at').textContent = isNaN(updated) ? data.generated_at :
+      updated.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+
+    const pill = document.getElementById('market-status');
+    pill.textContent = 'Market: ' + (data.market_status || 'unknown');
+    pill.className = 'status-pill ' + statusClass(data.market_status);
+
+    document.getElementById('scan-summary').innerHTML =
+      '<h3>This scan</h3><p><strong>' + data.total_scored + '</strong> stocks scored · ' +
+      '<strong>' + data.qualifying_count + '</strong> fully meet the Trend Template gate (≥ ' +
+      data.min_trend_needed + '/8) · everyone else shown is the closest available match.</p>';
+
+    renderTable('section1-mount', data.section1, 'Score');
+    renderTable('section2-mount', data.section2, 'Score');
+  } catch (e) {
+    document.getElementById('scan-summary').innerHTML = '';
+    ['section1-mount', 'section2-mount'].forEach(id => {
+      document.getElementById(id).innerHTML =
+        '<div class="state-msg"><strong>No scan data yet.</strong>This dashboard reads data/latest.json, written by the scheduled scan. Run it once (see README) to populate this page.</div>';
+    });
+  }
+}
+
+loadData();
+setInterval(loadData, REFRESH_MS);
+</script>
+
+</body>
+</html>
