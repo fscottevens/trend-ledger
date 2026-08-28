@@ -3,273 +3,318 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Trend Ledger — S&amp;P 500 + 400 Momentum &amp; Value Scan</title>
-<meta name="description" content="A daily-ranked screen of the S&P 500 and S&P 400 against Minervini's Trend Template, O'Neil's CANSLIM, and momentum criteria from Zanger and Qullamaggie.">
+<title>STONKS RUN -- INSERT COIN</title>
+<meta name="description" content="Stonks Run scans the S&P 500 and S&P 400 against Minervini's Trend Template, O'Neil's CANSLIM, and momentum criteria from Zanger and Qullamaggie.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Silkscreen:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --paper: #F6F7F4;
-    --paper-raised: #FFFFFF;
-    --ink: #12181F;
-    --ink-soft: #4A5560;
-    --rule: #DADFE1;
-    --rule-strong: #B7BEC3;
-    --accent: #2C3A5E;      /* deep indigo — primary */
-    --accent-warm: #A9791F; /* brass gold — secondary */
-    --gain: #1E7A4C;
-    --loss: #B23B3B;
-    --gain-bg: #E7F3ED;
-    --loss-bg: #FBEBEB;
-    --radius: 3px;
-    --serif: 'Fraunces', Georgia, serif;
-    --sans: 'Source Sans 3', -apple-system, BlinkMacSystemFont, sans-serif;
-    --mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+    --bg: #0A0014;
+    --bg-panel: #180A2C;
+    --grid-line: rgba(255,255,255,0.025);
+    --neon-magenta: #FF4DA6;
+    --neon-cyan: #2DF2FF;
+    --neon-gold: #FFD500;
+    --stonks-green: #4CFF4C;
+    --not-stonks-red: #FF5A5A;
+    --text: #FFFFFF;
+    --text-dim: #C9BEE8;
+
+    --font-display: 'Press Start 2P', monospace;
+    --font-pixel: 'Silkscreen', monospace;
+    --font-mono: 'Courier New', Courier, monospace;
+    --font-body: Arial, Helvetica, sans-serif;
   }
 
   * { box-sizing: border-box; }
-  html { -webkit-text-size-adjust: 100%; }
   body {
-    margin: 0;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: var(--sans);
+    margin: 0; padding: 14px 8px 40px;
+    background: radial-gradient(ellipse at top, #24123F 0%, var(--bg) 65%);
+    color: var(--text);
+    font-family: var(--font-body);
     font-size: 15px;
     line-height: 1.5;
   }
-  a { color: var(--accent); }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
+  a { color: var(--neon-cyan); }
 
-  /* ---------- Masthead ---------- */
-  header.masthead {
-    border-bottom: 1px solid var(--ink);
-    background: var(--paper-raised);
+  .cabinet {
+    max-width: 1180px; margin: 0 auto;
+    background: var(--bg-panel);
+    border: 3px solid var(--neon-magenta);
+    border-radius: 10px;
+    box-shadow: 0 0 0 3px #000, 0 0 20px rgba(255,77,166,0.35);
+    padding: 16px 16px 10px;
   }
-  .masthead-inner {
-    display: flex; align-items: baseline; justify-content: space-between;
-    padding: 22px 0 16px; gap: 24px; flex-wrap: wrap;
-  }
-  .wordmark {
-    font-family: var(--serif); font-weight: 600; font-size: 30px;
-    letter-spacing: -0.01em; color: var(--ink); margin: 0;
-    font-optical-sizing: auto;
-  }
-  .wordmark small {
-    display: block; font-family: var(--sans); font-weight: 500;
-    font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--ink-soft); margin-top: 4px;
-  }
-  .masthead-meta {
-    text-align: right; font-family: var(--mono); font-size: 12px; color: var(--ink-soft);
-  }
-  .masthead-meta .status-pill {
-    display: inline-block; margin-top: 6px; padding: 3px 10px;
-    border-radius: 999px; font-family: var(--sans); font-weight: 600;
-    font-size: 11.5px; letter-spacing: 0.02em;
-  }
-  .status-up { background: var(--gain-bg); color: var(--gain); }
-  .status-mixed { background: #FBF3E3; color: var(--accent-warm); }
-  .status-down { background: var(--loss-bg); color: var(--loss); }
-  .status-unknown { background: #EFEFEF; color: var(--ink-soft); }
+  @media (max-width: 480px) { .cabinet { padding: 12px 10px 8px; border-width: 2px; } }
 
-  /* ---------- Notice / disclaimer ---------- */
-  .notice {
-    border: 1px solid var(--accent-warm);
-    border-left-width: 4px;
-    background: #FBF7EE;
-    padding: 12px 16px;
-    margin: 20px 0;
-    font-size: 13px;
-    color: var(--ink-soft);
-    border-radius: var(--radius);
+  .logo-block { text-align: center; margin-bottom: 10px; }
+  .logo {
+    font-family: var(--font-display); font-size: 32px; margin: 6px 0 6px;
+    color: var(--neon-gold);
+    text-shadow: 3px 3px 0 var(--neon-magenta);
+    letter-spacing: 0.02em;
   }
-  .notice strong { color: var(--ink); }
+  @media (max-width: 560px) { .logo { font-size: 22px; } }
+  @media (max-width: 360px) { .logo { font-size: 18px; } }
+  .tagline {
+    font-family: var(--font-pixel); font-size: 13px; color: var(--text-dim); letter-spacing: 0.03em;
+  }
 
-  /* ---------- Layout ---------- */
-  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 32px; padding: 8px 0 60px; align-items: start; }
-  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+  #stonks-meter {
+    display: inline-block; margin-top: 10px; padding: 6px 14px;
+    font-family: var(--font-display); font-size: 13px; border-radius: 4px;
+    border: 2px solid currentColor;
+  }
+  .stonks-up { color: var(--stonks-green); }
+  .stonks-down { color: var(--not-stonks-red); }
+  .stonks-mixed { color: var(--neon-gold); }
+  .stonks-unknown { color: var(--text-dim); }
 
-  main { min-width: 0; }
-  aside.rail { display: flex; flex-direction: column; gap: 20px; position: sticky; top: 20px; }
-  @media (max-width: 880px) { aside.rail { position: static; } }
+  /* ---------- HUD / scan summary ---------- */
+  #scan-summary {
+    background: #000; border: 2px solid var(--neon-cyan); border-radius: 4px;
+    color: var(--neon-cyan); font-family: var(--font-mono); font-size: 14px; line-height: 1.9;
+    padding: 10px 14px; margin: 14px 0;
+  }
+  #scan-summary strong { color: var(--neon-gold); }
 
-  /* ---------- Ad slots ---------- */
+  /* ---------- game rules card (disclaimer) ---------- */
+  .rules-card {
+    background: #000; border: 2px solid var(--neon-magenta); border-radius: 4px; margin-bottom: 14px;
+  }
+  .rules-head {
+    font-family: var(--font-display); font-size: 11px; color: #000; background: var(--neon-magenta);
+    padding: 7px 10px;
+  }
+  .rules-body { padding: 13px 14px; font-size: 13.5px; line-height: 1.6; color: var(--text); }
+  .rules-body strong { color: var(--neon-gold); }
+
+  /* ---------- combo ticker ---------- */
+  .ticker-tape {
+    background: #000; color: var(--stonks-green); border: 1px solid var(--stonks-green);
+    border-radius: 4px; font-family: var(--font-mono); font-size: 14px; font-weight: bold;
+    padding: 7px 0; overflow: hidden; white-space: nowrap; margin-bottom: 14px;
+  }
+  .ticker-tape .tt-track { display: inline-block; padding-left: 100%; animation: tt-scroll 32s linear infinite; }
+  @keyframes tt-scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
+  @media (prefers-reduced-motion: reduce) { .ticker-tape .tt-track { animation: none; padding-left: 12px; } }
+
+  /* ---------- ad slots ---------- */
   .ad-slot {
-    border: 1px dashed var(--rule-strong);
-    border-radius: var(--radius);
-    background: repeating-linear-gradient(45deg, #FBFBFA, #FBFBFA 10px, #F3F4F2 10px, #F3F4F2 20px);
+    border: 2px dashed var(--neon-gold); border-radius: 4px;
+    background: #150726;
     display: flex; align-items: center; justify-content: center; flex-direction: column;
-    color: var(--ink-soft); font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase;
+    font-family: var(--font-pixel); font-size: 13px; text-align: center; color: var(--neon-gold);
     margin: 0 auto;
   }
-  .ad-slot span.dim { font-family: var(--mono); font-size: 10px; margin-top: 4px; letter-spacing: 0; text-transform: none; }
-  .ad-leaderboard { width: 100%; max-width: 728px; height: 90px; margin: 22px auto; }
-  .ad-rect { width: 300px; height: 250px; }
-  .ad-inline { width: 100%; height: 100px; margin: 28px 0; }
+  .ad-slot .blink-text { animation: coin-flash 1.6s ease-in-out infinite; }
+  @keyframes coin-flash { 50% { opacity: 0.55; } }
+  @media (prefers-reduced-motion: reduce) { .ad-slot .blink-text { animation: none; } }
+  .ad-slot span.dim { font-family: var(--font-mono); font-size: 11px; margin-top: 6px; color: var(--text-dim); }
+  .ad-leaderboard { width: 100%; max-width: 728px; height: 90px; margin: 0 auto 14px; }
+  .ad-rect { width: 100%; max-width: 300px; height: 250px; }
+  .ad-inline { width: 100%; height: 100px; margin: 22px 0; }
+  @media (max-width: 400px) { .ad-slot { font-size: 11px; } }
 
-  /* ---------- Section header ---------- */
-  .section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 40px 0 4px; }
-  .section-head:first-of-type { margin-top: 8px; }
-  .section-title { font-family: var(--serif); font-weight: 600; font-size: 22px; margin: 0; }
-  .section-sub { font-size: 12.5px; color: var(--ink-soft); margin: 2px 0 0; }
-  .section-eyebrow {
-    font-family: var(--mono); font-size: 11px; color: var(--accent-warm);
-    text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 2px;
+  /* ---------- layout ---------- */
+  .layout { display: grid; grid-template-columns: 1fr 280px; gap: 16px; align-items: start; }
+  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
+  aside.rail { display: flex; flex-direction: column; gap: 14px; }
+
+  /* ---------- level headers ---------- */
+  .section-head { margin: 18px 0 4px; }
+  .level-tag {
+    display: inline-block; font-family: var(--font-display); font-size: 10px;
+    background: var(--neon-cyan); color: #000; padding: 4px 8px; border-radius: 3px; margin-bottom: 7px;
   }
+  .section-title {
+    font-family: var(--font-display); font-size: 16px; margin: 0; color: var(--text);
+    text-shadow: 2px 2px 0 var(--neon-magenta); line-height: 1.5;
+  }
+  .section-sub { font-size: 12.5px; color: var(--text-dim); margin: 7px 0 0; }
 
-  /* ---------- Table (ledger style) ---------- */
-  table.ledger { width: 100%; border-collapse: collapse; margin-top: 14px; font-size: 13.5px; }
+  /* ---------- high-score table ---------- */
+  .term-screen {
+    background: #000; border: 2px solid var(--neon-cyan); border-radius: 4px;
+    padding: 6px; margin-top: 10px; overflow-x: auto;
+  }
+  table.ledger { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 14px; color: var(--text); min-width: 420px; }
   table.ledger thead th {
-    text-align: left; font-family: var(--sans); font-weight: 600; font-size: 11px;
-    text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft);
-    border-bottom: 1px solid var(--ink); padding: 0 10px 8px;
+    text-align: left; font-family: var(--font-pixel); font-weight: bold; font-size: 12px; text-transform: uppercase;
+    color: var(--neon-cyan); border-bottom: 1px solid var(--neon-cyan); padding: 0 6px 8px;
   }
-  table.ledger tbody tr { border-bottom: 1px solid var(--rule); cursor: pointer; }
-  table.ledger tbody tr:hover { background: #EFF1EE; }
-  table.ledger td { padding: 10px 10px; vertical-align: middle; }
-  td.num, th.num { text-align: right; font-family: var(--mono); }
-  td.rank { font-family: var(--mono); color: var(--ink-soft); width: 28px; }
-  td.ticker { font-family: var(--mono); font-weight: 600; font-size: 14px; }
-  .chg-pos { color: var(--gain); font-family: var(--mono); }
-  .chg-neg { color: var(--loss); font-family: var(--mono); }
-
-  .badge { display: inline-block; padding: 1px 7px; border-radius: 999px; font-size: 10.5px; font-weight: 600; }
-  .badge-yes { background: var(--gain-bg); color: var(--gain); }
-  .badge-no  { background: #EFEFEF; color: var(--ink-soft); }
-
-  /* Trend Template dot indicator — the signature element: 8 ledger-punches,
-     one per Minervini criterion, filled = met. */
-  .dots { display: inline-flex; gap: 2.5px; vertical-align: middle; }
-  .dot { width: 6px; height: 6px; border-radius: 1px; background: var(--rule); }
-  .dot.on { background: var(--accent); }
-
-  .why-row td { padding: 0 10px 16px; }
-  .why-box {
-    background: #FBFBF9; border-left: 3px solid var(--rule-strong);
-    padding: 10px 14px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.6;
+  table.ledger tbody tr { border-bottom: 1px dotted #3d2a5c; cursor: pointer; }
+  table.ledger tbody tr:hover, table.ledger tbody tr:focus-visible { background: rgba(45,242,255,0.10); }
+  table.ledger tbody tr[data-idx="0"] { background: rgba(255,213,0,0.10); }
+  table.ledger td { padding: 10px 6px; }
+  td.num, th.num { text-align: right; }
+  td.rank { color: var(--text-dim); width: 22px; font-family: var(--font-pixel); font-size: 12px; }
+  td.ticker { font-weight: bold; color: var(--neon-gold); }
+  .chg-pos { color: var(--stonks-green); }
+  .chg-neg { color: var(--not-stonks-red); }
+  .qual-check { color: var(--stonks-green); font-weight: bold; margin-left: 3px; }
+  @media (max-width: 600px) {
+    table.ledger { font-size: 12.5px; min-width: 0; }
+    table.ledger td { padding: 8px 4px; }
+    table.ledger thead th { font-size: 10px; padding: 0 4px 6px; }
   }
-  .why-row { display: none; }
-  .why-row.open { display: table-row; }
 
-  .scores-mini { display: flex; gap: 14px; margin-top: 6px; font-family: var(--mono); font-size: 11px; color: var(--ink-soft); }
+  /* Trend Template dots -> pixel coins */
+  .dots { display: inline-flex; gap: 2px; vertical-align: middle; }
+  .dot { width: 8px; height: 8px; border-radius: 1px; background: #2b1a4a; border: 1px solid #43296f; }
+  .dot.on { background: var(--neon-gold); box-shadow: 0 0 4px var(--neon-gold); }
 
-  /* ---------- Rail widgets ---------- */
-  .rail-card {
-    background: var(--paper-raised); border: 1px solid var(--rule);
-    border-radius: var(--radius); padding: 16px;
-  }
-  .rail-card h3 {
-    font-family: var(--sans); font-size: 11px; text-transform: uppercase;
-    letter-spacing: 0.08em; color: var(--ink-soft); margin: 0 0 10px;
-  }
-  .rail-card p { font-size: 12.5px; color: var(--ink-soft); margin: 0 0 8px; }
-  .glossary dt { font-family: var(--mono); font-weight: 600; font-size: 12px; color: var(--ink); margin-top: 8px; }
-  .glossary dd { margin: 2px 0 0; font-size: 12px; color: var(--ink-soft); }
-
-  /* ---------- Empty / loading states ---------- */
   .state-msg {
-    padding: 40px 20px; text-align: center; color: var(--ink-soft);
-    border: 1px dashed var(--rule-strong); border-radius: var(--radius); margin-top: 14px;
+    padding: 30px 16px; text-align: center; color: var(--text-dim);
+    font-family: var(--font-mono); font-size: 14px;
   }
-  .state-msg strong { display: block; color: var(--ink); font-family: var(--serif); font-size: 17px; margin-bottom: 6px; }
+  .state-msg strong { display: block; color: var(--neon-gold); font-family: var(--font-display); font-size: 14px; margin-bottom: 10px; }
 
-  footer {
-    border-top: 1px solid var(--rule); padding: 24px 0 50px;
-    font-size: 11.5px; color: var(--ink-soft);
+  /* ---------- rail cards ---------- */
+  .rail-card { background: #000; border: 2px solid var(--neon-magenta); border-radius: 4px; padding: 12px 13px; }
+  .rail-card h3 { font-family: var(--font-display); font-size: 11px; margin: 0 0 9px; color: var(--neon-magenta); }
+  .rail-card p { font-size: 13px; margin: 0 0 8px; line-height: 1.55; color: var(--text); }
+  .glossary dt { font-family: var(--font-mono); font-weight: bold; font-size: 12.5px; margin-top: 9px; color: var(--neon-cyan); }
+  .glossary dd { margin: 2px 0 0; font-size: 12.5px; color: var(--text-dim); }
+
+  .footer-hud {
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px;
+    font-family: var(--font-mono); font-size: 11.5px; color: var(--text-dim);
+    padding: 14px 4px 6px; border-top: 1px dashed #3d2a5c; margin-top: 14px;
   }
-  footer a { color: var(--ink-soft); }
 
-  .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
-  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  /* ---------- drill-down detail modal ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(5,0,15,0.82);
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; z-index: 200;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal-box {
+    background: var(--bg-panel); border: 3px solid var(--neon-cyan); border-radius: 8px;
+    max-width: 480px; width: 100%; max-height: 88vh; overflow-y: auto;
+    padding: 18px; position: relative;
+    box-shadow: 0 0 30px rgba(45,242,255,0.3);
+  }
+  @media (max-width: 560px) {
+    .modal-box { max-height: 92vh; padding: 16px 14px; border-radius: 6px; }
+  }
+  .modal-close {
+    position: absolute; top: 10px; right: 10px; width: 34px; height: 34px;
+    background: var(--neon-magenta); color: #000; border: none; border-radius: 4px;
+    font-family: var(--font-display); font-size: 14px; cursor: pointer;
+  }
+  .modal-close:hover { background: var(--neon-gold); }
+  .modal-ticker { font-family: var(--font-display); font-size: 22px; color: var(--neon-gold); margin: 0 0 4px; padding-right: 40px; }
+  .modal-price-row { font-family: var(--font-mono); font-size: 16px; margin-bottom: 4px; }
+  .modal-score-row { font-family: var(--font-mono); font-size: 13px; color: var(--text-dim); margin-bottom: 14px; }
+  .modal-section-title {
+    font-family: var(--font-pixel); font-size: 13px; color: var(--neon-cyan);
+    border-bottom: 1px solid var(--neon-cyan); padding-bottom: 4px; margin: 16px 0 8px;
+  }
+  .modal-section-title:first-of-type { margin-top: 4px; }
+  .checklist { list-style: none; margin: 0; padding: 0; }
+  .checklist li { padding: 5px 0; font-size: 13.5px; display: flex; gap: 8px; align-items: flex-start; }
+  .check-yes { color: var(--stonks-green); font-weight: bold; }
+  .check-no { color: #55486e; font-weight: bold; }
+  .checklist li.unmet { color: var(--text-dim); }
+  .signal-list { list-style: none; margin: 0; padding: 0; }
+  .signal-list li { padding: 4px 0 4px 16px; font-size: 13px; position: relative; color: var(--text); }
+  .signal-list li::before { content: "\25B8"; position: absolute; left: 0; color: var(--neon-gold); }
+  .signal-empty { font-size: 12.5px; color: var(--text-dim); font-style: italic; padding: 4px 0; }
 
-  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  :focus-visible { outline: 3px solid var(--neon-gold); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
 </style>
 </head>
 <body>
 
-<header class="masthead">
-  <div class="wrap masthead-inner">
-    <div>
-      <p class="wordmark">Trend Ledger<small>Minervini-weighted momentum &amp; value scan · S&amp;P 500 + S&amp;P 400</small></p>
-    </div>
-    <div class="masthead-meta">
-      <div>Updated <span id="updated-at">—</span></div>
-      <div id="market-status" class="status-pill status-unknown">Market: loading…</div>
+<div class="cabinet">
+  <div class="logo-block">
+    <div class="logo">STONKS RUN</div>
+    <div class="tagline">PRESS START -- MINERVINI-WEIGHTED SCAN -- S&amp;P 500 + S&amp;P 400</div>
+    <div id="stonks-meter" class="stonks-unknown">&#9670; LOADING...</div>
+  </div>
+
+  <div class="rules-card">
+    <div class="rules-head">&#9873; GAME RULES -- READ BEFORE YOU PLAY</div>
+    <div class="rules-body">
+      <strong>NOT FINANCIAL ADVICE.</strong> Rankings are generated automatically from public price data and public-domain approximations of well-known trading frameworks. This is an educational tool, not a recommendation to buy or sell anything. Data may be delayed. Verify everything independently before acting on it.
     </div>
   </div>
-</header>
 
-<div class="wrap">
-  <div class="notice">
-    <strong>Educational tool, not financial advice.</strong> Rankings are generated automatically from public price data and public-domain approximations of well-known trading frameworks. They are not recommendations to buy or sell anything. Data may be delayed. Verify everything independently before acting on it.
+  <div class="ticker-tape">
+    <div class="tt-track" id="ticker-track">LOADING FEED...</div>
   </div>
 
   <div class="ad-slot ad-leaderboard" aria-label="Advertisement placeholder">
-    Advertisement <span class="dim">728×90</span>
+    <span class="blink-text">&#9679; INSERT COIN TO CONTINUE &#9679;</span> <span class="dim">728x90</span>
   </div>
 
   <div class="layout">
     <main>
 
-      <div id="scan-summary" class="rail-card" style="margin-bottom: 8px;"></div>
+      <div id="scan-summary"></div>
 
       <div class="section-head">
-        <div>
-          <p class="section-eyebrow">Section 01</p>
-          <h2 class="section-title">Today's Momentum Leaders</h2>
-          <p class="section-sub">Ranked first by Trend Template compliance, then by CANSLIM + Zanger + Qullamaggie triggers from live intraday data.</p>
-        </div>
+        <div class="level-tag">LEVEL 1</div>
+        <h2 class="section-title">TODAY'S MOMENTUM LEADERS</h2>
+        <p class="section-sub">Ranked first by Trend Template compliance, then by CANSLIM + Zanger + Qullamaggie triggers from live intraday data. Tap a row for the full breakdown.</p>
       </div>
-      <div id="section1-mount"></div>
+      <div class="term-screen"><div id="section1-mount"></div></div>
 
       <div class="ad-slot ad-inline" aria-label="Advertisement placeholder">
-        Advertisement <span class="dim">320×100</span>
+        <span class="blink-text">&#9679; INSERT COIN TO CONTINUE &#9679;</span> <span class="dim">320x100</span>
       </div>
 
       <div class="section-head">
-        <div>
-          <p class="section-eyebrow">Section 02</p>
-          <h2 class="section-title">Fundamentals &amp; Trend-Quality Picks</h2>
-          <p class="section-sub">Same Trend Template priority, tie-broken by CANSLIM fundamentals and traditional value metrics — no intraday momentum triggers.</p>
-        </div>
+        <div class="level-tag">LEVEL 2</div>
+        <h2 class="section-title">FUNDAMENTALS &amp; TREND-QUALITY PICKS</h2>
+        <p class="section-sub">Same Trend Template priority, tie-broken by CANSLIM fundamentals and traditional value metrics -- no intraday momentum triggers.</p>
       </div>
-      <div id="section2-mount"></div>
+      <div class="term-screen"><div id="section2-mount"></div></div>
 
     </main>
 
     <aside class="rail">
       <div class="ad-slot ad-rect" aria-label="Advertisement placeholder">
-        Advertisement <span class="dim">300×250</span>
+        <span class="blink-text">&#9679; INSERT COIN &#9679;</span> <span class="dim">300x250</span>
       </div>
 
       <div class="rail-card">
-        <h3>Trend Template</h3>
-        <p>Each dot is one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and RS Rating ≥ 70.</p>
+        <h3>POWER-UP GUIDE</h3>
+        <p>Each pixel coin is one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and RS Rating &ge; 70. Tap any stock to see exactly which criteria it met.</p>
       </div>
 
       <div class="rail-card glossary">
-        <h3>Reading the columns</h3>
+        <h3>HOW TO PLAY</h3>
         <dl>
-          <dt>RS</dt><dd>Relative Strength Rating, 1–99, approximated against this scan's universe.</dd>
-          <dt>CANSLIM</dt><dd>O'Neil's per-stock factors: current &amp; annual earnings growth, new highs, demand, leadership, institutional ownership.</dd>
-          <dt>Zanger / Qullamaggie</dt><dd>Breakout, volume, and momentum triggers from today's live price action.</dd>
-          <dt>Qualifies</dt><dd>Whether the stock actually clears the Trend Template gate — unqualified names are shown as the closest available candidates.</dd>
+          <dt>RS</dt><dd>Relative Strength Rating, 1-99, approximated against this scan's universe.</dd>
+          <dt>CANSLIM</dt><dd>O'Neil's per-stock factors: earnings growth, new highs, demand, leadership, institutional ownership.</dd>
+          <dt>ZANGER / QULLAMAGGIE</dt><dd>Breakout, volume, and momentum triggers from today's live price action.</dd>
+          <dt>QUALIFIES</dt><dd>Whether the stock actually clears the Trend Template gate -- unqualified names are shown as the closest available candidates.</dd>
         </dl>
       </div>
 
       <div class="ad-slot ad-rect" aria-label="Advertisement placeholder">
-        Advertisement <span class="dim">300×250</span>
+        <span class="blink-text">&#9679; INSERT COIN &#9679;</span> <span class="dim">300x250</span>
       </div>
     </aside>
   </div>
+
+  <div class="footer-hud">
+    <span id="footer-counter">STOCKS SCANNED: 000000</span>
+    <span>STONKS RUN (C) 2026 -- FOR EDUCATIONAL USE ONLY -- CONTINUES AUTOMATICALLY, NO QUARTERS NEEDED</span>
+  </div>
 </div>
 
-<footer>
-  <div class="wrap">
-    Trend Ledger refreshes automatically on a schedule during market hours. Not investment advice. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations and are not endorsed by their namesakes.
+<div class="modal-overlay" id="detail-modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-ticker">
+    <button class="modal-close" id="modal-close-btn" aria-label="Close details">X</button>
+    <div id="modal-content"></div>
   </div>
-</footer>
+</div>
 
 <script>
 const DATA_URL = 'data/latest.json';
@@ -277,8 +322,7 @@ const REFRESH_MS = 5 * 60 * 1000; // poll for fresh data every 5 minutes
 
 function fmtPct(v) {
   if (v === null || v === undefined) return '—';
-  const s = (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
-  return s;
+  return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
 }
 
 function dotsHtml(n) {
@@ -295,44 +339,103 @@ function statusClass(status) {
   return 'status-unknown';
 }
 
+/* ---------- drill-down detail modal ---------- */
+function signalSection(title, items) {
+  let html = '<div class="modal-section-title">' + title + '</div>';
+  if (!items || items.length === 0) {
+    html += '<p class="signal-empty">No signals triggered.</p>';
+  } else {
+    html += '<ul class="signal-list">' + items.map(s => '<li>' + s + '</li>').join('') + '</ul>';
+  }
+  return html;
+}
+
+function openDetailModal(r) {
+  const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
+  const checklist = (r.trend_criteria || []).map(([label, met]) =>
+    '<li class="' + (met ? '' : 'unmet') + '"><span class="' + (met ? 'check-yes' : 'check-no') + '">' +
+    (met ? '\u2713' : '\u2715') + '</span> ' + label + '</li>'
+  ).join('');
+
+  const html =
+    '<h2 class="modal-ticker" id="modal-ticker">' + r.ticker + '</h2>' +
+    '<div class="modal-price-row">$' + (r.price ?? '—') + ' &nbsp; <span class="' + chgClass + '">' + fmtPct(r.pct_chg) + '</span></div>' +
+    '<div class="modal-score-row">Score ' + r.score + ' &middot; RS ' + (r.rs ?? '—') + ' &middot; Trend ' + r.trend +
+    ' &middot; Qualifies: ' + (r.qualifies ? 'YES' : 'NO') + '</div>' +
+    '<div class="modal-section-title">TREND TEMPLATE CHECKLIST (' + r.trend + ')</div>' +
+    '<ul class="checklist">' + checklist + '</ul>' +
+    signalSection('CANSLIM SIGNALS (' + r.canslim + ')', r.signals && r.signals.canslim) +
+    signalSection('ZANGER SIGNALS (' + r.zanger + ')', r.signals && r.signals.zanger) +
+    signalSection('QULLAMAGGIE SIGNALS (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
+    signalSection('VALUE SIGNALS (' + r.value + ')', r.signals && r.signals.value);
+
+  document.getElementById('modal-content').innerHTML = html;
+  const overlay = document.getElementById('detail-modal');
+  overlay.hidden = false;
+  document.getElementById('modal-close-btn').focus();
+}
+
+function closeDetailModal() {
+  document.getElementById('detail-modal').hidden = true;
+}
+
+document.getElementById('modal-close-btn').addEventListener('click', closeDetailModal);
+document.getElementById('detail-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'detail-modal') closeDetailModal();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeDetailModal();
+});
+
+/* ---------- list rendering ---------- */
 function renderTable(mountId, rows, scoreLabel) {
   const mount = document.getElementById(mountId);
   if (!rows || rows.length === 0) {
-    mount.innerHTML = '<div class="state-msg"><strong>No scan data yet.</strong>The first scheduled run will populate this automatically.</div>';
+    mount.innerHTML = '<div class="state-msg"><strong>NO DATA</strong>The first scheduled scan will populate this automatically.</div>';
     return;
   }
   let html = '<table class="ledger"><thead><tr>' +
     '<th></th><th>Ticker</th><th class="num">Price</th><th class="num">%Chg</th>' +
-    '<th>Trend</th><th>Qualifies</th><th class="num">' + scoreLabel + '</th>' +
+    '<th>Trend</th><th class="num">' + scoreLabel + '</th>' +
     '</tr></thead><tbody>';
 
   rows.forEach((r, i) => {
     const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
-    const qBadge = r.qualifies ? '<span class="badge badge-yes">Yes</span>' : '<span class="badge badge-no">No</span>';
-    html += '<tr class="data-row" data-idx="' + i + '">' +
+    const qualCheck = r.qualifies ? '<span class="qual-check" title="Fully qualifies">&#10003;</span>' : '';
+    html += '<tr class="data-row" data-idx="' + i + '" tabindex="0">' +
       '<td class="rank">' + (i + 1) + '</td>' +
       '<td class="ticker">' + r.ticker + '</td>' +
       '<td class="num">$' + (r.price ?? '—') + '</td>' +
       '<td class="num ' + chgClass + '">' + fmtPct(r.pct_chg) + '</td>' +
-      '<td>' + dotsHtml(r.trend_n) + ' <span style="font-family:var(--mono);font-size:11px;color:var(--ink-soft)">' + r.trend + '</span></td>' +
-      '<td>' + qBadge + '</td>' +
+      '<td>' + dotsHtml(r.trend_n) + ' ' + r.trend + qualCheck + '</td>' +
       '<td class="num">' + r.score + '</td>' +
       '</tr>';
-    html += '<tr class="why-row" id="why-' + mountId + '-' + i + '"><td colspan="7">' +
-      '<div class="why-box">' + (r.why || 'No notes.') +
-      '<div class="scores-mini"><span>CANSLIM ' + r.canslim + '</span><span>Zanger ' + r.zanger + '</span>' +
-      '<span>Qullamaggie ' + r.qullamaggie + '</span><span>Value ' + r.value + '</span><span>RS ' + (r.rs ?? '—') + '</span></div>' +
-      '</div></td></tr>';
   });
   html += '</tbody></table>';
   mount.innerHTML = html;
 
-  mount.querySelectorAll('tr.data-row').forEach(row => {
-    row.addEventListener('click', () => {
-      const why = document.getElementById('why-' + mountId + '-' + row.dataset.idx);
-      why.classList.toggle('open');
-    });
+  mount.querySelectorAll('tr.data-row').forEach((rowEl, i) => {
+    const openThis = () => openDetailModal(rows[i]);
+    rowEl.addEventListener('click', openThis);
+    rowEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openThis(); } });
   });
+}
+
+function updateTicker(data) {
+  const track = document.getElementById('ticker-track');
+  const all = [...(data.section1 || []), ...(data.section2 || [])];
+  if (all.length === 0) { track.textContent = 'NO SCAN DATA YET -- STAND BY...'; return; }
+  const parts = all.map(r => r.ticker + ' ' + fmtPct(r.pct_chg));
+  track.textContent = parts.join('     \u2022     ') + '     \u2022     ';
+}
+
+function updateStonksMeter(status) {
+  const meter = document.getElementById('stonks-meter');
+  const cls = statusClass(status);
+  if (cls === 'status-up') { meter.textContent = '\u25B2 STONKS'; meter.className = 'stonks-up'; }
+  else if (cls === 'status-down') { meter.textContent = '\u25BC NOT STONKS'; meter.className = 'stonks-down'; }
+  else if (cls === 'status-mixed') { meter.textContent = '\u25C6 MEH STONKS'; meter.className = 'stonks-mixed'; }
+  else { meter.textContent = '\u25C6 AWAITING DATA'; meter.className = 'stonks-unknown'; }
 }
 
 async function loadData() {
@@ -341,26 +444,28 @@ async function loadData() {
     if (!res.ok) throw new Error('no data file yet');
     const data = await res.json();
 
-    const updated = new Date(data.generated_at);
-    document.getElementById('updated-at').textContent = isNaN(updated) ? data.generated_at :
-      updated.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-
-    const pill = document.getElementById('market-status');
-    pill.textContent = 'Market: ' + (data.market_status || 'unknown');
-    pill.className = 'status-pill ' + statusClass(data.market_status);
+    updateStonksMeter(data.market_status);
 
     document.getElementById('scan-summary').innerHTML =
-      '<h3>This scan</h3><p><strong>' + data.total_scored + '</strong> stocks scored · ' +
-      '<strong>' + data.qualifying_count + '</strong> fully meet the Trend Template gate (≥ ' +
-      data.min_trend_needed + '/8) · everyone else shown is the closest available match.</p>';
+      '&gt; <strong>' + data.total_scored + '</strong> stocks scored<br>' +
+      '&gt; <strong>' + data.qualifying_count + '</strong> fully meet the Trend Template gate (&ge; ' +
+      data.min_trend_needed + '/8)<br>' +
+      '&gt; MARKET: ' + (data.market_status || 'unknown').toUpperCase() + '<br>' +
+      '&gt; everyone else shown is the closest available match_';
 
+    document.getElementById('footer-counter').textContent =
+      'STOCKS SCANNED: ' + String(data.total_scored).padStart(6, '0');
+
+    updateTicker(data);
     renderTable('section1-mount', data.section1, 'Score');
     renderTable('section2-mount', data.section2, 'Score');
   } catch (e) {
-    document.getElementById('scan-summary').innerHTML = '';
+    updateStonksMeter(null);
+    document.getElementById('scan-summary').innerHTML = '&gt; AWAITING FIRST SCAN...';
+    document.getElementById('ticker-track').textContent = 'NO SCAN DATA YET -- STAND BY...';
     ['section1-mount', 'section2-mount'].forEach(id => {
       document.getElementById(id).innerHTML =
-        '<div class="state-msg"><strong>No scan data yet.</strong>This dashboard reads data/latest.json, written by the scheduled scan. Run it once (see README) to populate this page.</div>';
+        '<div class="state-msg"><strong>NO DATA</strong>This dashboard reads data/latest.json, written by the scheduled scan. Run it once (see README) to populate this page.</div>';
     });
   }
 }
