@@ -1,13 +1,22 @@
 name: Scheduled scan
 
 on:
-  # Runs on the hour, 13:00-21:00 UTC, Mon-Fri. That's roughly 9am-5pm ET,
-  # but UTC doesn't shift for US daylight saving, so during EDT (Mar-Nov)
-  # this covers ~9:00am-5:00pm ET, and during EST (Nov-Mar) it drifts an
-  # hour later to ~8:00am-4:00pm ET. Adjust the two numbers below if you
-  # want tighter alignment for your part of the year.
+  # Runs every 15 minutes, 13:00-21:00 UTC, Mon-Fri. That's roughly
+  # 9am-5pm ET, but UTC doesn't shift for US daylight saving, so during
+  # EDT (Mar-Nov) this covers ~9:00am-5:00pm ET, and during EST (Nov-Mar)
+  # it drifts an hour later to ~8:00am-4:00pm ET. Adjust the two hour
+  # numbers below if you want tighter alignment for your part of the year.
+  #
+  # 15-minute cadence = up to 36 runs/day, ~180/week. Public repos get
+  # unlimited free GitHub Actions minutes, so this isn't a cost concern -
+  # the real constraint is runtime: a full ~900-ticker scan can itself
+  # take several minutes. The concurrency block below makes sure a new
+  # run never starts while a previous one is still pushing, so overlapping
+  # triggers queue safely rather than colliding - if a scan ever runs
+  # long, you'll just see slightly-less-than-15-minute-fresh data rather
+  # than anything breaking.
   schedule:
-    - cron: "0 13-21 * * 1-5"
+    - cron: "*/15 13-21 * * 1-5"
   # Lets you trigger a run manually from the Actions tab any time.
   workflow_dispatch: {}
 

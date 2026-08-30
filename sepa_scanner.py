@@ -565,29 +565,34 @@ class FundamentalsCache:
 # Strategy scoring
 # --------------------------------------------------------------------------
 
-def score_minervini(ind: dict, rs_rating: Optional[int]) -> Tuple[int, List[str]]:
-    """Minervini Trend Template - 8 classic criteria."""
-    notes = []
-    passed = 0
-
+def score_minervini(ind: dict, rs_rating: Optional[int]) -> Tuple[int, List[Tuple[str, bool]]]:
+    """Minervini Trend Template - 8 classic criteria. Returns
+    (count_passed, criteria) where criteria is ALWAYS all 8 labeled
+    (label, met) pairs in a fixed order - not just the ones that passed -
+    so callers can render a full checklist (used by the dashboard's
+    per-stock drill-down detail view)."""
     c1 = ind["last_close"] > ind["sma150"] and ind["last_close"] > ind["sma200"]
-    if c1: passed += 1; notes.append("Price>150&200MA")
     c2 = ind["sma150"] > ind["sma200"]
-    if c2: passed += 1; notes.append("150MA>200MA")
     c3 = not np.isnan(ind["sma200_1mo_ago"]) and ind["sma200"] > ind["sma200_1mo_ago"]
-    if c3: passed += 1; notes.append("200MA rising")
     c4 = ind["sma50"] > ind["sma150"] and ind["sma50"] > ind["sma200"]
-    if c4: passed += 1; notes.append("50MA>150&200MA")
     c5 = ind["last_close"] > ind["sma50"]
-    if c5: passed += 1; notes.append("Price>50MA")
     c6 = ind["last_close"] >= ind["wk52_low"] * 1.30
-    if c6: passed += 1; notes.append(">=30% off 52wLow")
     c7 = ind["last_close"] >= ind["wk52_high"] * 0.75
-    if c7: passed += 1; notes.append("Within 25% of 52wHigh")
     c8 = (rs_rating is not None) and (rs_rating >= 70)
-    if c8: passed += 1; notes.append(f"RS Rating {rs_rating}")
 
-    return passed, notes
+    rs_label = f"RS Rating >= 70 (currently {rs_rating})" if rs_rating is not None else "RS Rating >= 70 (unavailable)"
+    criteria = [
+        ("Price above rising 150-day & 200-day average", c1),
+        ("150-day average above 200-day average", c2),
+        ("200-day average trending up vs. 1 month ago", c3),
+        ("50-day average above both 150-day & 200-day", c4),
+        ("Price above 50-day average", c5),
+        ("At least 30% above 52-week low", c6),
+        ("Within 25% of 52-week high", c7),
+        (rs_label, c8),
+    ]
+    passed = sum(1 for _, met in criteria if met)
+    return passed, criteria
 
 
 def score_canslim(fund: dict, ind: dict, rs_rating: Optional[int]) -> Tuple[float, List[str]]:
@@ -709,6 +714,31 @@ def is_market_open(now_et: Optional[datetime] = None) -> bool:
     # doesn't account for market holidays.
 
 
+def _clean_num(v):
+    """Sanitizes a value for JSON export: NaN/inf -> None (real JSON has no
+    NaN token), everything else passed through unchanged."""
+    try:
+        if v is None:
+            return None
+        if isinstance(v, (float, np.floating)) and (np.isnan(v) or np.isinf(v)):
+            return None
+    except Exception:
+        return None
+    return v
+
+
+def _pct(v, digits: int = 1):
+    """Converts a fraction (0.05) to a rounded percentage-point number
+    (5.0) for display, sanitizing NaN/None along the way."""
+    v = _clean_num(v)
+    return round(v * 100, digits) if v is not None else None
+
+
+def _num(v, digits: int = 2):
+    v = _clean_num(v)
+    return round(v, digits) if v is not None else None
+
+
 def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
     """Runs one full pass over the entire universe. Every candidate that
     clears the basic price/liquidity filter gets scored - none are
@@ -770,7 +800,8 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
         rs = rs_ratings.get(t)
         fund["_rel_volume_ok"] = (intr.get("rel_volume") or 0) >= 1.3
 
-        mini_passed, mini_notes = score_minervini(ind, rs)
+        mini_passed, mini_criteria = score_minervini(ind, rs)
+        mini_notes = [label for label, met in mini_criteria if met]
         can_score, can_notes = score_canslim(fund, ind, rs)
         zan_score, zan_notes = score_zanger(ind, intr)
         qm_score, qm_notes = score_qullamaggie(ind, intr, rs)
@@ -796,6 +827,46 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
             "MomentumScore": round(momentum_score, 1),
             "QualityScore": round(quality_score, 1),
             "Why": "; ".join(mini_notes + can_notes + zan_notes + qm_notes + val_notes),
+            # Hidden columns (underscore prefix, same convention as _TrendN):
+            # not for CSV/console display, only read by _rows_for_json below
+            # to power the dashboard's per-stock drill-down detail view.
+            "_MiniCriteria": mini_criteria,   # ALL 8 (label, met) pairs
+            "_CanNotes": can_notes,
+            "_ZanNotes": zan_notes,
+            "_QmNotes": qm_notes,
+            "_ValNotes": val_notes,
+            # Raw trader-facing metrics (not just synthesized signals) for
+            # the drill-down detail view: moving averages, 52-week range,
+            # volatility, trailing returns, volume, and fundamentals -
+            # always populated where the underlying data exists, so the
+            # detail view has real numbers to show even when few or no
+            # "signals" happened to trigger that day.
+            "_Metrics": {
+                "sma50": _num(ind.get("sma50")),
+                "sma150": _num(ind.get("sma150")),
+                "sma200": _num(ind.get("sma200")),
+                "wk52_high": _num(ind.get("wk52_high")),
+                "wk52_low": _num(ind.get("wk52_low")),
+                "pct_off_52w_high": _pct((ind["last_close"] / ind["wk52_high"] - 1.0) if ind.get("wk52_high") else None),
+                "pct_off_52w_low": _pct((ind["last_close"] / ind["wk52_low"] - 1.0) if ind.get("wk52_low") else None),
+                "adr20_pct": _num(ind.get("adr20_pct")),
+                "tightness_ratio": _num(ind.get("tightness_ratio"), 2),
+                "ret_3m_pct": _pct(ind.get("ret_3m")),
+                "ret_6m_pct": _pct(ind.get("ret_6m")),
+                "ret_9m_pct": _pct(ind.get("ret_9m")),
+                "ret_12m_pct": _pct(ind.get("ret_12m")),
+                "avg_vol50": _num(ind.get("avg_vol50"), 0),
+                "avg_dollar_vol20": _num(ind.get("avg_dollar_vol20"), 0),
+                "prior_20d_high": _num(ind.get("prior_20d_high")),
+                "prior_50d_high": _num(ind.get("prior_50d_high")),
+                "trailing_pe": _num(fund.get("trailingPE")),
+                "peg_ratio": _num(fund.get("pegRatio")),
+                "profit_margin_pct": _pct(fund.get("profitMargins")),
+                "debt_to_equity": _num(fund.get("debtToEquity")),
+                "eps_qtr_growth_pct": _pct(fund.get("earningsQuarterlyGrowth")),
+                "eps_ann_growth_pct": _pct(fund.get("earningsGrowth")),
+                "institutional_pct": _pct(fund.get("heldPercentInstitutions")),
+            },
         })
 
     if not rows:
@@ -817,6 +888,9 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
     remaining = pool[~pool["Ticker"].isin(section1["Ticker"])]
     section2 = remaining.sort_values(["_TrendN", "QualityScore"], ascending=[False, False]).head(cfg.top_n_section)
 
+    # _TrendN was only needed for sorting; drop it now. The other hidden
+    # _Xxx columns are kept - export_json still needs to read them - and
+    # are stripped later, right before console printing / CSV export.
     section1 = section1.drop(columns=["_TrendN"]).reset_index(drop=True)
     section2 = section2.drop(columns=["_TrendN"]).reset_index(drop=True)
 
@@ -861,7 +935,7 @@ def print_results(section1: pd.DataFrame, section2: pd.DataFrame, market_status:
         print("No candidates this run (universe returned no usable data).")
     else:
         _print_table(section1, "MomentumScore",
-                      drop_cols=["Why", "QualityScore"])
+                      drop_cols=["Why", "QualityScore", "_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"])
 
     print(f"\n--- SECTION 2: Fundamentals & Trend-Quality Picks "
           f"(value-weighted, Minervini-heaviest) ---")
@@ -869,7 +943,8 @@ def print_results(section1: pd.DataFrame, section2: pd.DataFrame, market_status:
         print("No candidates this run (universe returned no usable data).")
     else:
         _print_table(section2, "QualityScore",
-                      drop_cols=["Why", "MomentumScore", "%Chg", "RelVol", "Zanger", "Qullamaggie"])
+                      drop_cols=["Why", "MomentumScore", "%Chg", "RelVol", "Zanger", "Qullamaggie",
+                                 "_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"])
 
 
 def save_results(section1: pd.DataFrame, section2: pd.DataFrame, cfg: Config) -> None:
@@ -877,8 +952,11 @@ def save_results(section1: pd.DataFrame, section2: pd.DataFrame, cfg: Config) ->
         return
     os.makedirs(cfg.output_dir, exist_ok=True)
     fname = os.path.join(cfg.output_dir, f"scan_{datetime.now(ET).strftime('%Y%m%d_%H%M%S')}.csv")
-    s1 = section1.copy(); s1.insert(0, "Section", "1_Momentum")
-    s2 = section2.copy(); s2.insert(0, "Section", "2_ValueQuality")
+    hidden_cols = ["_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"]
+    s1 = section1.drop(columns=[c for c in hidden_cols if c in section1.columns]).copy()
+    s1.insert(0, "Section", "1_Momentum")
+    s2 = section2.drop(columns=[c for c in hidden_cols if c in section2.columns]).copy()
+    s2.insert(0, "Section", "2_ValueQuality")
     combined = pd.concat([s1, s2], ignore_index=True)
     combined.insert(0, "timestamp", datetime.now(ET).isoformat())
     combined.to_csv(fname, index=False)
@@ -906,8 +984,22 @@ def _rows_for_json(df: pd.DataFrame, score_col: str) -> List[dict]:
             "value": row["Value"],
             "score": row[score_col],
             "why": row["Why"],
+            # Structured detail data for the dashboard's per-stock
+            # drill-down: the full 8-item Trend Template checklist
+            # (met AND unmet, not just what passed) plus the other four
+            # frameworks' triggered signals, grouped separately instead
+            # of flattened into one "why" blob.
+            "trend_criteria": [[label, bool(met)] for label, met in row["_MiniCriteria"]],
+            "signals": {
+                "canslim": list(row["_CanNotes"]),
+                "zanger": list(row["_ZanNotes"]),
+                "qullamaggie": list(row["_QmNotes"]),
+                "value": list(row["_ValNotes"]),
+            },
+            "metrics": dict(row["_Metrics"]),
         })
     return out
+
 
 
 def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: str,
@@ -938,7 +1030,12 @@ def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: s
 def _make_synthetic_ohlcv(n=400, trend=0.0008, vol=0.015, start_price=50.0,
                            start_vol=1_000_000, spike_last_day=False, seed=42):
     rng = np.random.default_rng(seed)
-    dates = pd.bdate_range(end=datetime.today(), periods=n)
+    # Over-generate then slice to exactly n: pd.bdate_range(end=..., periods=n)
+    # can return n-1 dates when `end` happens to land on a weekend (its
+    # non-business-day roll-back interacts oddly with the periods count) -
+    # padding by a few extra periods and slicing guarantees exactly n
+    # regardless of what day `end` falls on.
+    dates = pd.bdate_range(end=datetime.today(), periods=n + 5)[-n:]
     rets = rng.normal(trend, vol, n)
     close = start_price * np.cumprod(1 + rets)
     high = close * (1 + np.abs(rng.normal(0.006, 0.004, n)))

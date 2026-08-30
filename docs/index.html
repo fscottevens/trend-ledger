@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
+     crossorigin="anonymous"></script>
 <style>
   :root {
     --bg: #05070A;
@@ -50,10 +52,29 @@
   a { color: var(--teal); }
   .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
 
+  /* ---------- tooltip system: hover OR keyboard focus ---------- */
+  [data-tip] { cursor: help; position: relative; border-bottom: 1px dotted var(--text-faint); }
+  [data-tip]:hover, [data-tip]:focus { outline: none; }
+  [data-tip]:hover::after, [data-tip]:focus::after {
+    content: attr(data-tip);
+    position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%);
+    background: #000; border: 1px solid var(--teal); color: var(--text);
+    padding: 9px 11px; font-family: var(--font-body); font-size: 12.5px; font-weight: 400;
+    line-height: 1.45; white-space: normal; width: max-content; max-width: 250px;
+    z-index: 80; box-shadow: 0 6px 18px rgba(0,0,0,0.55); text-align: left;
+  }
+  [data-tip]:hover::before, [data-tip]:focus::before {
+    content: ""; position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
+    border: 5px solid transparent; border-top-color: var(--teal); z-index: 80;
+  }
+  th[data-tip] { text-decoration: none; }
+  @media (max-width: 560px) {
+    [data-tip]:hover::after, [data-tip]:focus::after { max-width: 200px; font-size: 12px; }
+  }
+
   /* ---------- HUD corner-bracket panel utility ---------- */
   .bracket { position: relative; }
-  .bracket::before, .bracket::after,
-  .bracket .bl, .bracket .br {
+  .bracket::before, .bracket::after {
     content: ""; position: absolute; width: 10px; height: 10px;
     border-color: var(--teal); border-style: solid; opacity: 0.7;
   }
@@ -79,15 +100,38 @@
   }
   .masthead-meta { text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); }
   .status-pill {
-    display: inline-block; margin-top: 8px; padding: 4px 12px;
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px;
     border-radius: 2px; font-family: var(--font-label); font-weight: 600;
     font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid currentColor;
   }
+  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .status-up .dot { animation: pulse 2s ease-in-out infinite; }
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+  @media (prefers-reduced-motion: reduce) { .status-up .dot { animation: none; } }
   .status-up { color: var(--gain); }
   .status-mixed { color: var(--amber); }
   .status-down { color: var(--loss); }
   .status-unknown { color: var(--text-faint); }
   @media (max-width: 640px) { .masthead-inner { flex-direction: column; } .masthead-meta { text-align: left; } }
+
+  /* ---------- in-page nav ---------- */
+  .quicknav {
+    display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px;
+    font-family: var(--font-label); font-size: 12.5px; font-weight: 600;
+    letter-spacing: 0.04em; text-transform: uppercase;
+  }
+  .quicknav a { color: var(--text-dim); text-decoration: none; }
+  .quicknav a:hover { color: var(--teal); }
+
+  /* ---------- intro / how-this-works ---------- */
+  .intro { margin: 26px 0 30px; }
+  .intro h2 {
+    font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--text); margin: 0 0 12px;
+  }
+  .intro p { font-size: 14px; color: var(--text-dim); line-height: 1.65; margin: 0 0 12px; max-width: 780px; }
+  .intro p:last-child { margin-bottom: 0; }
+  .intro strong { color: var(--text); font-weight: 600; }
 
   /* ---------- disclosure notice ---------- */
   .notice {
@@ -117,7 +161,6 @@
   }
   .ad-slot span.dim { font-family: var(--font-mono); font-size: 10px; margin-top: 5px; letter-spacing: 0; text-transform: none; }
   .ad-leaderboard { width: 100%; max-width: 728px; height: 90px; margin: 0 auto 22px; }
-  .ad-rect { width: 100%; max-width: 300px; height: 250px; }
   .ad-inline { width: 100%; height: 90px; margin: 26px 0; }
 
   /* ---------- layout ---------- */
@@ -158,6 +201,7 @@
     letter-spacing: 0.05em; color: var(--text-dim); border-bottom: 1px solid var(--hairline-bright);
     padding: 10px 10px 8px;
   }
+  table.ledger thead th[data-tip] { border-bottom-color: var(--hairline-bright); }
   table.ledger tbody tr { border-bottom: 1px solid var(--hairline); cursor: pointer; }
   table.ledger tbody tr:hover, table.ledger tbody tr:focus-visible { background: rgba(47,216,203,0.06); }
   table.ledger tbody tr[data-idx="0"] { background: rgba(47,216,203,0.045); }
@@ -174,7 +218,7 @@
     table.ledger thead th { font-size: 10px; padding: 8px 6px 6px; }
   }
 
-  /* Trend Template indicator -> segmented bar (bar-graph, not novelty icon) */
+  /* Trend Template indicator -> segmented bar */
   .trend-bar { display: inline-flex; gap: 2px; vertical-align: middle; }
   .seg { width: 8px; height: 10px; background: var(--hairline-bright); }
   .seg.on { background: var(--teal); }
@@ -209,7 +253,7 @@
   .modal-overlay[hidden] { display: none; }
   .modal-box {
     background: var(--bg-panel); border: 1px solid var(--teal);
-    max-width: 560px; width: 100%; max-height: 88vh; overflow-y: auto;
+    max-width: 600px; width: 100%; max-height: 88vh; overflow-y: auto;
     padding: 22px; position: relative; box-shadow: 0 0 40px rgba(47,216,203,0.14);
   }
   @media (max-width: 560px) { .modal-box { max-height: 92vh; padding: 18px 15px; } }
@@ -221,22 +265,40 @@
   .modal-close:hover { color: var(--teal); border-color: var(--teal); }
   .modal-ticker { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: 0.03em; margin: 0 0 6px; padding-right: 40px; }
   .modal-price-row { font-family: var(--font-mono); font-size: 16px; margin-bottom: 4px; }
-  .modal-score-row { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim); margin-bottom: 16px; }
-  .modal-section-title {
-    font-family: var(--font-label); font-size: 12px; font-weight: 600; color: var(--teal);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    border-bottom: 1px solid var(--hairline-bright); padding-bottom: 5px; margin: 20px 0 10px;
+  .modal-score-row { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px; }
+  .modal-group-title {
+    font-family: var(--font-label); font-size: 13px; font-weight: 700; color: var(--text);
+    text-transform: uppercase; letter-spacing: 0.06em; margin: 22px 0 4px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--teal);
   }
-  .modal-section-title:first-of-type { margin-top: 6px; }
+  .modal-group-title:first-of-type { margin-top: 14px; }
+  .modal-group-sub { font-size: 12px; color: var(--text-faint); margin: 0 0 10px; }
+  .modal-subsection-title {
+    font-family: var(--font-label); font-size: 11px; font-weight: 600; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 0 6px;
+  }
+  .modal-subsection-title:first-of-type { margin-top: 2px; }
+
+  /* 52-week range visual */
+  .range-wrap { margin: 6px 0 14px; }
+  .range-track { position: relative; height: 6px; background: var(--hairline-bright); border-radius: 3px; }
+  .range-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--teal-dim); border-radius: 3px; }
+  .range-marker {
+    position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%;
+    background: var(--teal); border: 2px solid var(--bg-panel); transform: translate(-50%, -50%);
+    box-shadow: 0 0 6px var(--teal);
+  }
+  .range-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-top: 6px; }
+  .range-labels strong { color: var(--text-dim); font-weight: 500; }
 
   .metric-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
     background: var(--hairline); border: 1px solid var(--hairline);
   }
-  @media (max-width: 400px) { .metric-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 480px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
   .metric-cell { background: var(--bg-inset); padding: 8px 10px; }
-  .metric-cell .m-label { font-family: var(--font-label); font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--text-faint); }
-  .metric-cell .m-value { font-family: var(--font-mono); font-size: 14px; color: var(--text); margin-top: 2px; }
+  .metric-cell .m-label { font-family: var(--font-label); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
+  .metric-cell .m-value { font-family: var(--font-mono); font-size: 13.5px; color: var(--text); margin-top: 2px; }
 
   .checklist { list-style: none; margin: 0; padding: 0; }
   .checklist li { padding: 6px 0; font-size: 13.5px; display: flex; gap: 9px; align-items: flex-start; border-bottom: 1px solid var(--hairline); }
@@ -249,6 +311,8 @@
   .signal-list li { padding: 5px 0 5px 16px; font-size: 13px; position: relative; color: var(--text); }
   .signal-list li::before { content: "\2014"; position: absolute; left: 0; color: var(--teal); }
   .signal-empty { font-size: 12.5px; color: var(--text-faint); font-style: italic; padding: 4px 0; }
+  .signal-block + .signal-block { margin-top: 12px; }
+  .signal-block-head { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 4px; }
 
   :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
@@ -261,15 +325,27 @@
     <div>
       <p class="wordmark">Stonks<span> Run</span></p>
       <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <nav class="quicknav">
+        <a href="#how-it-works">How It Works</a>
+        <a href="#momentum">Momentum Leaders</a>
+        <a href="#value">Trend Quality &amp; Value</a>
+      </nav>
     </div>
     <div class="masthead-meta">
       <div>Last refresh: <span id="updated-at">&mdash;</span></div>
-      <div id="market-status" class="status-pill status-unknown">Market: Loading</div>
+      <div id="market-status" class="status-pill status-unknown"><span class="dot"></span> Market: Loading</div>
     </div>
   </div>
 </header>
 
 <div class="wrap">
+  <section class="intro" id="how-it-works">
+    <h2>How This Works</h2>
+    <p>Every S&amp;P 500 and S&amp;P 400 stock is re-scanned automatically during market hours against several well-known, published trading frameworks &mdash; not a single black-box signal, but a blend of <span data-tip="Mark Minervini's 8-point technical checklist for a confirmed uptrend, from Trade Like a Stock Market Wizard." tabindex="0">technical trend criteria</span>, growth-stock fundamentals, and momentum triggers drawn from public sources.</p>
+    <p>The results split into two philosophically different views. <strong>Momentum Leaders</strong> ranks names using live intraday price and volume action &mdash; the breakout, volume-surge, and relative-strength triggers day traders watch for right now. <strong>Trend Quality &amp; Value</strong> re-ranks the same qualifying pool using fundamentals and traditional valuation metrics instead, favoring names with earnings growth, reasonable debt, and institutional support alongside a healthy technical trend.</p>
+    <p>Neither list is a signal to buy or sell. Select any stock to see exactly why it ranked where it did &mdash; every moving average, every return period, every criterion met or missed &mdash; and use that as a starting point for your own research, not the end of it.</p>
+  </section>
+
   <div class="notice">
     <strong>Methodology &amp; Disclosure.</strong> This screen ranks securities automatically against public-domain approximations of published trading frameworks. It is provided for informational and educational purposes only and does not constitute investment advice or a recommendation to buy or sell any security. Prices may be delayed. Independently verify all data before making any trading decision.
   </div>
@@ -278,51 +354,51 @@
     <div class="tt-track" id="ticker-track">LOADING FEED&hellip;</div>
   </div>
 
-  <div class="ad-slot ad-leaderboard" aria-label="Advertisement placeholder">
-    ADVERTISEMENT <span class="dim">728&times;90</span>
-  </div>
-
   <div class="layout">
     <main>
 
       <div id="scan-summary"></div>
 
-      <div class="section-head">
+      <div class="section-head" id="momentum">
         <p class="section-eyebrow">01</p>
         <h2 class="section-title">Momentum Leaders</h2>
-        <p class="section-sub">Ranked first by Trend Template compliance, then by CANSLIM, breakout, and momentum triggers from live intraday data. Select any row for the full breakdown.</p>
+        <p class="section-sub">Ranked first by <span data-tip="How many of Minervini's 8 Trend Template criteria this stock currently meets, out of 8." tabindex="0">Trend Template</span> compliance, then by <span data-tip="O'Neil's growth framework: Current & Annual earnings growth, New highs, Supply/demand, Leadership, Institutional sponsorship, Market direction." tabindex="0">CANSLIM</span>, breakout, and momentum triggers from live intraday data. Select any row for the full breakdown.</p>
       </div>
       <div class="term-screen"><div id="section1-mount"></div></div>
 
-      <div class="ad-slot ad-inline" aria-label="Advertisement placeholder">
-        ADVERTISEMENT <span class="dim">320&times;100</span>
-      </div>
-
-      <div class="section-head">
+      <div class="section-head" id="value">
         <p class="section-eyebrow">02</p>
         <h2 class="section-title">Trend Quality &amp; Value</h2>
         <p class="section-sub">Same Trend Template priority, tie-broken by CANSLIM fundamentals and traditional value metrics instead of intraday momentum.</p>
       </div>
       <div class="term-screen"><div id="section2-mount"></div></div>
 
+      <div class="ad-slot ad-inline" aria-label="Advertisement placeholder">
+        ADVERTISEMENT <span class="dim">320&times;100</span>
+      </div>
+
     </main>
 
     <aside class="rail">
       <div class="rail-card">
         <h3>Trend Template</h3>
-        <p>Each segment represents one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and RS Rating &ge; 70. Open any stock's detail view for the exact criteria met.</p>
+        <p>Each segment represents one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and <span data-tip="Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS Rating</span> &ge; 70. Open any stock's detail view for the exact criteria met.</p>
       </div>
 
       <div class="rail-card glossary">
         <h3>Reference</h3>
         <dl>
-          <dt>RS</dt><dd>Relative Strength Rating, 1&ndash;99, ranked against this scan's universe.</dd>
-          <dt>CANSLIM</dt><dd>O'Neil's per-stock factors: earnings growth, new highs, demand, leadership, institutional ownership.</dd>
-          <dt>Zanger / Qullamaggie</dt><dd>Breakout, volume, and momentum triggers from today's live price action.</dd>
-          <dt>Qualifies</dt><dd>Whether a stock fully clears the Trend Template gate. Names shown without it are the closest available candidates.</dd>
+          <dt data-tip="Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS</dt><dd>Relative Strength Rating, 1&ndash;99, ranked against this scan's universe.</dd>
+          <dt data-tip="O'Neil's growth framework: Current & Annual earnings growth, New highs, Supply/demand, Leadership, Institutional sponsorship, Market direction." tabindex="0">CANSLIM</dt><dd>O'Neil's per-stock factors: earnings growth, new highs, demand, leadership, institutional ownership.</dd>
+          <dt data-tip="Zanger: buying stocks breaking to new highs on unusually heavy volume. Qullamaggie: strong relative strength, tight consolidation, and breakouts or gap-up 'episodic pivots.'" tabindex="0">Zanger / Qullamaggie</dt><dd>Breakout, volume, and momentum triggers from today's live price action.</dd>
+          <dt data-tip="Whether this stock fully clears the Trend Template gate. Stocks without it are the closest available matches, not confirmed setups." tabindex="0">Qualifies</dt><dd>Whether a stock fully clears the Trend Template gate. Names shown without it are the closest available candidates.</dd>
         </dl>
       </div>
     </aside>
+  </div>
+
+  <div class="ad-slot ad-leaderboard" aria-label="Advertisement placeholder">
+    ADVERTISEMENT <span class="dim">728&times;90</span>
   </div>
 
   <footer>
@@ -341,6 +417,35 @@
 <script>
 const DATA_URL = 'data/latest.json';
 const REFRESH_MS = 5 * 60 * 1000; // poll for fresh data every 5 minutes
+
+const TIP = {
+  rs: "Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best).",
+  trend: "How many of Minervini's 8 Trend Template criteria this stock currently meets, out of 8.",
+  score: "Composite ranking score, weighted heavily toward Trend Template compliance, with other frameworks breaking ties.",
+  qualifies: "Whether this stock fully clears the Trend Template gate. Unqualified names are the closest available matches.",
+  chg: "Price change since the prior session's close, as of this scan.",
+  sma50: "Average closing price over the trailing 50 trading days.",
+  sma150: "Average closing price over the trailing 150 trading days.",
+  sma200: "Average closing price over the trailing 200 trading days.",
+  adr: "Average daily high-to-low range over the past 20 sessions, as a % of price. Higher means more volatile.",
+  ret3m: "Total price return over the trailing 3 months.",
+  ret6m: "Total price return over the trailing 6 months.",
+  ret12m: "Total price return over the trailing 12 months.",
+  avgvol: "Average daily trading volume (shares) over the past 50 sessions.",
+  avgdollarvol: "Average daily dollar volume over the past 20 sessions -- a common liquidity filter.",
+  breakout50: "Highest price over the prior 50 sessions. A move above this level on volume is a classic breakout.",
+  pe: "Price-to-earnings ratio using trailing twelve months of earnings.",
+  peg: "P/E divided by expected earnings growth. Near or below 1 is often read as reasonably priced relative to growth.",
+  margin: "Net income as a percentage of revenue.",
+  debtEquity: "Total debt relative to shareholder equity -- a measure of financial leverage.",
+  epsQtr: "Year-over-year quarterly earnings-per-share growth.",
+  epsAnn: "Year-over-year annual earnings-per-share growth.",
+  inst: "Percentage of shares held by institutions. CANSLIM treats rising institutional ownership as a demand signal.",
+};
+function tipAttr(key) {
+  const t = TIP[key];
+  return t ? ' data-tip="' + t.replace(/"/g, '&quot;') + '" tabindex="0"' : '';
+}
 
 function fmtPct(v) {
   if (v === null || v === undefined) return '—';
@@ -376,50 +481,75 @@ function statusClass(status) {
   return 'status-unknown';
 }
 
+/* ---------- 52-week range visual ---------- */
+function rangeBarHtml(price, low, high) {
+  if (price == null || low == null || high == null || high <= low) return '';
+  let pct = ((price - low) / (high - low)) * 100;
+  pct = Math.max(0, Math.min(100, pct));
+  return '<div class="range-wrap">' +
+    '<div class="range-track"><div class="range-fill" style="width:' + pct.toFixed(1) + '%"></div>' +
+    '<div class="range-marker" style="left:' + pct.toFixed(1) + '%"></div></div>' +
+    '<div class="range-labels"><span>52W Low <strong>' + fmtMoney(low) + '</strong></span>' +
+    '<span>52W High <strong>' + fmtMoney(high) + '</strong></span></div></div>';
+}
+
 /* ---------- drill-down detail modal ---------- */
 function signalSection(title, items) {
-  let html = '<div class="modal-section-title">' + title + '</div>';
+  let html = '<div class="signal-block"><div class="signal-block-head">' + title + '</div>';
   if (!items || items.length === 0) {
     html += '<p class="signal-empty">No signals triggered.</p>';
   } else {
     html += '<ul class="signal-list">' + items.map(s => '<li>' + s + '</li>').join('') + '</ul>';
   }
-  return html;
+  return html + '</div>';
 }
 
-function metricCell(label, value) {
-  return '<div class="metric-cell"><div class="m-label">' + label + '</div><div class="m-value">' + value + '</div></div>';
+function metricCell(labelKey, labelText, value) {
+  return '<div class="metric-cell"><div class="m-label"' + tipAttr(labelKey) + '>' + labelText + '</div><div class="m-value">' + value + '</div></div>';
 }
 
-function metricsGridHtml(m) {
+function metricsGridHtml(m, price) {
   if (!m) return '';
-  const cells = [
-    metricCell('50-Day Avg', fmtMoney(m.sma50)),
-    metricCell('150-Day Avg', fmtMoney(m.sma150)),
-    metricCell('200-Day Avg', fmtMoney(m.sma200)),
-    metricCell('52-Wk High', fmtMoney(m.wk52_high) + (m.pct_off_52w_high != null ? ' (' + fmtPct(m.pct_off_52w_high) + ')' : '')),
-    metricCell('52-Wk Low', fmtMoney(m.wk52_low) + (m.pct_off_52w_low != null ? ' (+' + fmtNum(m.pct_off_52w_low, 1) + '%)' : '')),
-    metricCell('ADR (20d)', m.adr20_pct != null ? fmtNum(m.adr20_pct, 2) + '%' : '—'),
-    metricCell('3-Mo Return', fmtPct(m.ret_3m_pct)),
-    metricCell('6-Mo Return', fmtPct(m.ret_6m_pct)),
-    metricCell('12-Mo Return', fmtPct(m.ret_12m_pct)),
-    metricCell('Avg Vol (50d)', fmtVol(m.avg_vol50)),
-    metricCell('Avg $ Vol (20d)', m.avg_dollar_vol20 != null ? fmtVol(m.avg_dollar_vol20) : '—'),
-    metricCell('50d Breakout Lvl', fmtMoney(m.prior_50d_high)),
+  let html = '<div class="modal-group-title">Technicals</div>';
+
+  html += '<div class="modal-subsection-title">Price &amp; Trend</div>';
+  html += rangeBarHtml(price, m.wk52_low, m.wk52_high);
+  const trendCells = [
+    metricCell('sma50', '50-Day Avg', fmtMoney(m.sma50)),
+    metricCell('sma150', '150-Day Avg', fmtMoney(m.sma150)),
+    metricCell('sma200', '200-Day Avg', fmtMoney(m.sma200)),
   ];
-  let html = '<div class="metric-grid">' + cells.join('') + '</div>';
+  html += '<div class="metric-grid">' + trendCells.join('') + '</div>';
+
+  html += '<div class="modal-subsection-title">Volatility &amp; Liquidity</div>';
+  const volCells = [
+    metricCell('adr', 'ADR (20d)', m.adr20_pct != null ? fmtNum(m.adr20_pct, 2) + '%' : '—'),
+    metricCell('avgvol', 'Avg Vol (50d)', fmtVol(m.avg_vol50)),
+    metricCell('avgdollarvol', 'Avg $ Vol (20d)', m.avg_dollar_vol20 != null ? fmtVol(m.avg_dollar_vol20) : '—'),
+  ];
+  html += '<div class="metric-grid">' + volCells.join('') + '</div>';
+
+  html += '<div class="modal-subsection-title">Momentum</div>';
+  const momCells = [
+    metricCell('ret3m', '3-Mo Return', fmtPct(m.ret_3m_pct)),
+    metricCell('ret6m', '6-Mo Return', fmtPct(m.ret_6m_pct)),
+    metricCell('ret12m', '12-Mo Return', fmtPct(m.ret_12m_pct)),
+    metricCell('breakout50', '50d Breakout Lvl', fmtMoney(m.prior_50d_high)),
+  ];
+  html += '<div class="metric-grid">' + momCells.join('') + '</div>';
 
   const fundCells = [];
-  if (m.trailing_pe != null) fundCells.push(metricCell('P/E (TTM)', fmtNum(m.trailing_pe, 1)));
-  if (m.peg_ratio != null) fundCells.push(metricCell('PEG Ratio', fmtNum(m.peg_ratio, 2)));
-  if (m.profit_margin_pct != null) fundCells.push(metricCell('Profit Margin', fmtNum(m.profit_margin_pct, 1) + '%'));
-  if (m.debt_to_equity != null) fundCells.push(metricCell('Debt/Equity', fmtNum(m.debt_to_equity, 1)));
-  if (m.eps_qtr_growth_pct != null) fundCells.push(metricCell('EPS Qtr Growth', fmtPct(m.eps_qtr_growth_pct)));
-  if (m.eps_ann_growth_pct != null) fundCells.push(metricCell('EPS Ann Growth', fmtPct(m.eps_ann_growth_pct)));
-  if (m.institutional_pct != null) fundCells.push(metricCell('Institutional', fmtNum(m.institutional_pct, 1) + '%'));
+  if (m.trailing_pe != null) fundCells.push(metricCell('pe', 'P/E (TTM)', fmtNum(m.trailing_pe, 1)));
+  if (m.peg_ratio != null) fundCells.push(metricCell('peg', 'PEG Ratio', fmtNum(m.peg_ratio, 2)));
+  if (m.profit_margin_pct != null) fundCells.push(metricCell('margin', 'Profit Margin', fmtNum(m.profit_margin_pct, 1) + '%'));
+  if (m.debt_to_equity != null) fundCells.push(metricCell('debtEquity', 'Debt/Equity', fmtNum(m.debt_to_equity, 1)));
+  if (m.eps_qtr_growth_pct != null) fundCells.push(metricCell('epsQtr', 'EPS Qtr Growth', fmtPct(m.eps_qtr_growth_pct)));
+  if (m.eps_ann_growth_pct != null) fundCells.push(metricCell('epsAnn', 'EPS Ann Growth', fmtPct(m.eps_ann_growth_pct)));
+  if (m.institutional_pct != null) fundCells.push(metricCell('inst', 'Institutional', fmtNum(m.institutional_pct, 1) + '%'));
 
   if (fundCells.length > 0) {
-    html += '<div class="modal-section-title">Fundamentals</div>' +
+    html += '<div class="modal-group-title">Fundamentals</div>' +
+      '<div class="modal-group-sub">Traditional valuation and quality metrics, where available.</div>' +
       '<div class="metric-grid">' + fundCells.join('') + '</div>';
   }
   return html;
@@ -432,18 +562,24 @@ function openDetailModal(r) {
     (met ? '[X]' : '[ ]') + '</span> ' + label + '</li>'
   ).join('');
 
+  const m = r.metrics || {};
+  const metricsHtml = metricsGridHtml(m, r.price);
+
   const html =
     '<h2 class="modal-ticker" id="modal-ticker">' + r.ticker + '</h2>' +
-    '<div class="modal-price-row">' + fmtMoney(r.price) + ' &nbsp; <span class="' + chgClass + '">' + fmtPct(r.pct_chg) + '</span></div>' +
-    '<div class="modal-score-row">Composite score ' + r.score + ' &middot; RS ' + (r.rs ?? '—') + ' &middot; Trend ' + r.trend +
-    ' &middot; Qualifies: ' + (r.qualifies ? 'Yes' : 'No') + '</div>' +
-    metricsGridHtml(r.metrics) +
-    '<div class="modal-section-title">Trend Template (' + r.trend + ')</div>' +
+    '<div class="modal-price-row">' + fmtMoney(r.price) + ' &nbsp; <span class="' + chgClass + '"' + tipAttr('chg') + '>' + fmtPct(r.pct_chg) + '</span></div>' +
+    '<div class="modal-score-row">Composite score<span' + tipAttr('score') + '> ' + r.score + '</span> &middot; RS<span' + tipAttr('rs') + '> ' + (r.rs ?? '—') + '</span> &middot; Trend<span' + tipAttr('trend') + '> ' + r.trend + '</span>' +
+    ' &middot; Qualifies<span' + tipAttr('qualifies') + '>: ' + (r.qualifies ? 'Yes' : 'No') + '</span></div>' +
+    metricsHtml +
+    '<div class="modal-group-title">Trend Template Checklist</div>' +
+    '<div class="modal-group-sub">' + r.trend + ' of Minervini\'s 8 criteria currently met.</div>' +
     '<ul class="checklist">' + checklist + '</ul>' +
-    signalSection('CANSLIM Signals (' + r.canslim + ')', r.signals && r.signals.canslim) +
-    signalSection('Zanger Signals (' + r.zanger + ')', r.signals && r.signals.zanger) +
-    signalSection('Qullamaggie Signals (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
-    signalSection('Value Signals (' + r.value + ')', r.signals && r.signals.value);
+    '<div class="modal-group-title">Triggered Signals</div>' +
+    '<div class="modal-group-sub">Framework-specific triggers from today\'s data. Empty sections mean no signal fired -- not necessarily a negative.</div>' +
+    signalSection('CANSLIM (' + r.canslim + ')', r.signals && r.signals.canslim) +
+    signalSection('Zanger (' + r.zanger + ')', r.signals && r.signals.zanger) +
+    signalSection('Qullamaggie (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
+    signalSection('Value (' + r.value + ')', r.signals && r.signals.value);
 
   document.getElementById('modal-content').innerHTML = html;
   const overlay = document.getElementById('detail-modal');
@@ -471,8 +607,10 @@ function renderTable(mountId, rows, scoreLabel) {
     return;
   }
   let html = '<table class="ledger"><thead><tr>' +
-    '<th></th><th>Ticker</th><th class="num">Price</th><th class="num">%Chg</th>' +
-    '<th>Trend</th><th class="num">' + scoreLabel + '</th>' +
+    '<th></th><th>Ticker</th><th class="num">Price</th>' +
+    '<th class="num"' + tipAttr('chg') + '>%Chg</th>' +
+    '<th' + tipAttr('trend') + '>Trend</th>' +
+    '<th class="num"' + tipAttr('score') + '>' + scoreLabel + '</th>' +
     '</tr></thead><tbody>';
 
   rows.forEach((r, i) => {
@@ -514,7 +652,7 @@ function updateStatus(status) {
     'status-mixed': 'Market: Mixed',
     'status-unknown': 'Market: Unavailable',
   };
-  pill.textContent = labels[cls];
+  pill.innerHTML = '<span class="dot"></span> ' + labels[cls];
   pill.className = 'status-pill ' + cls;
 }
 
