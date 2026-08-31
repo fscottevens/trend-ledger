@@ -43,12 +43,16 @@ jobs:
 
       - name: Run scan
         run: python sepa_scanner.py --json-out docs/data/latest.json
-        # If Yahoo Finance rate-limits or blocks this run (shared cloud IPs
-        # occasionally get throttled), this step can fail intermittently.
-        # continue-on-error keeps the workflow green so it doesn't send you
-        # failure-email noise for a transient network issue - the site
-        # simply keeps showing the last successful scan until the next run.
-        continue-on-error: true
+        # No continue-on-error here on purpose: an earlier version of this
+        # workflow suppressed failures to avoid noisy emails for the rare
+        # transient Yahoo Finance rate-limit hiccup, but that also meant
+        # a run that failed EVERY time would still show green with no
+        # visible signal anything was wrong - which is exactly how this
+        # site went stale for days without anyone noticing. Now with runs
+        # every 15 minutes, an occasional single failed run costs almost
+        # nothing (the next one fires 15 minutes later) - so it's a much
+        # better trade to let genuine failures show as a red X (and, by
+        # GitHub's default behavior, an email) than to hide them.
 
       - name: Commit updated data
         run: |

@@ -237,6 +237,12 @@
     text-transform: uppercase; margin: 0 0 10px; color: var(--teal);
   }
   .rail-card p { font-size: 13px; margin: 0 0 8px; line-height: 1.6; color: var(--text-dim); }
+  .discord-link {
+    display: inline-block; font-family: var(--font-label); font-weight: 600; font-size: 13px;
+    letter-spacing: 0.02em; color: var(--teal); text-decoration: none;
+    border-bottom: 1px solid var(--teal-dim); padding-bottom: 2px;
+  }
+  .discord-link:hover { border-bottom-color: var(--teal); }
   .glossary dt { font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; margin-top: 10px; color: var(--text); }
   .glossary dd { margin: 2px 0 0; font-size: 12.5px; color: var(--text-dim); }
 
@@ -330,6 +336,7 @@
         <a href="#how-it-works">How It Works</a>
         <a href="#momentum">Momentum Leaders</a>
         <a href="#value">Trend Quality &amp; Value</a>
+        <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       </nav>
     </div>
     <div class="masthead-meta">
@@ -381,6 +388,12 @@
     </main>
 
     <aside class="rail">
+      <div class="rail-card">
+        <h3>Community</h3>
+        <p>Discuss the screen, share research, and talk momentum vs. value with other traders on Discord.</p>
+        <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer" class="discord-link">Join the Discord &rarr;</a>
+      </div>
+
       <div class="rail-card">
         <h3>Trend Template</h3>
         <p>Each segment represents one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and <span data-tip="Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS Rating</span> &ge; 70. Open any stock's detail view for the exact criteria met.</p>
