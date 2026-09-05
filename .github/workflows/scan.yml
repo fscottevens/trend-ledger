@@ -1,23 +1,29 @@
 name: Scheduled scan
 
 on:
-  # Runs every 15 minutes, 13:00-21:00 UTC, Mon-Fri. That's roughly
-  # 9am-5pm ET, but UTC doesn't shift for US daylight saving, so during
-  # EDT (Mar-Nov) this covers ~9:00am-5:00pm ET, and during EST (Nov-Mar)
-  # it drifts an hour later to ~8:00am-4:00pm ET. Adjust the two hour
-  # numbers below if you want tighter alignment for your part of the year.
+  # ---------------------------------------------------------------------
+  # Runs hourly during US market hours, weekdays.
   #
-  # 15-minute cadence = up to 36 runs/day, ~180/week. Public repos get
-  # unlimited free GitHub Actions minutes, so this isn't a cost concern -
-  # the real constraint is runtime: a full ~900-ticker scan can itself
-  # take several minutes. The concurrency block below makes sure a new
-  # run never starts while a previous one is still pushing, so overlapping
-  # triggers queue safely rather than colliding - if a scan ever runs
-  # long, you'll just see slightly-less-than-15-minute-fresh data rather
-  # than anything breaking.
+  # WHY MINUTE :17 AND NOT :00 --- this is deliberate and matters.
+  # GitHub's own documentation states: "The schedule event can be delayed
+  # during periods of high loads of GitHub Actions workflow runs. High load
+  # times include THE START OF EVERY HOUR. If the load is sufficiently high
+  # enough, some queued jobs may be dropped. To decrease the chance of
+  # delay, schedule your workflow to run at a different time of the hour."
+  #
+  # Scheduling at :00 puts this job in the single most contended slot on
+  # GitHub's global scheduler, where public-repo jobs are deprioritised and
+  # can be delayed by hours or dropped outright. Running at :17 gives the
+  # same once-per-hour cadence with a materially better chance of actually
+  # firing on time. If you ever want to move it, pick any minute that is
+  # not 0, 15, 30 or 45 --- those are the crowded ones.
+  #
+  # 13:00-21:00 UTC is roughly 9am-5pm ET. UTC does not shift for US
+  # daylight saving, so this window drifts by an hour between EDT and EST.
+  # ---------------------------------------------------------------------
   schedule:
-    - cron: "*/15 13-21 * * 1-5"
-  # Lets you trigger a run manually from the Actions tab any time.
+    - cron: "17 13-21 * * 1-5"
+  # Lets you trigger a run manually from the Actions tab at any time.
   workflow_dispatch: {}
 
 permissions:
@@ -37,28 +43,29 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
       - name: Run scan
         run: python sepa_scanner.py --json-out docs/data/latest.json
-        # No continue-on-error here on purpose: an earlier version of this
-        # workflow suppressed failures to avoid noisy emails for the rare
-        # transient Yahoo Finance rate-limit hiccup, but that also meant
-        # a run that failed EVERY time would still show green with no
-        # visible signal anything was wrong - which is exactly how this
-        # site went stale for days without anyone noticing. Now with runs
-        # every 15 minutes, an occasional single failed run costs almost
-        # nothing (the next one fires 15 minutes later) - so it's a much
-        # better trade to let genuine failures show as a red X (and, by
-        # GitHub's default behavior, an email) than to hide them.
+        # No continue-on-error here, on purpose. An earlier version of this
+        # workflow suppressed failures to avoid email noise from occasional
+        # Yahoo Finance rate limiting --- but that also meant a scan failing
+        # every single time still reported success, so the site could go
+        # stale for days with nothing visibly wrong. A genuine failure
+        # should be a red X you can see.
 
       - name: Commit updated data
         run: |
-          git config user.name "trend-ledger-bot"
+          git config user.name "stonks-run-bot"
           git config user.email "actions@users.noreply.github.com"
           git add docs/data/latest.json
           git diff --cached --quiet && echo "No changes to commit" && exit 0
           git commit -m "Scheduled scan update $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # Rebase before pushing: if a manual run and a scheduled run finish
+          # close together, or you pushed site edits mid-scan, a plain push
+          # would be rejected and the scan's data would be silently lost.
+          git pull --rebase --autostash origin main
           git push

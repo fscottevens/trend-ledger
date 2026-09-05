@@ -3,339 +3,78 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Stonks Run -- Systematic Momentum &amp; Trend Screen</title>
-<meta name="description" content="Stonks Run screens the S&P 500 and S&P 400 against Minervini's Trend Template, O'Neil's CANSLIM, and momentum criteria from Zanger and Qullamaggie, refreshed automatically during market hours.">
+<title>Stonks Run — Systematic Momentum &amp; Trend Stock Screen</title>
+<meta name="description" content="An automated educational stock screen ranking the S&amp;P 500 and S&amp;P 400 against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
+<link rel="canonical" href="https://stonks.run/">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#05070A">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Stonks Run">
+<meta property="og:title" content="Stonks Run — Systematic Momentum &amp; Trend Stock Screen">
+<meta property="og:description" content="An automated educational stock screen ranking the S&amp;P 500 and S&amp;P 400 against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
+<meta property="og:url" content="https://stonks.run/">
+<meta property="og:image" content="https://stonks.run/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Stonks Run — Systematic Momentum &amp; Trend Stock Screen">
+<meta name="twitter:description" content="An automated educational stock screen ranking the S&amp;P 500 and S&amp;P 400 against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
+<meta name="twitter:image" content="https://stonks.run/social-card.png">
+
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
      crossorigin="anonymous"></script>
-<style>
-  :root {
-    --bg: #05070A;
-    --bg-panel: #0B121C;
-    --bg-inset: #000000;
-    --hairline: #1E2A38;
-    --hairline-bright: #2E4256;
-
-    --teal: #2FD8CB;
-    --teal-dim: #1B7A72;
-    --amber: #F2A65A;
-    --amber-dim: #8C5E2E;
-    --magenta: #E8497A;
-
-    --text: #E7EEF2;
-    --text-dim: #8CA0AE;
-    --text-faint: #566A78;
-
-    --gain: #33D9A8;
-    --loss: #E8664F;
-
-    --font-display: 'Orbitron', sans-serif;
-    --font-label: 'Rajdhani', sans-serif;
-    --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
-    --font-body: 'Inter', -apple-system, sans-serif;
-  }
-
-  * { box-sizing: border-box; }
-  body {
-    margin: 0; padding: 0 0 60px;
-    background:
-      repeating-linear-gradient(180deg, rgba(255,255,255,0.012) 0 2px, transparent 2px 5px),
-      radial-gradient(ellipse 900px 500px at 50% -10%, rgba(47,216,203,0.09), transparent 60%),
-      var(--bg);
-    color: var(--text);
-    font-family: var(--font-body);
-    font-size: 15px;
-    line-height: 1.55;
-  }
-  a { color: var(--teal); }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
-
-  /* ---------- tooltip system: hover OR keyboard focus ---------- */
-  [data-tip] { cursor: help; position: relative; border-bottom: 1px dotted var(--text-faint); }
-  [data-tip]:hover, [data-tip]:focus { outline: none; }
-  [data-tip]:hover::after, [data-tip]:focus::after {
-    content: attr(data-tip);
-    position: absolute; bottom: calc(100% + 9px); left: 50%; transform: translateX(-50%);
-    background: #000; border: 1px solid var(--teal); color: var(--text);
-    padding: 9px 11px; font-family: var(--font-body); font-size: 12.5px; font-weight: 400;
-    line-height: 1.45; white-space: normal; width: max-content; max-width: 250px;
-    z-index: 80; box-shadow: 0 6px 18px rgba(0,0,0,0.55); text-align: left;
-  }
-  [data-tip]:hover::before, [data-tip]:focus::before {
-    content: ""; position: absolute; bottom: calc(100% + 4px); left: 50%; transform: translateX(-50%);
-    border: 5px solid transparent; border-top-color: var(--teal); z-index: 80;
-  }
-  th[data-tip] { text-decoration: none; }
-  @media (max-width: 560px) {
-    [data-tip]:hover::after, [data-tip]:focus::after { max-width: 200px; font-size: 12px; }
-  }
-
-  /* ---------- HUD corner-bracket panel utility ---------- */
-  .bracket { position: relative; }
-  .bracket::before, .bracket::after {
-    content: ""; position: absolute; width: 10px; height: 10px;
-    border-color: var(--teal); border-style: solid; opacity: 0.7;
-  }
-  .bracket::before { top: -1px; left: -1px; border-width: 1.5px 0 0 1.5px; }
-  .bracket::after { top: -1px; right: -1px; border-width: 1.5px 1.5px 0 0; }
-
-  /* ---------- masthead ---------- */
-  header.masthead {
-    border-bottom: 1px solid var(--hairline);
-    background: linear-gradient(180deg, rgba(47,216,203,0.05), transparent);
-    padding: 26px 0 18px;
-  }
-  .masthead-inner { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
-  .wordmark {
-    font-family: var(--font-display); font-weight: 700; font-size: 28px;
-    letter-spacing: 0.06em; color: var(--text); margin: 0; text-transform: uppercase;
-    text-shadow: 0 0 18px rgba(47,216,203,0.35);
-  }
-  .wordmark span { color: var(--teal); }
-  .tagline {
-    font-family: var(--font-label); font-weight: 600; font-size: 12.5px; letter-spacing: 0.06em;
-    text-transform: uppercase; color: var(--text-dim); margin-top: 6px;
-  }
-  .masthead-meta { text-align: right; font-family: var(--font-mono); font-size: 12px; color: var(--text-dim); }
-  .status-pill {
-    display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px;
-    border-radius: 2px; font-family: var(--font-label); font-weight: 600;
-    font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; border: 1px solid currentColor;
-  }
-  .status-pill .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
-  .status-up .dot { animation: pulse 2s ease-in-out infinite; }
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
-  @media (prefers-reduced-motion: reduce) { .status-up .dot { animation: none; } }
-  .status-up { color: var(--gain); }
-  .status-mixed { color: var(--amber); }
-  .status-down { color: var(--loss); }
-  .status-unknown { color: var(--text-faint); }
-  @media (max-width: 640px) { .masthead-inner { flex-direction: column; } .masthead-meta { text-align: left; } }
-
-  /* ---------- in-page nav ---------- */
-  .quicknav {
-    display: flex; gap: 18px; flex-wrap: wrap; margin-top: 14px;
-    font-family: var(--font-label); font-size: 12.5px; font-weight: 600;
-    letter-spacing: 0.04em; text-transform: uppercase;
-  }
-  .quicknav a { color: var(--text-dim); text-decoration: none; }
-  .quicknav a:hover { color: var(--teal); }
-
-  /* ---------- intro / how-this-works ---------- */
-  .intro { margin: 26px 0 30px; }
-  .intro h2 {
-    font-family: var(--font-display); font-weight: 700; font-size: 15px; letter-spacing: 0.06em;
-    text-transform: uppercase; color: var(--text); margin: 0 0 12px;
-  }
-  .intro p { font-size: 14px; color: var(--text-dim); line-height: 1.65; margin: 0 0 12px; max-width: 780px; }
-  .intro p:last-child { margin-bottom: 0; }
-  .intro strong { color: var(--text); font-weight: 600; }
-
-  /* ---------- disclosure notice ---------- */
-  .notice {
-    border: 1px solid var(--hairline-bright); border-left: 3px solid var(--amber);
-    background: var(--bg-panel); padding: 14px 18px; margin: 22px 0;
-    font-size: 13.5px; color: var(--text-dim); line-height: 1.6;
-  }
-  .notice strong { color: var(--text); font-family: var(--font-label); font-weight: 600; letter-spacing: 0.02em; }
-
-  /* ---------- market ticker strip ---------- */
-  .ticker-strip {
-    background: var(--bg-inset); border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline);
-    font-family: var(--font-mono); font-size: 13px; color: var(--text-dim);
-    padding: 8px 0; overflow: hidden; white-space: nowrap; margin-bottom: 22px;
-  }
-  .ticker-strip .tt-track { display: inline-block; padding-left: 100%; animation: tt-scroll 36s linear infinite; }
-  @keyframes tt-scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
-  @media (prefers-reduced-motion: reduce) { .ticker-strip .tt-track { animation: none; padding-left: 20px; } }
-
-  /* ---------- ad slots: subdued, AdSense-friendly ---------- */
-  .ad-slot {
-    border: 1px solid var(--hairline); border-radius: 2px;
-    background: rgba(255,255,255,0.015);
-    display: flex; align-items: center; justify-content: center; flex-direction: column;
-    font-family: var(--font-label); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
-    color: var(--text-faint); margin: 0 auto;
-  }
-  .ad-slot span.dim { font-family: var(--font-mono); font-size: 10px; margin-top: 5px; letter-spacing: 0; text-transform: none; }
-  .ad-leaderboard { width: 100%; max-width: 728px; height: 90px; margin: 0 auto 22px; }
-  .ad-inline { width: 100%; height: 90px; margin: 26px 0; }
-  .ad-rect { width: 100%; max-width: 300px; height: 250px; margin: 0 auto; }
-
-  /* ---------- layout ---------- */
-  .layout { display: grid; grid-template-columns: 1fr 300px; gap: 28px; padding-bottom: 50px; align-items: start; }
-  @media (max-width: 880px) { .layout { grid-template-columns: 1fr; } }
-  aside.rail { display: flex; flex-direction: column; gap: 18px; }
-  @media (max-width: 880px) { aside.rail { flex-direction: row; flex-wrap: wrap; } aside.rail > * { flex: 1 1 260px; } }
-
-  /* ---------- scan summary readout ---------- */
-  #scan-summary {
-    background: var(--bg-inset); border: 1px solid var(--hairline-bright);
-    color: var(--text); font-family: var(--font-mono); font-size: 13px; line-height: 1.9;
-    padding: 12px 16px; margin-bottom: 8px;
-  }
-  #scan-summary strong { color: var(--teal); }
-  #scan-summary .label { color: var(--text-faint); }
-
-  /* ---------- section headers ---------- */
-  .section-head { margin: 34px 0 4px; }
-  .section-eyebrow {
-    font-family: var(--font-label); font-size: 12px; font-weight: 600; letter-spacing: 0.14em;
-    color: var(--teal); text-transform: uppercase; margin: 0 0 4px;
-  }
-  .section-title {
-    font-family: var(--font-display); font-weight: 700; font-size: 19px; margin: 0;
-    letter-spacing: 0.02em; text-transform: uppercase;
-  }
-  .section-sub { font-size: 13px; color: var(--text-dim); margin: 8px 0 0; max-width: 640px; }
-
-  /* ---------- data table ---------- */
-  .term-screen {
-    background: var(--bg-inset); border: 1px solid var(--hairline-bright);
-    padding: 4px; margin-top: 14px; overflow-x: auto;
-  }
-  table.ledger { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: 13.5px; color: var(--text); min-width: 440px; }
-  table.ledger thead th {
-    text-align: left; font-family: var(--font-label); font-weight: 600; font-size: 11.5px; text-transform: uppercase;
-    letter-spacing: 0.05em; color: var(--text-dim); border-bottom: 1px solid var(--hairline-bright);
-    padding: 10px 10px 8px;
-  }
-  table.ledger thead th[data-tip] { border-bottom-color: var(--hairline-bright); }
-  table.ledger tbody tr { border-bottom: 1px solid var(--hairline); cursor: pointer; }
-  table.ledger tbody tr:hover, table.ledger tbody tr:focus-visible { background: rgba(47,216,203,0.06); }
-  table.ledger tbody tr[data-idx="0"] { background: rgba(47,216,203,0.045); }
-  table.ledger td { padding: 11px 10px; }
-  td.num, th.num { text-align: right; }
-  td.rank { color: var(--text-faint); width: 24px; }
-  td.ticker { font-weight: 600; color: var(--text); letter-spacing: 0.02em; }
-  .chg-pos { color: var(--gain); }
-  .chg-neg { color: var(--loss); }
-  .qual-flag { color: var(--teal); font-size: 11px; margin-left: 4px; }
-  @media (max-width: 600px) {
-    table.ledger { font-size: 12.5px; min-width: 0; }
-    table.ledger td { padding: 9px 6px; }
-    table.ledger thead th { font-size: 10px; padding: 8px 6px 6px; }
-  }
-
-  /* Trend Template indicator -> segmented bar */
-  .trend-bar { display: inline-flex; gap: 2px; vertical-align: middle; }
-  .seg { width: 8px; height: 10px; background: var(--hairline-bright); }
-  .seg.on { background: var(--teal); }
-
-  .state-msg {
-    padding: 34px 16px; text-align: center; color: var(--text-dim);
-    font-family: var(--font-mono); font-size: 13.5px;
-  }
-  .state-msg strong { display: block; color: var(--text); font-family: var(--font-label); font-size: 15px; margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase; }
-
-  /* ---------- rail cards ---------- */
-  .rail-card { background: var(--bg-panel); border: 1px solid var(--hairline); padding: 16px 18px; }
-  .rail-card h3 {
-    font-family: var(--font-label); font-size: 12px; font-weight: 600; letter-spacing: 0.1em;
-    text-transform: uppercase; margin: 0 0 10px; color: var(--teal);
-  }
-  .rail-card p { font-size: 13px; margin: 0 0 8px; line-height: 1.6; color: var(--text-dim); }
-  .discord-link {
-    display: inline-block; font-family: var(--font-label); font-weight: 600; font-size: 13px;
-    letter-spacing: 0.02em; color: var(--teal); text-decoration: none;
-    border-bottom: 1px solid var(--teal-dim); padding-bottom: 2px;
-  }
-  .discord-link:hover { border-bottom-color: var(--teal); }
-  .glossary dt { font-family: var(--font-mono); font-weight: 600; font-size: 12.5px; margin-top: 10px; color: var(--text); }
-  .glossary dd { margin: 2px 0 0; font-size: 12.5px; color: var(--text-dim); }
-
-  footer {
-    border-top: 1px solid var(--hairline); padding: 22px 0 10px;
-    font-size: 12px; color: var(--text-faint); line-height: 1.7;
-  }
-
-  /* ---------- drill-down detail modal ---------- */
-  .modal-overlay {
-    position: fixed; inset: 0; background: rgba(2,3,6,0.85);
-    display: flex; align-items: center; justify-content: center;
-    padding: 16px; z-index: 200;
-  }
-  .modal-overlay[hidden] { display: none; }
-  .modal-box {
-    background: var(--bg-panel); border: 1px solid var(--teal);
-    max-width: 600px; width: 100%; max-height: 88vh; overflow-y: auto;
-    padding: 22px; position: relative; box-shadow: 0 0 40px rgba(47,216,203,0.14);
-  }
-  @media (max-width: 560px) { .modal-box { max-height: 92vh; padding: 18px 15px; } }
-  .modal-close {
-    position: absolute; top: 12px; right: 12px; width: 30px; height: 30px;
-    background: transparent; color: var(--text-dim); border: 1px solid var(--hairline-bright);
-    font-family: var(--font-mono); font-size: 14px; cursor: pointer; line-height: 1;
-  }
-  .modal-close:hover { color: var(--teal); border-color: var(--teal); }
-  .modal-ticker { font-family: var(--font-display); font-weight: 700; font-size: 24px; letter-spacing: 0.03em; margin: 0 0 6px; padding-right: 40px; }
-  .modal-price-row { font-family: var(--font-mono); font-size: 16px; margin-bottom: 4px; }
-  .modal-score-row { font-family: var(--font-mono); font-size: 12.5px; color: var(--text-dim); margin-bottom: 6px; }
-  .modal-group-title {
-    font-family: var(--font-label); font-size: 13px; font-weight: 700; color: var(--text);
-    text-transform: uppercase; letter-spacing: 0.06em; margin: 22px 0 4px;
-    padding-bottom: 6px; border-bottom: 1px solid var(--teal);
-  }
-  .modal-group-title:first-of-type { margin-top: 14px; }
-  .modal-group-sub { font-size: 12px; color: var(--text-faint); margin: 0 0 10px; }
-  .modal-subsection-title {
-    font-family: var(--font-label); font-size: 11px; font-weight: 600; color: var(--text-dim);
-    text-transform: uppercase; letter-spacing: 0.06em; margin: 12px 0 6px;
-  }
-  .modal-subsection-title:first-of-type { margin-top: 2px; }
-
-  /* 52-week range visual */
-  .range-wrap { margin: 6px 0 14px; }
-  .range-track { position: relative; height: 6px; background: var(--hairline-bright); border-radius: 3px; }
-  .range-fill { position: absolute; left: 0; top: 0; bottom: 0; background: var(--teal-dim); border-radius: 3px; }
-  .range-marker {
-    position: absolute; top: 50%; width: 10px; height: 10px; border-radius: 50%;
-    background: var(--teal); border: 2px solid var(--bg-panel); transform: translate(-50%, -50%);
-    box-shadow: 0 0 6px var(--teal);
-  }
-  .range-labels { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); margin-top: 6px; }
-  .range-labels strong { color: var(--text-dim); font-weight: 500; }
-
-  .metric-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
-    background: var(--hairline); border: 1px solid var(--hairline);
-  }
-  @media (max-width: 480px) { .metric-grid { grid-template-columns: repeat(2, 1fr); } }
-  .metric-cell { background: var(--bg-inset); padding: 8px 10px; }
-  .metric-cell .m-label { font-family: var(--font-label); font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-faint); }
-  .metric-cell .m-value { font-family: var(--font-mono); font-size: 13.5px; color: var(--text); margin-top: 2px; }
-
-  .checklist { list-style: none; margin: 0; padding: 0; }
-  .checklist li { padding: 6px 0; font-size: 13.5px; display: flex; gap: 9px; align-items: flex-start; border-bottom: 1px solid var(--hairline); }
-  .checklist li:last-child { border-bottom: none; }
-  .check-yes { color: var(--gain); font-family: var(--font-mono); }
-  .check-no { color: var(--text-faint); font-family: var(--font-mono); }
-  .checklist li.unmet { color: var(--text-faint); }
-
-  .signal-list { list-style: none; margin: 0; padding: 0; }
-  .signal-list li { padding: 5px 0 5px 16px; font-size: 13px; position: relative; color: var(--text); }
-  .signal-list li::before { content: "\2014"; position: absolute; left: 0; color: var(--teal); }
-  .signal-empty { font-size: 12.5px; color: var(--text-faint); font-style: italic; padding: 4px 0; }
-  .signal-block + .signal-block { margin-top: 12px; }
-  .signal-block-head { font-family: var(--font-mono); font-size: 12px; font-weight: 600; color: var(--text-dim); margin-bottom: 4px; }
-
-  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
-  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
-</style>
 </head>
 <body>
-
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://stonks.run/#website",
+      "url": "https://stonks.run/",
+      "name": "Stonks Run",
+      "description": "An automated educational stock screen ranking the S&P 500 and S&P 400 against published trading frameworks.",
+      "publisher": {"@id": "https://stonks.run/#org"},
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://stonks.run/#org",
+      "name": "Stonks Run",
+      "url": "https://stonks.run/",
+      "email": "stonksrun@gmail.com",
+      "description": "Publisher of an automated, fully documented educational stock screen."
+    },
+    {
+      "@type": "WebApplication",
+      "name": "Stonks Run Stock Screen",
+      "url": "https://stonks.run/",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+      "isAccessibleForFree": true,
+      "publisher": {"@id": "https://stonks.run/#org"}
+    }
+  ]
+}
+</script>
 <header class="masthead">
   <div class="wrap masthead-inner">
     <div>
-      <p class="wordmark">Stonks<span> Run</span></p>
+      <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
       <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
-      <nav class="quicknav">
-        <a href="#how-it-works">How It Works</a>
-        <a href="#momentum">Momentum Leaders</a>
-        <a href="#value">Trend Quality &amp; Value</a>
+      <nav class="quicknav" aria-label="Main navigation">
+        <a href="index.html" class="active" aria-current="page">Screen</a>
+        <a href="learn.html">Learn</a>
+        <a href="methodology.html">Methodology</a>
+        <a href="about.html">About</a>
         <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       </nav>
     </div>
@@ -347,78 +86,108 @@
 </header>
 
 <div class="wrap">
+<main id="main-content">
   <section class="intro" id="how-it-works">
     <h2>How This Works</h2>
-    <p>Every S&amp;P 500 and S&amp;P 400 stock is re-scanned automatically during market hours against several well-known, published trading frameworks &mdash; not a single black-box signal, but a blend of <span data-tip="Mark Minervini's 8-point technical checklist for a confirmed uptrend, from Trade Like a Stock Market Wizard." tabindex="0">technical trend criteria</span>, growth-stock fundamentals, and momentum triggers drawn from public sources.</p>
-    <p>The results split into two philosophically different views. <strong>Momentum Leaders</strong> ranks names using live intraday price and volume action &mdash; the breakout, volume-surge, and relative-strength triggers day traders watch for right now. <strong>Trend Quality &amp; Value</strong> re-ranks the same qualifying pool using fundamentals and traditional valuation metrics instead, favoring names with earnings growth, reasonable debt, and institutional support alongside a healthy technical trend.</p>
-    <p>Neither list is a signal to buy or sell. Select any stock to see exactly why it ranked where it did &mdash; every moving average, every return period, every criterion met or missed &mdash; and use that as a starting point for your own research, not the end of it.</p>
+    <p>Every S&amp;P 500 and S&amp;P 400 stock is re-scanned automatically during market hours and ranked against several
+    published trading frameworks &mdash; Minervini's Trend Template, O'Neil's CANSLIM, and momentum criteria associated
+    with Dan Zanger and Qullamaggie. Nothing is hand-picked: if a name appears here, it is because it scored here.</p>
+    <p>The results split into two philosophically different views. <strong>Momentum Leaders</strong> ranks using live
+    intraday price and volume action &mdash; the breakout and relative-strength signals short-term traders watch.
+    <strong>Trend Quality &amp; Value</strong> re-ranks the same pool using fundamentals and traditional valuation instead.
+    The difference between them is explained in <a href="momentum-vs-value.html">Momentum vs. Value</a>.</p>
+    <p>Neither list is a signal to buy or sell anything. Select any stock to see exactly why it ranked where it did &mdash;
+    every moving average, return period, and criterion met or missed. New here? Start with
+    <a href="reading-the-screen.html">How to Read the Screen</a>, which covers what this data does <em>not</em> tell you.</p>
   </section>
 
   <div class="notice">
-    <strong>Methodology &amp; Disclosure.</strong> This screen ranks securities automatically against public-domain approximations of published trading frameworks. It is provided for informational and educational purposes only and does not constitute investment advice or a recommendation to buy or sell any security. Prices may be delayed. Independently verify all data before making any trading decision.
+    <strong>Educational tool &mdash; not investment advice.</strong> These rankings are the mechanical output of automated
+    filters applied to delayed public market data. They are not recommendations, and they do not account for your financial
+    situation or risk tolerance. Market data is delayed roughly 15&ndash;20 minutes and may contain errors. Read the
+    <a href="methodology.html">methodology and its limitations</a> and our <a href="terms.html">full disclaimer</a> before
+    relying on anything here.
   </div>
+
 
   <div class="ticker-strip">
     <div class="tt-track" id="ticker-track">LOADING FEED&hellip;</div>
   </div>
 
   <div class="layout">
-    <main>
+    <div class="col-main">
 
+      <div id="freshness-banner"></div>
       <div id="scan-summary"></div>
 
       <div class="section-head" id="momentum">
         <p class="section-eyebrow">01</p>
         <h2 class="section-title">Momentum Leaders</h2>
-        <p class="section-sub">Ranked first by <span data-tip="How many of Minervini's 8 Trend Template criteria this stock currently meets, out of 8." tabindex="0">Trend Template</span> compliance, then by <span data-tip="O'Neil's growth framework: Current & Annual earnings growth, New highs, Supply/demand, Leadership, Institutional sponsorship, Market direction." tabindex="0">CANSLIM</span>, breakout, and momentum triggers from live intraday data. Select any row for the full breakdown.</p>
+        <p class="section-sub">Ranked first by <a href="trend-template.html">Trend Template</a> compliance, then by
+        <a href="canslim.html">CANSLIM</a>, breakout, and momentum triggers from live intraday data. Select any row for the
+        full breakdown.</p>
       </div>
       <div class="term-screen"><div id="section1-mount"></div></div>
 
       <div class="section-head" id="value">
         <p class="section-eyebrow">02</p>
         <h2 class="section-title">Trend Quality &amp; Value</h2>
-        <p class="section-sub">Same Trend Template priority, tie-broken by CANSLIM fundamentals and traditional value metrics instead of intraday momentum.</p>
+        <p class="section-sub">Same Trend Template priority, tie-broken by CANSLIM fundamentals and traditional value
+        metrics instead of intraday momentum. <a href="momentum-vs-value.html">Why two lists?</a></p>
       </div>
       <div class="term-screen"><div id="section2-mount"></div></div>
 
-      <div class="ad-slot ad-inline" aria-label="Advertisement placeholder">
+      <div class="ad-slot ad-inline" aria-label="Advertisement">
         ADVERTISEMENT <span class="dim">320&times;100</span>
       </div>
 
-    </main>
+    </div>
 
     <aside class="rail">
       <div class="rail-card">
+        <h3>New Here?</h3>
+        <p>These guides explain what the rankings actually mean and where the frameworks break down:</p>
+        <ul>
+          <li><a href="reading-the-screen.html">How to read the screen</a></li>
+          <li><a href="trend-template.html">The Trend Template, criterion by criterion</a></li>
+          <li><a href="canslim.html">What CANSLIM measures</a></li>
+          <li><a href="momentum-vs-value.html">Momentum vs. value investing</a></li>
+          <li><a href="glossary.html">Glossary of every term</a></li>
+        </ul>
+      </div>
+
+      <div class="rail-card">
         <h3>Community</h3>
-        <p>Discuss the screen, share research, and talk momentum vs. value with other traders on Discord.</p>
+        <p>Discuss the screen, the frameworks, and markets generally with other traders on Discord.</p>
         <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer" class="discord-link">Join the Discord &rarr;</a>
       </div>
 
       <div class="rail-card">
         <h3>Trend Template</h3>
-        <p>Each segment represents one of Mark Minervini's 8 criteria from <em>Trade Like a Stock Market Wizard</em>: price above rising 150/200-day averages, 50-day above both, price 30%+ off its 52-week low and within 25% of its high, and <span data-tip="Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS Rating</span> &ge; 70. Open any stock's detail view for the exact criteria met.</p>
+        <p>Each segment is one of Minervini's 8 criteria: price above rising 150/200-day averages, 50-day above both, price
+        30%+ off its 52-week low and within 25% of its high, and
+        <span data-tip="Ranks a stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS Rating</span>
+        &ge; 70. <a href="trend-template.html">Full explanation &rarr;</a></p>
       </div>
 
       <div class="rail-card glossary">
-        <h3>Reference</h3>
+        <h3>Quick Reference</h3>
         <dl>
-          <dt data-tip="Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS</dt><dd>Relative Strength Rating, 1&ndash;99, ranked against this scan's universe.</dd>
-          <dt data-tip="O'Neil's growth framework: Current & Annual earnings growth, New highs, Supply/demand, Leadership, Institutional sponsorship, Market direction." tabindex="0">CANSLIM</dt><dd>O'Neil's per-stock factors: earnings growth, new highs, demand, leadership, institutional ownership.</dd>
-          <dt data-tip="Zanger: buying stocks breaking to new highs on unusually heavy volume. Qullamaggie: strong relative strength, tight consolidation, and breakouts or gap-up 'episodic pivots.'" tabindex="0">Zanger / Qullamaggie</dt><dd>Breakout, volume, and momentum triggers from today's live price action.</dd>
-          <dt data-tip="Whether this stock fully clears the Trend Template gate. Stocks without it are the closest available matches, not confirmed setups." tabindex="0">Qualifies</dt><dd>Whether a stock fully clears the Trend Template gate. Names shown without it are the closest available candidates.</dd>
+          <dt data-tip="Ranks a stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS</dt><dd>Relative Strength Rating, 1&ndash;99, ranked within this scan's universe.</dd>
+          <dt data-tip="O'Neil's growth framework: Current & Annual earnings growth, New highs, Supply/demand, Leadership, Institutional sponsorship, Market direction." tabindex="0">CANSLIM</dt><dd>Earnings growth, new highs, demand, leadership, institutional ownership.</dd>
+          <dt data-tip="Zanger: breakouts to new highs on heavy volume. Qullamaggie: strong relative strength, tight consolidation, breakouts and gap-up episodic pivots." tabindex="0">Zanger / Qullamaggie</dt><dd>Breakout, volume, and momentum triggers from today's action.</dd>
+          <dt data-tip="Whether a stock fully clears the Trend Template gate. Names without it are the closest available candidates, not confirmed setups." tabindex="0">Qualifies</dt><dd>Whether a stock fully clears the Trend Template gate.</dd>
         </dl>
+        <p style="margin-top:12px"><a href="glossary.html">Full glossary &rarr;</a></p>
       </div>
 
-      <div class="ad-slot ad-rect" aria-label="Advertisement placeholder">
+      <div class="ad-slot ad-rect" aria-label="Advertisement">
         ADVERTISEMENT <span class="dim">300&times;250</span>
       </div>
     </aside>
   </div>
 
-  <footer>
-    <span id="footer-counter">Stocks scanned: &mdash;</span> &middot; Stonks Run refreshes automatically during market hours.
-    Not investment advice. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations and are not endorsed by their namesakes.
-  </footer>
+</main>
 </div>
 
 <div class="modal-overlay" id="detail-modal" hidden>
@@ -435,26 +204,26 @@ const REFRESH_MS = 5 * 60 * 1000; // poll for fresh data every 5 minutes
 const TIP = {
   rs: "Ranks this stock's price performance against every other stock in the scan, 1 (worst) to 99 (best).",
   trend: "How many of Minervini's 8 Trend Template criteria this stock currently meets, out of 8.",
-  score: "Composite ranking score, weighted heavily toward Trend Template compliance, with other frameworks breaking ties.",
+  score: "Composite ranking score. Trend Template compliance is the primary sort; this breaks ties within the same count.",
   qualifies: "Whether this stock fully clears the Trend Template gate. Unqualified names are the closest available matches.",
   chg: "Price change since the prior session's close, as of this scan.",
-  sma50: "Average closing price over the trailing 50 trading days.",
-  sma150: "Average closing price over the trailing 150 trading days.",
-  sma200: "Average closing price over the trailing 200 trading days.",
+  sma50: "Average closing price over the trailing 50 trading days (about 2.5 months).",
+  sma150: "Average closing price over the trailing 150 trading days (about 7 months).",
+  sma200: "Average closing price over the trailing 200 trading days (about 10 months).",
   adr: "Average daily high-to-low range over the past 20 sessions, as a % of price. Higher means more volatile.",
   ret3m: "Total price return over the trailing 3 months.",
   ret6m: "Total price return over the trailing 6 months.",
   ret12m: "Total price return over the trailing 12 months.",
-  avgvol: "Average daily trading volume (shares) over the past 50 sessions.",
-  avgdollarvol: "Average daily dollar volume over the past 20 sessions -- a common liquidity filter.",
-  breakout50: "Highest price over the prior 50 sessions. A move above this level on volume is a classic breakout.",
-  pe: "Price-to-earnings ratio using trailing twelve months of earnings.",
-  peg: "P/E divided by expected earnings growth. Near or below 1 is often read as reasonably priced relative to growth.",
+  avgvol: "Average daily share volume over the past 50 sessions.",
+  avgdollarvol: "Average daily dollar volume over the past 20 sessions — a common liquidity filter.",
+  breakout50: "Highest price over the prior 50 sessions. A move above this on volume is a classic breakout level.",
+  pe: "Share price divided by trailing twelve months earnings per share.",
+  peg: "P/E divided by expected earnings growth. Near or below 1 is conventionally read as reasonable relative to growth.",
   margin: "Net income as a percentage of revenue.",
-  debtEquity: "Total debt relative to shareholder equity -- a measure of financial leverage.",
+  debtEquity: "Total debt relative to shareholder equity — a leverage measure.",
   epsQtr: "Year-over-year quarterly earnings-per-share growth.",
   epsAnn: "Year-over-year annual earnings-per-share growth.",
-  inst: "Percentage of shares held by institutions. CANSLIM treats rising institutional ownership as a demand signal.",
+  inst: "Percentage of shares held by institutions. CANSLIM treats rising sponsorship as a demand signal.",
 };
 function tipAttr(key) {
   const t = TIP[key];
@@ -504,10 +273,77 @@ function rangeBarHtml(price, low, high) {
     '<div class="range-track"><div class="range-fill" style="width:' + pct.toFixed(1) + '%"></div>' +
     '<div class="range-marker" style="left:' + pct.toFixed(1) + '%"></div></div>' +
     '<div class="range-labels"><span>52W Low <strong>' + fmtMoney(low) + '</strong></span>' +
+    '<span>' + pct.toFixed(0) + '% of range</span>' +
     '<span>52W High <strong>' + fmtMoney(high) + '</strong></span></div></div>';
 }
 
-/* ---------- drill-down detail modal ---------- */
+/* ---------- plain-language interpretation of the numbers ----------
+   Deliberately descriptive, never prescriptive: it states what the data
+   shows and what the framework says about that condition. It never tells
+   anyone to buy, sell, or hold anything. */
+function buildReadout(r) {
+  const m = r.metrics || {};
+  const lines = [];
+
+  // Trend structure
+  if (r.trend_n >= 7) {
+    lines.push('<strong>Trend structure:</strong> meets ' + r.trend_n + ' of 8 Trend Template criteria — the moving averages are in the stacked arrangement the framework associates with a confirmed uptrend.');
+  } else if (r.trend_n >= 5) {
+    lines.push('<strong>Trend structure:</strong> meets ' + r.trend_n + ' of 8. Partially aligned — check the checklist below for which specific conditions are unmet, since that matters more than the count.');
+  } else {
+    lines.push('<strong>Trend structure:</strong> meets only ' + r.trend_n + ' of 8. The framework would not consider this a confirmed uptrend.');
+  }
+
+  // Extension from 50-day
+  if (m.sma50 != null && r.price != null) {
+    const ext = ((r.price / m.sma50) - 1) * 100;
+    if (ext > 25) {
+      lines.push('<strong>Extension:</strong> trading ' + ext.toFixed(0) + '% above its 50-day average. Minervini\'s writing treats stocks this far extended as carrying elevated risk of a sharp pullback toward the average.');
+    } else if (ext < -3) {
+      lines.push('<strong>Extension:</strong> currently ' + Math.abs(ext).toFixed(1) + '% <em>below</em> its 50-day average — it is in a short-term pullback rather than pushing higher.');
+    } else {
+      lines.push('<strong>Extension:</strong> ' + (ext >= 0 ? ext.toFixed(1) + '% above' : Math.abs(ext).toFixed(1) + '% below') + ' its 50-day average — not unusually extended in either direction.');
+    }
+  }
+
+  // Position in 52-week range
+  if (m.wk52_high != null && m.wk52_low != null && r.price != null && m.wk52_high > m.wk52_low) {
+    const pos = ((r.price - m.wk52_low) / (m.wk52_high - m.wk52_low)) * 100;
+    if (pos >= 90) {
+      lines.push('<strong>Range position:</strong> near the top of its 52-week range. Little to no overhead supply — few holders are underwater.');
+    } else if (pos <= 40) {
+      lines.push('<strong>Range position:</strong> in the lower portion of its 52-week range, meaning meaningful overhead supply sits above the current price.');
+    } else {
+      lines.push('<strong>Range position:</strong> mid-range within its 52-week span.');
+    }
+  }
+
+  // Momentum shape
+  if (m.ret_3m_pct != null && m.ret_12m_pct != null) {
+    if (m.ret_12m_pct > 0 && m.ret_3m_pct > m.ret_12m_pct * 0.7) {
+      lines.push('<strong>Momentum shape:</strong> most of the trailing 12-month gain came in the last 3 months — a recent acceleration rather than a steady climb.');
+    } else if (m.ret_3m_pct < 0 && m.ret_12m_pct > 0) {
+      lines.push('<strong>Momentum shape:</strong> positive over 12 months but negative over the last 3 — decelerating.');
+    }
+  }
+
+  // Volatility context for sizing
+  if (m.adr20_pct != null) {
+    if (m.adr20_pct >= 5) {
+      lines.push('<strong>Volatility:</strong> average daily range of ' + m.adr20_pct.toFixed(1) + '% is high — position sizing and stop distance would need to account for much larger daily swings than a typical large-cap.');
+    } else if (m.adr20_pct <= 1.5) {
+      lines.push('<strong>Volatility:</strong> average daily range of ' + m.adr20_pct.toFixed(1) + '% is low relative to typical momentum candidates.');
+    }
+  }
+
+  if (!r.qualifies) {
+    lines.push('<strong>Note:</strong> this name does not fully clear the Trend Template gate. It appears as one of the closest available candidates, not as a confirmed setup.');
+  }
+
+  return '<div class="readout">' + lines.map(l => '<div class="rd-line">' + l + '</div>').join('') + '</div>';
+}
+
+/* ---------- modal ---------- */
 function signalSection(title, items) {
   let html = '<div class="signal-block"><div class="signal-block-head">' + title + '</div>';
   if (!items || items.length === 0) {
@@ -518,8 +354,17 @@ function signalSection(title, items) {
   return html + '</div>';
 }
 
-function metricCell(labelKey, labelText, value) {
-  return '<div class="metric-cell"><div class="m-label"' + tipAttr(labelKey) + '>' + labelText + '</div><div class="m-value">' + value + '</div></div>';
+function metricCell(labelKey, labelText, value, sub) {
+  const subHtml = sub ? '<div class="m-sub ' + sub.cls + '">' + sub.text + '</div>' : '';
+  return '<div class="metric-cell"><div class="m-label"' + tipAttr(labelKey) + '>' + labelText + '</div>' +
+         '<div class="m-value">' + value + '</div>' + subHtml + '</div>';
+}
+
+// distance of price from a moving average, as a labeled sub-line
+function maDistance(price, ma) {
+  if (price == null || ma == null || ma === 0) return null;
+  const d = ((price / ma) - 1) * 100;
+  return { text: (d >= 0 ? '+' : '') + d.toFixed(1) + '% vs price', cls: d >= 0 ? 'm-above' : 'm-below' };
 }
 
 function metricsGridHtml(m, price) {
@@ -529,9 +374,9 @@ function metricsGridHtml(m, price) {
   html += '<div class="modal-subsection-title">Price &amp; Trend</div>';
   html += rangeBarHtml(price, m.wk52_low, m.wk52_high);
   const trendCells = [
-    metricCell('sma50', '50-Day Avg', fmtMoney(m.sma50)),
-    metricCell('sma150', '150-Day Avg', fmtMoney(m.sma150)),
-    metricCell('sma200', '200-Day Avg', fmtMoney(m.sma200)),
+    metricCell('sma50', '50-Day Avg', fmtMoney(m.sma50), maDistance(price, m.sma50)),
+    metricCell('sma150', '150-Day Avg', fmtMoney(m.sma150), maDistance(price, m.sma150)),
+    metricCell('sma200', '200-Day Avg', fmtMoney(m.sma200), maDistance(price, m.sma200)),
   ];
   html += '<div class="metric-grid">' + trendCells.join('') + '</div>';
 
@@ -539,7 +384,7 @@ function metricsGridHtml(m, price) {
   const volCells = [
     metricCell('adr', 'ADR (20d)', m.adr20_pct != null ? fmtNum(m.adr20_pct, 2) + '%' : '—'),
     metricCell('avgvol', 'Avg Vol (50d)', fmtVol(m.avg_vol50)),
-    metricCell('avgdollarvol', 'Avg $ Vol (20d)', m.avg_dollar_vol20 != null ? fmtVol(m.avg_dollar_vol20) : '—'),
+    metricCell('avgdollarvol', 'Avg $ Vol (20d)', m.avg_dollar_vol20 != null ? '$' + fmtVol(m.avg_dollar_vol20) : '—'),
   ];
   html += '<div class="metric-grid">' + volCells.join('') + '</div>';
 
@@ -548,7 +393,7 @@ function metricsGridHtml(m, price) {
     metricCell('ret3m', '3-Mo Return', fmtPct(m.ret_3m_pct)),
     metricCell('ret6m', '6-Mo Return', fmtPct(m.ret_6m_pct)),
     metricCell('ret12m', '12-Mo Return', fmtPct(m.ret_12m_pct)),
-    metricCell('breakout50', '50d Breakout Lvl', fmtMoney(m.prior_50d_high)),
+    metricCell('breakout50', '50d Breakout Lvl', fmtMoney(m.prior_50d_high), maDistance(price, m.prior_50d_high)),
   ];
   html += '<div class="metric-grid">' + momCells.join('') + '</div>';
 
@@ -563,8 +408,11 @@ function metricsGridHtml(m, price) {
 
   if (fundCells.length > 0) {
     html += '<div class="modal-group-title">Fundamentals</div>' +
-      '<div class="modal-group-sub">Traditional valuation and quality metrics, where available.</div>' +
+      '<div class="modal-group-sub">Traditional valuation and quality metrics, where published.</div>' +
       '<div class="metric-grid">' + fundCells.join('') + '</div>';
+  } else {
+    html += '<div class="modal-group-title">Fundamentals</div>' +
+      '<div class="modal-group-sub">No fundamental data was available for this stock in this scan. Missing fields are skipped rather than counted against a stock.</div>';
   }
   return html;
 }
@@ -577,23 +425,24 @@ function openDetailModal(r) {
   ).join('');
 
   const m = r.metrics || {};
-  const metricsHtml = metricsGridHtml(m, r.price);
 
   const html =
     '<h2 class="modal-ticker" id="modal-ticker">' + r.ticker + '</h2>' +
     '<div class="modal-price-row">' + fmtMoney(r.price) + ' &nbsp; <span class="' + chgClass + '"' + tipAttr('chg') + '>' + fmtPct(r.pct_chg) + '</span></div>' +
     '<div class="modal-score-row">Composite score<span' + tipAttr('score') + '> ' + r.score + '</span> &middot; RS<span' + tipAttr('rs') + '> ' + (r.rs ?? '—') + '</span> &middot; Trend<span' + tipAttr('trend') + '> ' + r.trend + '</span>' +
     ' &middot; Qualifies<span' + tipAttr('qualifies') + '>: ' + (r.qualifies ? 'Yes' : 'No') + '</span></div>' +
-    metricsHtml +
+    buildReadout(r) +
+    metricsGridHtml(m, r.price) +
     '<div class="modal-group-title">Trend Template Checklist</div>' +
-    '<div class="modal-group-sub">' + r.trend + ' of Minervini\'s 8 criteria currently met.</div>' +
+    '<div class="modal-group-sub">' + r.trend + ' of Minervini\'s 8 criteria currently met. <a href="trend-template.html">What each criterion means &rarr;</a></div>' +
     '<ul class="checklist">' + checklist + '</ul>' +
     '<div class="modal-group-title">Triggered Signals</div>' +
-    '<div class="modal-group-sub">Framework-specific triggers from today\'s data. Empty sections mean no signal fired -- not necessarily a negative.</div>' +
+    '<div class="modal-group-sub">Framework-specific triggers from today\'s data. An empty section means no signal fired — which is normal, not a negative reading.</div>' +
     signalSection('CANSLIM (' + r.canslim + ')', r.signals && r.signals.canslim) +
     signalSection('Zanger (' + r.zanger + ')', r.signals && r.signals.zanger) +
     signalSection('Qullamaggie (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
-    signalSection('Value (' + r.value + ')', r.signals && r.signals.value);
+    signalSection('Value (' + r.value + ')', r.signals && r.signals.value) +
+    '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news, earnings dates, or your own circumstances. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
 
   document.getElementById('modal-content').innerHTML = html;
   const overlay = document.getElementById('detail-modal');
@@ -659,6 +508,7 @@ function updateTicker(data) {
 
 function updateStatus(status) {
   const pill = document.getElementById('market-status');
+  if (!pill) return;
   const cls = statusClass(status);
   const labels = {
     'status-up': 'Market: Confirmed Uptrend',
@@ -670,6 +520,39 @@ function updateStatus(status) {
   pill.className = 'status-pill ' + cls;
 }
 
+/* ---------- data freshness ----------
+   The scan runs on a schedule that can be delayed or skipped by the CI
+   provider. Rather than silently presenting stale numbers as if they were
+   current, show the actual age of the data whenever it is meaningfully old.
+   Honest staleness beats confident wrongness on a finance site. */
+function describeAge(generatedAt) {
+  const then = new Date(generatedAt);
+  if (isNaN(then)) return null;
+  const mins = Math.floor((Date.now() - then.getTime()) / 60000);
+  if (mins < 0) return { mins, text: 'just now', level: 'fresh' };
+  if (mins < 90) return { mins, text: mins + ' min ago', level: 'fresh' };
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return { mins, text: hrs + ' hour' + (hrs === 1 ? '' : 's') + ' ago', level: hrs >= 6 ? 'stale' : 'aging' };
+  const days = Math.floor(hrs / 24);
+  return { mins, text: days + ' day' + (days === 1 ? '' : 's') + ' ago', level: 'stale' };
+}
+
+function renderFreshness(generatedAt) {
+  const host = document.getElementById('freshness-banner');
+  if (!host) return;
+  const age = describeAge(generatedAt);
+  if (!age || age.level === 'fresh') { host.innerHTML = ''; return; }
+
+  if (age.level === 'stale') {
+    host.innerHTML = '<div class="freshness stale"><strong>This data is ' + age.text + '.</strong> ' +
+      'The scheduled scan has not completed recently, so the figures below do not reflect current market conditions. ' +
+      'Treat them as a historical snapshot, not live data.</div>';
+  } else {
+    host.innerHTML = '<div class="freshness aging">Last successful scan was <strong>' + age.text + '</strong>. ' +
+      'Figures may not reflect the most recent session.</div>';
+  }
+}
+
 async function loadData() {
   try {
     const res = await fetch(DATA_URL, { cache: 'no-store' });
@@ -677,36 +560,62 @@ async function loadData() {
     const data = await res.json();
 
     const updated = new Date(data.generated_at);
-    document.getElementById('updated-at').textContent = isNaN(updated) ? data.generated_at :
+    const el = document.getElementById('updated-at');
+    if (el) el.textContent = isNaN(updated) ? data.generated_at :
       updated.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
     updateStatus(data.market_status);
+    renderFreshness(data.generated_at);
 
     document.getElementById('scan-summary').innerHTML =
       '<span class="label">Universe scanned</span> &nbsp; <strong>' + data.total_scored + '</strong> stocks &nbsp;&middot;&nbsp; ' +
       '<span class="label">Fully qualified</span> &nbsp; <strong>' + data.qualifying_count + '</strong> (&ge; ' +
       data.min_trend_needed + '/8 Trend Template) &nbsp;&middot;&nbsp; ' +
-      '<span class="label">Remaining names are the closest available candidates</span>';
-
-    document.getElementById('footer-counter').textContent = 'Stocks scanned: ' + data.total_scored;
+      '<span class="label">Remaining names shown are the closest available candidates</span>';
 
     updateTicker(data);
     renderTable('section1-mount', data.section1, 'Score');
     renderTable('section2-mount', data.section2, 'Score');
   } catch (e) {
     updateStatus(null);
+    const fh = document.getElementById('freshness-banner');
+    if (fh) fh.innerHTML = '';
     document.getElementById('scan-summary').innerHTML = '<span class="label">Awaiting first scan&hellip;</span>';
     document.getElementById('ticker-track').textContent = 'No scan data yet.';
     ['section1-mount', 'section2-mount'].forEach(id => {
       document.getElementById(id).innerHTML =
-        '<div class="state-msg"><strong>No Data</strong>This dashboard reads data/latest.json, written by the scheduled scan. Run it once (see README) to populate this page.</div>';
+        '<div class="state-msg"><strong>No Data</strong>This screen reads data written by the scheduled scan. If this persists, the most recent scan may not have completed.</div>';
     });
   }
 }
 
 loadData();
 setInterval(loadData, REFRESH_MS);
+
 </script>
 
+<footer>
+  <div class="wrap">
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="index.html">Screen</a>
+      <a href="learn.html">Learn</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms &amp; Disclaimer</a>
+      <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="mailto:stonksrun@gmail.com">Contact</a>
+    </nav>
+    <div>
+      <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
+      investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
+      <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
+      relying on anything here.
+    </div>
+    <div style="margin-top:10px">&copy; 2026 Stonks Run. Contact: <a href="mailto:stonksrun@gmail.com">stonksrun@gmail.com</a></div>
+  </div>
+</footer>
 </body>
 </html>

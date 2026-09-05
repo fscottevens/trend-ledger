@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About Stonks Run</title>
+<meta name="description" content="About Stonks Run: an independently built, automated educational stock screen with fully published methodology. What it is, what it isn&#x27;t, and how to get in touch.">
+<link rel="canonical" href="https://stonks.run/about.html">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#05070A">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Stonks Run">
+<meta property="og:title" content="About Stonks Run">
+<meta property="og:description" content="About Stonks Run: an independently built, automated educational stock screen with fully published methodology. What it is, what it isn&#x27;t, and how to get in touch.">
+<meta property="og:url" content="https://stonks.run/about.html">
+<meta property="og:image" content="https://stonks.run/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="About Stonks Run">
+<meta name="twitter:description" content="About Stonks Run: an independently built, automated educational stock screen with fully published methodology. What it is, what it isn&#x27;t, and how to get in touch.">
+<meta name="twitter:image" content="https://stonks.run/social-card.png">
+
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "About Stonks Run",
+  "description": "About Stonks Run: an independently built, automated educational stock screen with fully published methodology. What it is, what it isn't, and how to get in touch.",
+  "author": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/about.html"},
+  "publisher": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/"},
+  "datePublished": "2026-09-05",
+  "dateModified": "2026-09-05",
+  "mainEntityOfPage": {"@type": "WebPage", "@id": "https://stonks.run/about.html"},
+  "isAccessibleForFree": true
+}
+</script>
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <div>
+      <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <nav class="quicknav" aria-label="Main navigation">
+        <a href="index.html">Screen</a>
+        <a href="learn.html">Learn</a>
+        <a href="methodology.html">Methodology</a>
+        <a href="about.html" class="active" aria-current="page">About</a>
+        <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+<div class="wrap-narrow">
+  <article class="article">
+    <p class="article-eyebrow">About</p>
+    <h1>About Stonks Run</h1>
+    <div class="article-meta">An independently built, automated stock screen with published methodology. &middot; Last updated September 5, 2026</div>
+
+    <p>Stonks Run is an independently built, automated stock screen. It scans the S&amp;P 500 and S&amp;P 400 MidCap
+    indices during market hours and ranks them against several published trading frameworks &mdash; Mark Minervini's Trend
+    Template, William O'Neil's CANSLIM, and momentum criteria associated with Dan Zanger and the trader known as
+    Qullamaggie.</p>
+
+    <h2>Why this exists</h2>
+    <p>Most retail-facing stock screeners fall into one of two categories. Either they hand you a number with no
+    explanation of where it came from, or they bury a simple filter under a subscription and a great deal of confident
+    language about proprietary signals.</p>
+
+    <p>This site takes a different approach: publish the rankings, publish the full methodology, publish the limitations,
+    and explain the underlying frameworks well enough that a reader can judge the output for themselves. The
+    <a href="methodology.html">methodology page</a> documents every approximation and every known weakness, including the
+    ones that make the tool look worse.</p>
+
+    <p>The screen exists primarily as a learning tool &mdash; a way to see how well-known trading frameworks actually behave
+    across a real universe of stocks, day after day, rather than in the curated examples that appear in books.</p>
+
+    <h2>What this site is not</h2>
+    <ul>
+      <li><strong>Not an advisory service.</strong> Nothing here is personalized advice, and no one associated with this
+      site is a registered investment adviser or broker-dealer.</li>
+      <li><strong>Not a signal service.</strong> The lists are not buy or sell recommendations. They are the output of
+      publicly documented filters applied to public data.</li>
+      <li><strong>Not selling anything.</strong> There is no subscription, no course, no premium tier, and no paid group.
+      The site is free and supported by advertising.</li>
+      <li><strong>Not affiliated with any of the traders whose frameworks it references.</strong> Minervini, O'Neil,
+      Zanger, and Qullamaggie have no involvement with, and have not reviewed, this implementation. The frameworks are
+      implemented from publicly published descriptions of their work.</li>
+      <li><strong>Not a source of real-time data.</strong> Prices are delayed roughly 15&ndash;20 minutes.</li>
+    </ul>
+
+    <h2>How it is built</h2>
+    <p>The scanner is a Python program that pulls daily and intraday price data along with published fundamentals, computes
+    each framework's criteria, and writes ranked results as structured data. The site reads that data and renders it. The
+    entire pipeline runs automatically on a schedule; no one hand-picks or edits the rankings, and no stock is ever
+    promoted, sponsored, or placed for payment.</p>
+
+    <p>If a name appears on this site, it is because it scored there. There is no mechanism by which it could appear for
+    any other reason.</p>
+
+    <h2>Community</h2>
+    <p>There is a Discord server for discussing the screen, the frameworks behind it, and markets generally. It operates
+    under clear rules: no personalized advice, no soliciting trades, no signal-selling, and no coordinated promotion of
+    any security. It is a place to learn and discuss, not a trading group.</p>
+
+    <h2>Contact</h2>
+    <p>Questions about the methodology, corrections, or bug reports are genuinely welcome &mdash; particularly corrections.
+    An automated screen built on free data will get things wrong, and knowing about it is useful.</p>
+
+    <p><strong>Email:</strong> <a href="mailto:stonksrun@gmail.com">stonksrun@gmail.com</a></p>
+
+    <p>For anything relating to data accuracy, please include the ticker and roughly when you saw the issue, since the
+    underlying data refreshes throughout the day.</p>
+
+
+  </article>
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="index.html">Screen</a>
+      <a href="learn.html">Learn</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms &amp; Disclaimer</a>
+      <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="mailto:stonksrun@gmail.com">Contact</a>
+    </nav>
+    <div>
+      <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
+      investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
+      <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
+      relying on anything here.
+    </div>
+    <div style="margin-top:10px">&copy; 2026 Stonks Run. Contact: <a href="mailto:stonksrun@gmail.com">stonksrun@gmail.com</a></div>
+  </div>
+</footer>
+</body>
+</html>

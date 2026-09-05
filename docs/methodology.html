@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Methodology &amp; Limitations | Stonks Run</title>
+<meta name="description" content="Exactly how the Stonks Run screen works: data sources, refresh cadence, how each score is computed, known approximations, and documented limitations.">
+<link rel="canonical" href="https://stonks.run/methodology.html">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#05070A">
+
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Stonks Run">
+<meta property="og:title" content="Methodology &amp; Limitations | Stonks Run">
+<meta property="og:description" content="Exactly how the Stonks Run screen works: data sources, refresh cadence, how each score is computed, known approximations, and documented limitations.">
+<meta property="og:url" content="https://stonks.run/methodology.html">
+<meta property="og:image" content="https://stonks.run/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Methodology &amp; Limitations | Stonks Run">
+<meta name="twitter:description" content="Exactly how the Stonks Run screen works: data sources, refresh cadence, how each score is computed, known approximations, and documented limitations.">
+<meta name="twitter:image" content="https://stonks.run/social-card.png">
+
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Methodology & Limitations",
+  "description": "Exactly how the Stonks Run screen works: data sources, refresh cadence, how each score is computed, known approximations, and documented limitations.",
+  "author": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/about.html"},
+  "publisher": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/"},
+  "datePublished": "2026-09-05",
+  "dateModified": "2026-09-05",
+  "mainEntityOfPage": {"@type": "WebPage", "@id": "https://stonks.run/methodology.html"},
+  "isAccessibleForFree": true
+}
+</script>
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <div>
+      <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <nav class="quicknav" aria-label="Main navigation">
+        <a href="index.html">Screen</a>
+        <a href="learn.html">Learn</a>
+        <a href="methodology.html" class="active" aria-current="page">Methodology</a>
+        <a href="about.html">About</a>
+        <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<main id="main-content">
+<div class="wrap-narrow">
+  <article class="article">
+    <p class="article-eyebrow">Transparency</p>
+    <h1>Methodology &amp; Limitations</h1>
+    <div class="article-meta">How the scan works, what it approximates, and what it cannot do. &middot; Last updated September 5, 2026</div>
+
+    <p>This page documents exactly how the screen works &mdash; where data comes from, how each score is computed, what is
+    approximated, and what the tool cannot do. It is deliberately detailed. A ranking you cannot interrogate is not worth
+    much, and an automated screen that does not disclose its approximations is asking for more trust than it has earned.</p>
+
+    <h2>What the screen does</h2>
+    <p>An automated scan runs on a schedule during U.S. market hours. Each run evaluates every constituent of the S&amp;P
+    500 and S&amp;P 400 MidCap indices &mdash; roughly 900 stocks &mdash; against several published trading frameworks,
+    then publishes two ranked lists of ten stocks each.</p>
+
+    <p>The two lists draw from the same evaluated pool but rank by different weightings. <strong>Momentum Leaders</strong>
+    emphasizes intraday price and volume signals. <strong>Trend Quality &amp; Value</strong> emphasizes fundamental and
+    valuation factors, deliberately excluding the intraday momentum triggers. The two lists never overlap: names appearing
+    in the first are removed before the second is ranked.</p>
+
+    <h2>Data sources and refresh cadence</h2>
+    <table>
+      <tr><th>Item</th><th>Detail</th></tr>
+      <tr><td>Price and volume</td><td>Yahoo Finance, via the open-source <code>yfinance</code> library</td></tr>
+      <tr><td>Fundamentals</td><td>Yahoo Finance company data, where published</td></tr>
+      <tr><td>Index membership</td><td>A fixed list updated manually; see "known limitations" below</td></tr>
+      <tr><td>Scan frequency</td><td>Every 15 minutes during U.S. market hours, weekdays</td></tr>
+      <tr><td>Data latency</td><td>Typically 15&ndash;20 minutes behind live prices</td></tr>
+      <tr><td>History window</td><td>Approximately 15 months of daily bars per stock</td></tr>
+    </table>
+
+    <div class="article-callout warn">
+      <strong>Data is delayed and free-tier.</strong> Every figure on this site should be assumed to lag the live market by
+      roughly 15&ndash;20 minutes, and free data sources carry occasional gaps and errors. Nothing here is suitable for
+      execution decisions. Verify against a real-time source before acting on anything.
+    </div>
+
+    <h2>Filtering</h2>
+    <p>Before scoring, stocks are excluded if they fail basic liquidity and price thresholds &mdash; a minimum share price
+    and a minimum 20-day average dollar volume. The purpose is to remove names where the screen's own signals would be
+    unreliable and where a position would be difficult to exit.</p>
+
+    <p>Stocks with insufficient price history (roughly under 210 trading days) are also excluded, since the 200-day moving
+    average and 52-week range cannot be computed meaningfully without it. This means recent IPOs will not appear regardless
+    of how they are performing.</p>
+
+    <h2>How the Trend Template is scored</h2>
+    <p>All eight of Minervini's published criteria are evaluated, and the count of criteria met is the <strong>primary sort
+    key for both lists</strong> &mdash; not one input among several. A stock meeting seven criteria ranks above one meeting
+    five regardless of any other factor. The composite score only breaks ties within the same count.</p>
+
+    <p>Two implementation details worth stating explicitly:</p>
+    <ul>
+      <li>The "200-day average trending up" test compares the current 200-day average against its value approximately one
+      month (22 trading sessions) earlier.</li>
+      <li>The Relative Strength Rating is an approximation &mdash; see the next section.</li>
+    </ul>
+
+    <h3>The Relative Strength approximation</h3>
+    <p>RS Rating is computed as a weighted blend of trailing returns (weighted most heavily toward the trailing three
+    months, with additional weight on six, nine, and twelve months), then percentile-ranked from 1 to 99.</p>
+
+    <p><strong>The important caveat:</strong> that percentile is calculated <em>within the scanned universe only</em> &mdash;
+    roughly 900 large and mid-cap stocks. It is not ranked against the entire market. A stock showing RS 90 here has
+    outperformed about 90% of the S&amp;P 500 and 400, which is not the same as outperforming 90% of all publicly traded
+    stocks. Commercial providers such as Investor's Business Daily use proprietary calculations against a broader universe;
+    our numbers are not equivalent and should not be compared directly.</p>
+
+    <h2>How the other frameworks are scored</h2>
+    <h3>CANSLIM factors</h3>
+    <p>Current and annual earnings growth, proximity to new highs, volume-based demand, relative strength leadership, and
+    institutional ownership are scored where data is available. <strong>Missing fields are skipped rather than counted
+    against a stock</strong> &mdash; an unavailable data point is not evidence of a weak fundamental. Because free
+    fundamental data coverage is inconsistent, a given stock's CANSLIM score reflects only the factors that could actually
+    be measured. Each stock's detail view lists which signals were found.</p>
+    <p>The M factor (market direction) is evaluated once per scan at the market level and displayed as the status indicator
+    in the site header, not as a per-stock score.</p>
+
+    <h3>Breakout and momentum triggers</h3>
+    <p>Zanger-style rules look for a move above a recent high combined with meaningfully elevated volume and a significant
+    daily gain. Qullamaggie-style rules look for top-decile relative strength, sufficient average daily range, a tight
+    consolidation, and either a breakout or a large gap on heavy volume.</p>
+    <p>These are simplified approximations built from publicly described criteria. Neither trader has reviewed, endorsed, or
+    is affiliated with this implementation.</p>
+
+    <h3>Value metrics</h3>
+    <p>PEG ratio, trailing P/E, profit margin, and debt-to-equity are evaluated against conventional thresholds where the
+    data is published. These are deliberately simple screening thresholds, not a valuation model, and they make no attempt
+    to estimate intrinsic value.</p>
+
+    <h2>Why non-qualifying stocks still appear</h2>
+    <p>Both lists always show ten names. When fewer than ten stocks fully clear the Trend Template threshold, the remaining
+    slots are filled with the closest available candidates, each flagged as not qualifying.</p>
+
+    <p>This is a deliberate design decision with a tradeoff worth naming. Showing the closest candidates gives a continuous
+    view of relative strength even in poor conditions. The risk is that a list <em>looks</em> like ten opportunities when it
+    may contain none. That is why every non-qualifying name is explicitly marked, and why the header reports how many
+    actually qualified. On a weak day, that number may be zero &mdash; and that is meaningful information rather than a
+    malfunction.</p>
+
+    <h2>Known limitations</h2>
+    <ul>
+      <li><strong>Delayed data.</strong> Roughly 15&ndash;20 minutes behind live prices. Not suitable for execution.</li>
+      <li><strong>Approximated RS Rating.</strong> Ranked within the scanned universe only, not the full market.</li>
+      <li><strong>Inconsistent fundamentals.</strong> Free-tier coverage varies; missing fields are skipped, so scores are
+      based on partial data for some stocks.</li>
+      <li><strong>No earnings calendar.</strong> The screen detects the price-and-volume signature of a large gap but cannot
+      confirm what caused it. A gap on a positive earnings surprise and one on a disastrous announcement can look
+      identical to the scanner.</li>
+      <li><strong>No news or event awareness.</strong> Litigation, regulatory action, management changes, accounting
+      concerns &mdash; none of this is visible in price data.</li>
+      <li><strong>Manually maintained index membership.</strong> The constituent list is fixed in code and updated
+      periodically. Between updates, recently added index members may be missing and removed ones may linger.</li>
+      <li><strong>No survivorship-bias correction and no backtesting.</strong> This screen reports current conditions. It
+      makes no historical performance claims, because none have been rigorously tested here.</li>
+      <li><strong>Large-cap and mid-cap only.</strong> Small-caps, micro-caps, ADRs, and recent IPOs are outside the scanned
+      universe.</li>
+      <li><strong>No position sizing, stops, or risk management.</strong> The screen identifies candidates only. The
+      practitioners whose frameworks it borrows from all emphasize that risk management &mdash; not stock selection &mdash;
+      determines outcomes.</li>
+    </ul>
+
+    <h2>Why the methodology is published at all</h2>
+    <p>Automated financial screens are easy to build and easy to dress up as more authoritative than they are. Publishing
+    the approximations, the data limitations, and the specific things the tool cannot do is the only honest way to offer
+    one. If a ranking here looks wrong to you, this page should give you enough detail to work out why &mdash; and if the
+    reason is a flaw in the method, that is worth knowing.</p>
+
+<nav class="next-nav" aria-label="Guide navigation"><a href="glossary.html">&larr; Glossary</a><span></span></nav>
+  </article>
+</div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="index.html">Screen</a>
+      <a href="learn.html">Learn</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms &amp; Disclaimer</a>
+      <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="mailto:stonksrun@gmail.com">Contact</a>
+    </nav>
+    <div>
+      <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
+      investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
+      <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
+      relying on anything here.
+    </div>
+    <div style="margin-top:10px">&copy; 2026 Stonks Run. Contact: <a href="mailto:stonksrun@gmail.com">stonksrun@gmail.com</a></div>
+  </div>
+</footer>
+</body>
+</html>
