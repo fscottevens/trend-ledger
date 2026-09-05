@@ -91,6 +91,15 @@
     with a high composite score. The second is being carried by short-term momentum signals without the underlying trend
     structure to support them.</p>
 
+    <div class="article-callout warn">
+      <strong>Days when nothing qualifies.</strong> Some days no stock in the entire universe clears the Trend Template
+      gate. When that happens the screen says so at the top, in place of the usual summary. The lists still populate with
+      the closest candidates, because seeing where relative strength sits during a weak tape is useful &mdash; but that is
+      a fundamentally different situation from ten qualifying setups, and the page is built to make sure you never confuse
+      the two. In the frameworks this screen borrows from, a day with no qualifiers is generally read as a reason to do
+      less, not to lower the bar.
+    </div>
+
     <div class="article-callout">
       <strong>Check whether names actually qualify.</strong> Both lists always display a fixed number of stocks. When few
       or no stocks clear the full Trend Template threshold, the lists fill with the closest available candidates, marked
@@ -105,6 +114,12 @@
     <p>The visual bar shows where the current price sits between its 52-week low and high. A marker far to the right means
     the stock is near its highs &mdash; minimal overhead supply, which trend frameworks favor. A marker in the middle means
     the stock has meaningful prior resistance above it.</p>
+
+    <h3>The moving-average stack</h3>
+    <p>Price and the 50, 150, and 200-day averages are listed high to low, with price highlighted. This exists because
+    Minervini's fourth criterion is about the <em>order</em> of the averages, and a grid of four numbers doesn't make that
+    order obvious. When the stack reads price, then 50-day, then 150-day, then 200-day from top to bottom, the averages
+    are arranged the way the framework looks for, and the panel says so directly.</p>
 
     <h3>Moving averages with distance</h3>
     <p>Each average is shown alongside how far current price sits above or below it, as a percentage. This distance matters
@@ -130,6 +145,19 @@
     <p>Framework-specific signals from CANSLIM, Zanger-style breakout rules, Qullamaggie-style momentum rules, and
     traditional value metrics. An empty section means no signal fired for that framework today &mdash; which is normal and
     not a negative reading. Most stocks trigger few or no signals on any given day.</p>
+
+    <h3>Company, sector, and charts</h3>
+    <p>Each entry shows the company name alongside its ticker, and the detail view adds its sector. Sector matters more
+    than it might appear: CANSLIM's leadership factor is explicitly about being strong <em>within a strong group</em>, so
+    several names from the same sector appearing together is itself a signal about where money is currently rotating.</p>
+    <p>There is no chart drawn here, deliberately &mdash; on delayed data, a chart we render ourselves would look
+    authoritative while being slightly wrong. Each detail view links out to a live chart instead, which is the right
+    place to verify price action before forming any view.</p>
+
+    <h3>Moving between stocks</h3>
+    <p>The detail view has Prev and Next controls at the bottom, and the left and right arrow keys do the same thing. This
+    is worth using: comparing several candidates against each other tends to be more informative than examining any one in
+    isolation, because it makes the differences between them obvious.</p>
 
     <h2>What this screen cannot tell you</h2>
     <p>Being direct about this is more useful than any feature:</p>

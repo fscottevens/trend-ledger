@@ -813,6 +813,14 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
 
         rows.append({
             "Ticker": t,
+            # Company identity: already present in the fundamentals payload we
+            # fetch, previously discarded. Showing a bare ticker with no company
+            # name is a usability failure - most people do not know what MRSH or
+            # PODD trade as. Sector also matters here because CANSLIM's "L"
+            # (leadership) is explicitly about being strong within a strong group.
+            "Company": (fund.get("longName") or fund.get("shortName") or "") if fund else "",
+            "Sector": (fund.get("sector") or "") if fund else "",
+            "Industry": (fund.get("industry") or "") if fund else "",
             "Price": round(intr["last_price"], 2),
             "%Chg": round(intr["pct_change"], 2) if intr.get("pct_change") is not None else None,
             "RelVol": round(intr["rel_volume"], 2) if intr.get("rel_volume") is not None else None,
@@ -935,7 +943,7 @@ def print_results(section1: pd.DataFrame, section2: pd.DataFrame, market_status:
         print("No candidates this run (universe returned no usable data).")
     else:
         _print_table(section1, "MomentumScore",
-                      drop_cols=["Why", "QualityScore", "_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"])
+                      drop_cols=["Why", "QualityScore", "Company", "Sector", "Industry", "_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"])
 
     print(f"\n--- SECTION 2: Fundamentals & Trend-Quality Picks "
           f"(value-weighted, Minervini-heaviest) ---")
@@ -943,7 +951,7 @@ def print_results(section1: pd.DataFrame, section2: pd.DataFrame, market_status:
         print("No candidates this run (universe returned no usable data).")
     else:
         _print_table(section2, "QualityScore",
-                      drop_cols=["Why", "MomentumScore", "%Chg", "RelVol", "Zanger", "Qullamaggie",
+                      drop_cols=["Why", "MomentumScore", "%Chg", "RelVol", "Zanger", "Qullamaggie", "Sector", "Industry",
                                  "_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"])
 
 
@@ -971,6 +979,9 @@ def _rows_for_json(df: pd.DataFrame, score_col: str) -> List[dict]:
         trend_n = int(str(row["Trend"]).split("/")[0])
         out.append({
             "ticker": row["Ticker"],
+            "company": row.get("Company", ""),
+            "sector": row.get("Sector", ""),
+            "industry": row.get("Industry", ""),
             "price": row["Price"],
             "pct_chg": row["%Chg"],
             "rel_vol": row["RelVol"],

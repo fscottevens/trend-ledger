@@ -225,6 +225,13 @@ function tipAttr(key) {
   return t ? ' data-tip="' + t.replace(/"/g, '&quot;') + '" tabindex="0"' : '';
 }
 
+function esc(str) {
+  if (str == null) return '';
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function fmtPct(v) {
   if (v === null || v === undefined) return '—';
   return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
@@ -338,6 +345,44 @@ function buildReadout(r) {
   return '<div class="readout">' + lines.map(l => '<div class="rd-line">' + l + '</div>').join('') + '</div>';
 }
 
+/* ---------- moving-average stack ----------
+   Minervini's fourth criterion is about the ORDER of the averages, which a
+   grid of numbers doesn't convey. This lists price and the three averages
+   sorted high-to-low, so "proper order" (price > 50 > 150 > 200) is
+   visible at a glance rather than something you compute in your head. */
+function maStackHtml(price, m) {
+  const rows = [
+    { label: 'Price', v: price, isPrice: true },
+    { label: '50-day', v: m.sma50 },
+    { label: '150-day', v: m.sma150 },
+    { label: '200-day', v: m.sma200 },
+  ].filter(r => r.v != null);
+  if (rows.length < 2) return '';
+
+  const ideal = ['Price', '50-day', '150-day', '200-day'];
+  const sorted = [...rows].sort((a, b) => b.v - a.v);
+  const actualOrder = sorted.map(r => r.label);
+  const present = ideal.filter(l => actualOrder.includes(l));
+  const inOrder = actualOrder.join('|') === present.join('|');
+
+  const max = sorted[0].v, min = sorted[sorted.length - 1].v;
+  const span = max - min || 1;
+
+  let bars = sorted.map(r => {
+    const w = 22 + ((r.v - min) / span) * 78; // never zero-width
+    return '<div class="ma-row">' +
+      '<span class="ma-name' + (r.isPrice ? ' is-price' : '') + '">' + r.label + '</span>' +
+      '<span class="ma-bar-wrap"><span class="ma-bar' + (r.isPrice ? ' is-price' : '') + '" style="width:' + w.toFixed(1) + '%"></span></span>' +
+      '<span class="ma-val">' + fmtMoney(r.v) + '</span></div>';
+  }).join('');
+
+  const verdict = inOrder
+    ? '<span class="ma-ok">Stacked in trend order</span> &mdash; price above the 50-day, above the 150-day, above the 200-day.'
+    : '<span class="ma-no">Not in trend order</span> &mdash; the framework looks for price above the 50-day, above the 150-day, above the 200-day.';
+
+  return '<div class="ma-stack">' + bars + '<div class="ma-verdict">' + verdict + '</div></div>';
+}
+
 /* ---------- modal ---------- */
 function signalSection(title, items) {
   let html = '<div class="signal-block"><div class="signal-block-head">' + title + '</div>';
@@ -412,7 +457,14 @@ function metricsGridHtml(m, price) {
   return html;
 }
 
-function openDetailModal(r) {
+/* Modal navigation state: lets a user step through the ranked list without
+   closing and reopening, which is the actual workflow when comparing
+   candidates. Arrow keys work too. */
+let MODAL_CTX = { rows: [], index: 0, listName: '' };
+
+function openDetailModal(r, rows, index, listName) {
+  if (rows) MODAL_CTX = { rows: rows, index: index, listName: listName || '' };
+
   const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
   const checklist = (r.trend_criteria || []).map(([label, met]) =>
     '<li class="' + (met ? '' : 'unmet') + '"><span class="' + (met ? 'check-yes' : 'check-no') + '">' +
@@ -420,13 +472,32 @@ function openDetailModal(r) {
   ).join('');
 
   const m = r.metrics || {};
+  const total = MODAL_CTX.rows.length;
+  const pos = MODAL_CTX.index;
+  const rankLine = total
+    ? '<div class="modal-rank">#' + (pos + 1) + ' of ' + total + (MODAL_CTX.listName ? ' &middot; ' + MODAL_CTX.listName : '') + '</div>'
+    : '';
+
+  const navBar = total > 1
+    ? '<div class="modal-nav">' +
+        '<button class="mnav-btn" id="modal-prev"' + (pos === 0 ? ' disabled' : '') + ' aria-label="Previous stock">&larr; Prev</button>' +
+        '<span class="mnav-hint">Use &larr; &rarr; keys</span>' +
+        '<button class="mnav-btn" id="modal-next"' + (pos >= total - 1 ? ' disabled' : '') + ' aria-label="Next stock">Next &rarr;</button>' +
+      '</div>'
+    : '';
 
   const html =
-    '<h2 class="modal-ticker" id="modal-ticker">' + r.ticker + '</h2>' +
+    rankLine +
+    '<h2 class="modal-ticker" id="modal-ticker">' + esc(r.ticker) + '</h2>' +
+    (r.company ? '<div class="modal-company">' + esc(r.company) +
+       (r.sector ? ' <span class="modal-sector">' + esc(r.sector) + '</span>' : '') + '</div>' : '') +
     '<div class="modal-price-row">' + fmtMoney(r.price) + ' &nbsp; <span class="' + chgClass + '"' + tipAttr('chg') + '>' + fmtPct(r.pct_chg) + '</span></div>' +
     '<div class="modal-score-row">Composite score<span' + tipAttr('score') + '> ' + r.score + '</span> &middot; RS<span' + tipAttr('rs') + '> ' + (r.rs ?? '—') + '</span> &middot; Trend<span' + tipAttr('trend') + '> ' + r.trend + '</span>' +
     ' &middot; Qualifies<span' + tipAttr('qualifies') + '>: ' + (r.qualifies ? 'Yes' : 'No') + '</span></div>' +
     buildReadout(r) +
+    '<div class="modal-group-title">Moving Average Stack</div>' +
+    '<div class="modal-group-sub">Where price sits relative to each average, and whether they are in the order the Trend Template looks for.</div>' +
+    maStackHtml(r.price, m) +
     metricsGridHtml(m, r.price) +
     '<div class="modal-group-title">Trend Template Checklist</div>' +
     '<div class="modal-group-sub">' + r.trend + ' of Minervini\'s 8 criteria currently met. <a href="trend-template.html">What each criterion means &rarr;</a></div>' +
@@ -437,12 +508,33 @@ function openDetailModal(r) {
     signalSection('Zanger (' + r.zanger + ')', r.signals && r.signals.zanger) +
     signalSection('Qullamaggie (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
     signalSection('Value (' + r.value + ')', r.signals && r.signals.value) +
+    navBar +
+    '<div class="modal-links"><a href="https://finance.yahoo.com/quote/' + encodeURIComponent(r.ticker) +
+      '/chart" target="_blank" rel="noopener noreferrer">Open chart on Yahoo Finance &rarr;</a>' +
+      '<span class="ml-note">External site. We do not draw charts here &mdash; verify price action against a real-time source.</span></div>' +
     '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news, earnings dates, or your own circumstances. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
 
-  document.getElementById('modal-content').innerHTML = html;
+  const box = document.getElementById('modal-content');
+  box.innerHTML = html;
+
+  const prevBtn = document.getElementById('modal-prev');
+  const nextBtn = document.getElementById('modal-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => stepModal(-1));
+  if (nextBtn) nextBtn.addEventListener('click', () => stepModal(1));
+
   const overlay = document.getElementById('detail-modal');
   overlay.hidden = false;
+  overlay.scrollTop = 0;
+  const mb = overlay.querySelector ? overlay.querySelector('.modal-box') : null;
+  if (mb) mb.scrollTop = 0;
   document.getElementById('modal-close-btn').focus();
+}
+
+function stepModal(delta) {
+  const next = MODAL_CTX.index + delta;
+  if (next < 0 || next >= MODAL_CTX.rows.length) return;
+  MODAL_CTX.index = next;
+  openDetailModal(MODAL_CTX.rows[next]);
 }
 
 function closeDetailModal() {
@@ -454,11 +546,16 @@ document.getElementById('detail-modal').addEventListener('click', (e) => {
   if (e.target.id === 'detail-modal') closeDetailModal();
 });
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape') closeDetailModal();
+  const overlay = document.getElementById('detail-modal');
+  const open = overlay && !overlay.hidden;
+  if (e.key === 'Escape') { closeDetailModal(); return; }
+  if (!open) return;
+  if (e.key === 'ArrowLeft') { e.preventDefault(); stepModal(-1); }
+  if (e.key === 'ArrowRight') { e.preventDefault(); stepModal(1); }
 });
 
 /* ---------- list rendering ---------- */
-function renderTable(mountId, rows, scoreLabel) {
+function renderTable(mountId, rows, scoreLabel, listName) {
   const mount = document.getElementById(mountId);
   if (!rows || rows.length === 0) {
     mount.innerHTML = '<div class="state-msg"><strong>No Data</strong>The first scheduled scan will populate this automatically.</div>';
@@ -476,7 +573,8 @@ function renderTable(mountId, rows, scoreLabel) {
     const qualFlag = r.qualifies ? '<span class="qual-flag" title="Fully qualifies">&#9679;</span>' : '';
     html += '<tr class="data-row" data-idx="' + i + '" tabindex="0">' +
       '<td class="rank">' + (i + 1) + '</td>' +
-      '<td class="ticker">' + r.ticker + '</td>' +
+      '<td class="ticker">' + esc(r.ticker) +
+        (r.company ? '<span class="co-name">' + esc(r.company) + '</span>' : '') + '</td>' +
       '<td class="num">' + fmtMoney(r.price) + '</td>' +
       '<td class="num ' + chgClass + '">' + fmtPct(r.pct_chg) + '</td>' +
       '<td>' + trendBarHtml(r.trend_n) + ' ' + r.trend + qualFlag + '</td>' +
@@ -487,7 +585,7 @@ function renderTable(mountId, rows, scoreLabel) {
   mount.innerHTML = html;
 
   mount.querySelectorAll('tr.data-row').forEach((rowEl, i) => {
-    const openThis = () => openDetailModal(rows[i]);
+    const openThis = () => openDetailModal(rows[i], rows, i, listName);
     rowEl.addEventListener('click', openThis);
     rowEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openThis(); } });
   });
@@ -497,7 +595,7 @@ function updateTicker(data) {
   const track = document.getElementById('ticker-track');
   const all = [...(data.section1 || []), ...(data.section2 || [])];
   if (all.length === 0) { track.textContent = 'No scan data yet.'; return; }
-  const parts = all.map(r => r.ticker + ' ' + fmtPct(r.pct_chg));
+  const parts = all.map(r => esc(r.ticker) + ' ' + fmtPct(r.pct_chg));
   track.textContent = parts.join('     \u2022     ') + '     \u2022     ';
 }
 
@@ -562,15 +660,32 @@ async function loadData() {
     updateStatus(data.market_status);
     renderFreshness(data.generated_at);
 
-    document.getElementById('scan-summary').innerHTML =
-      '<span class="label">Universe scanned</span> &nbsp; <strong>' + data.total_scored + '</strong> stocks &nbsp;&middot;&nbsp; ' +
-      '<span class="label">Fully qualified</span> &nbsp; <strong>' + data.qualifying_count + '</strong> (&ge; ' +
-      data.min_trend_needed + '/8 Trend Template) &nbsp;&middot;&nbsp; ' +
-      '<span class="label">Remaining names shown are the closest available candidates</span>';
+    /* When nothing clears the gate, that is the most important fact on the
+       page and it should read as a headline, not a statistic buried in a
+       summary line. A list of ten non-qualifying names is not ten
+       opportunities, and the page should not let anyone assume it is. */
+    const q = data.qualifying_count;
+    const summaryEl = document.getElementById('scan-summary');
+    if (q === 0) {
+      summaryEl.className = 'scan-summary zero-qualified';
+      summaryEl.innerHTML =
+        '<div class="zq-head">No stock currently clears the Trend Template gate.</div>' +
+        '<div class="zq-body">All ' + data.total_scored + ' scanned names fall short of ' +
+        data.min_trend_needed + '/8 criteria. The lists below show the <em>closest</em> candidates so you can see ' +
+        'where relative strength sits &mdash; they are not confirmed setups, and a day like this is itself information ' +
+        'about market conditions. <a href="reading-the-screen.html">What this means &rarr;</a></div>';
+    } else {
+      summaryEl.className = 'scan-summary';
+      summaryEl.innerHTML =
+        '<span class="label">Universe scanned</span> &nbsp; <strong>' + data.total_scored + '</strong> stocks &nbsp;&middot;&nbsp; ' +
+        '<span class="label">Fully qualified</span> &nbsp; <strong>' + q + '</strong> (&ge; ' +
+        data.min_trend_needed + '/8 Trend Template) &nbsp;&middot;&nbsp; ' +
+        '<span class="label">Remaining names shown are the closest available candidates</span>';
+    }
 
     updateTicker(data);
-    renderTable('section1-mount', data.section1, 'Score');
-    renderTable('section2-mount', data.section2, 'Score');
+    renderTable('section1-mount', data.section1, 'Score', 'Momentum Leaders');
+    renderTable('section2-mount', data.section2, 'Score', 'Trend Quality & Value');
   } catch (e) {
     updateStatus(null);
     const fh = document.getElementById('freshness-banner');
