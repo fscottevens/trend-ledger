@@ -38,7 +38,6 @@ body {
 }
 a { color: var(--teal); }
 .wrap { max-width: 1180px; margin: 0 auto; padding: 0 20px; }
-.wrap-narrow { max-width: 780px; margin: 0 auto; padding: 0 20px; }
 
 /* ---------- tooltip system ---------- */
 [data-tip] { cursor: help; position: relative; border-bottom: 1px dotted var(--text-faint); }
@@ -129,19 +128,6 @@ header.masthead {
 .ticker-strip .tt-track { display: inline-block; padding-left: 100%; animation: tt-scroll 36s linear infinite; }
 @keyframes tt-scroll { from { transform: translateX(0); } to { transform: translateX(-100%); } }
 @media (prefers-reduced-motion: reduce) { .ticker-strip .tt-track { animation: none; padding-left: 20px; } }
-
-/* ---------- ads ---------- */
-.ad-slot {
-  border: 1px solid var(--hairline); border-radius: 2px;
-  background: rgba(255,255,255,0.015);
-  display: flex; align-items: center; justify-content: center; flex-direction: column;
-  font-family: var(--font-label); font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
-  color: var(--text-faint); margin: 0 auto;
-}
-.ad-slot span.dim { font-family: var(--font-mono); font-size: 10px; margin-top: 5px; letter-spacing: 0; text-transform: none; }
-.ad-leaderboard { width: 100%; max-width: 728px; height: 90px; margin: 0 auto 22px; }
-.ad-inline { width: 100%; height: 90px; margin: 26px 0; }
-.ad-rect { width: 100%; max-width: 300px; height: 250px; margin: 0 auto; }
 
 /* ---------- layout ---------- */
 .layout { display: grid; grid-template-columns: 1fr 300px; gap: 28px; padding-bottom: 50px; align-items: start; }
@@ -343,6 +329,7 @@ footer a:hover { color: var(--teal); }
   font-family: var(--font-label); font-weight: 600; font-size: 16px; letter-spacing: 0.02em;
   color: var(--teal); margin: 26px 0 8px;
 }
+.article { max-width: 760px; }
 .article p { font-size: 15px; line-height: 1.72; color: var(--text-dim); margin: 0 0 15px; }
 .article strong { color: var(--text); font-weight: 600; }
 .article em { color: var(--text); font-style: italic; }

@@ -62,8 +62,9 @@
 </header>
 
 <main id="main-content">
-<div class="wrap-narrow">
-  <article class="article">
+<div class="wrap">
+  <div class="layout">
+    <article class="article col-main">
     <p class="article-eyebrow">Guide</p>
     <h1>Minervini's Trend Template, Criterion by Criterion</h1>
     <div class="article-meta">The eight-condition technical filter that drives the primary ranking on this site. &middot; Last updated September 5, 2026</div>
@@ -204,14 +205,42 @@
     </div>
 
     <h2>How this screen implements it</h2>
-    <p>Our implementation follows the eight criteria as published, with two deliberate accommodations documented in full on
-    the <a href="methodology.html">methodology page</a>: the RS Rating is an approximation ranked within the scanned
-    universe rather than the entire market, and the "200-day trending up" test compares the current 200-day average against
-    its value approximately one month prior. Both are noted wherever the data appears, and neither is presented as
-    equivalent to the proprietary calculations used by commercial data providers.</p>
+    <p>Our implementation follows the eight criteria as published, with two documented accommodations. The Relative
+    Strength Rating is an approximation, percentile-ranked within the scanned universe rather than the entire market. The
+    "200-day trending up" test compares the current 200-day average against its value roughly one month earlier.</p>
+    <p>Both are noted wherever the data appears, and neither is presented as equivalent to the proprietary calculations
+    used by commercial data providers. The <a href="methodology.html">methodology page</a> covers them in full, along with
+    every other known limitation.</p>
 
 <nav class="next-nav" aria-label="Guide navigation"><a href="reading-the-screen.html">&larr; How to Read the Screen</a><a href="canslim.html">CANSLIM &rarr;</a></nav>
-  </article>
+    </article>
+    <aside class="rail">
+      <div class="rail-card">
+        <h3>Guides</h3>
+        <ul>
+          <li><a href="reading-the-screen.html">How to Read the Screen</a></li>
+          <li><strong style="color:var(--teal)">The Trend Template</strong></li>
+          <li><a href="canslim.html">CANSLIM</a></li>
+          <li><a href="momentum-vs-value.html">Momentum vs. Value</a></li>
+          <li><a href="glossary.html">Glossary</a></li>
+          <li><a href="methodology.html">Methodology</a></li>
+        </ul>
+      </div>
+
+      <div class="rail-card">
+        <h3>The Screen</h3>
+        <p>See the frameworks on this page applied to every S&amp;P 500 and S&amp;P 400 stock, updated hourly during
+        market hours.</p>
+        <a href="index.html" class="discord-link">Open the screen &rarr;</a>
+      </div>
+
+      <div class="rail-card">
+        <h3>Community</h3>
+        <p>Discuss the screen, the frameworks, and markets generally with other traders.</p>
+        <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer" class="discord-link">Join the Discord &rarr;</a>
+      </div>
+    </aside>
+  </div>
 </div>
 </main>
 
