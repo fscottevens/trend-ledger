@@ -1,0 +1,43 @@
+STONKS RUN - COMPLETE PROJECT
+=============================
+
+Copy these into C:\Users\fscot\Documents\trend-ledger\ :
+
+  docs\                 -> replace the whole docs folder contents
+  sepa_scanner.py       -> repo root
+  requirements.txt      -> repo root
+  README.md             -> repo root
+  .gitignore            -> repo root
+  .github\workflows\scan.yml  -> THE IMPORTANT ONE (see below)
+
+
+ABOUT scan.yml
+--------------
+The .github folder starts with a dot. Windows Explorer sometimes fails to
+extract or copy dot-folders, which is why this file kept not updating.
+
+If you cannot see a .github folder after extracting this zip:
+  use the file named  scan.yml.COPY-INTO-.github-workflows
+  rename it to        scan.yml
+  and place it in     C:\Users\fscot\Documents\trend-ledger\.github\workflows\
+
+To create that folder from Command Prompt if it does not exist:
+  cd C:\Users\fscot\Documents\trend-ledger
+  mkdir .github\workflows
+
+To confirm the file is really there:
+  dir /a .github\workflows
+  findstr /C:"for attempt in" .github\workflows\scan.yml
+
+That findstr must print a line. If it prints nothing, the file is not there.
+
+
+BEFORE YOU PUSH - check for a duplicate workflow
+------------------------------------------------
+Scans have been failing because an old workflow file appears to still be
+running. Check this page in your browser:
+
+  https://github.com/fscottevens/trend-ledger/tree/main/.github/workflows
+
+There should be exactly ONE file: scan.yml
+If there are others, delete them on GitHub (open file -> trash icon -> commit).
