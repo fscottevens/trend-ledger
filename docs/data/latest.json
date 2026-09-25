@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-24T17:37:43.050557-04:00",
+  "generated_at": "2026-09-25T14:01:03.517501-04:00",
   "market_status": "CONFIRMED UPTREND (SPY > 50MA > 200MA)",
   "total_scored": 891,
   "qualifying_count": 262,
@@ -10,9 +10,9 @@
       "company": "Hewlett Packard Enterprise Company",
       "sector": "Technology",
       "industry": "Communication Equipment",
-      "price": 63.53,
-      "pct_chg": 0.02,
-      "rel_vol": 0.91,
+      "price": 64.04,
+      "pct_chg": -0.13,
+      "rel_vol": 0.67,
       "rs": 98.0,
       "trend": "8/8",
       "trend_n": 8,
@@ -22,7 +22,7 @@
       "qullamaggie": "4/3",
       "value": "1.5/2.5",
       "score": 118.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 98); C: qtr EPS growth 405%; A: ann EPS growth 410%; N: near new highs; L: RS leader (98); I: institutional 91%; New 20d-high breakout; Top-decile RS (98); ADR 5.8%; Tight base (contraction); 50d breakout; PEG 0.50; Reasonable debt/equity",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 98); C: qtr EPS growth 405%; A: ann EPS growth 410%; N: near new highs; L: RS leader (98); I: institutional 91%; New 20d-high breakout; Top-decile RS (98); ADR 5.8%; Tight base (contraction); 50d breakout; PEG 0.51; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -75,30 +75,30 @@
           "50d breakout"
         ],
         "value": [
-          "PEG 0.50",
+          "PEG 0.51",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 53.59,
-        "sma150": 39.95,
-        "sma200": 35.71,
-        "wk52_high": 63.52,
+        "sma50": 53.97,
+        "sma150": 40.24,
+        "sma200": 35.91,
+        "wk52_high": 64.12,
         "wk52_low": 20.0,
         "pct_off_52w_high": 0.0,
-        "pct_off_52w_low": 217.6,
-        "adr20_pct": 5.81,
+        "pct_off_52w_low": 220.6,
+        "adr20_pct": 5.83,
         "tightness_ratio": 0.53,
-        "ret_3m_pct": 36.0,
-        "ret_6m_pct": 146.4,
-        "ret_9m_pct": 157.2,
-        "ret_12m_pct": 157.2,
-        "avg_vol50": 20606973.0,
-        "avg_dollar_vol20": 1587996935.0,
-        "prior_20d_high": 63.86,
-        "prior_50d_high": 63.86,
-        "trailing_pe": 32.74,
-        "peg_ratio": 0.5,
+        "ret_3m_pct": 46.7,
+        "ret_6m_pct": 155.8,
+        "ret_9m_pct": 160.9,
+        "ret_12m_pct": 162.2,
+        "avg_vol50": 20248064.0,
+        "avg_dollar_vol20": 1577460201.0,
+        "prior_20d_high": 65.48,
+        "prior_50d_high": 65.48,
+        "trailing_pe": 33.03,
+        "peg_ratio": 0.51,
         "profit_margin_pct": 6.7,
         "debt_to_equity": 76.46,
         "eps_qtr_growth_pct": 404.9,
@@ -107,23 +107,223 @@
       }
     },
     {
-      "ticker": "FTNT",
-      "company": "Fortinet, Inc.",
+      "ticker": "AMD",
+      "company": "Advanced Micro Devices, Inc.",
       "sector": "Technology",
-      "industry": "Software - Infrastructure",
-      "price": 178.7,
-      "pct_chg": 0.02,
-      "rel_vol": 0.58,
+      "industry": "Semiconductors",
+      "price": 629.87,
+      "pct_chg": 0.01,
+      "rel_vol": 0.76,
+      "rs": 99.0,
+      "trend": "8/8",
+      "trend_n": 8,
+      "qualifies": true,
+      "canslim": "5.0/6",
+      "zanger": "1/3",
+      "qullamaggie": "2/3",
+      "value": "2.5/2.5",
+      "score": 109.0,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); C: qtr EPS growth 163%; A: ann EPS growth 160%; N: near new highs; L: RS leader (99); I: institutional 75%; New 20d-high breakout; Top-decile RS (99); 50d breakout; PEG 0.64; Profit margin 16%; Reasonable debt/equity",
+      "trend_criteria": [
+        [
+          "Price above rising 150-day & 200-day average",
+          true
+        ],
+        [
+          "150-day average above 200-day average",
+          true
+        ],
+        [
+          "200-day average trending up vs. 1 month ago",
+          true
+        ],
+        [
+          "50-day average above both 150-day & 200-day",
+          true
+        ],
+        [
+          "Price above 50-day average",
+          true
+        ],
+        [
+          "At least 30% above 52-week low",
+          true
+        ],
+        [
+          "Within 25% of 52-week high",
+          true
+        ],
+        [
+          "RS Rating >= 70 (currently 99)",
+          true
+        ]
+      ],
+      "signals": {
+        "canslim": [
+          "C: qtr EPS growth 163%",
+          "A: ann EPS growth 160%",
+          "N: near new highs",
+          "L: RS leader (99)",
+          "I: institutional 75%"
+        ],
+        "zanger": [
+          "New 20d-high breakout"
+        ],
+        "qullamaggie": [
+          "Top-decile RS (99)",
+          "50d breakout"
+        ],
+        "value": [
+          "PEG 0.64",
+          "Profit margin 16%",
+          "Reasonable debt/equity"
+        ]
+      },
+      "metrics": {
+        "sma50": 504.7,
+        "sma150": 413.06,
+        "sma200": 364.75,
+        "wk52_high": 629.8,
+        "wk52_low": 159.46,
+        "pct_off_52w_high": 0.0,
+        "pct_off_52w_low": 295.0,
+        "adr20_pct": 3.54,
+        "tightness_ratio": 0.8,
+        "ret_3m_pct": 20.7,
+        "ret_6m_pct": 209.1,
+        "ret_9m_pct": 193.1,
+        "ret_12m_pct": 291.5,
+        "avg_vol50": 23770101.0,
+        "avg_dollar_vol20": 11516935199.0,
+        "prior_20d_high": 630.8,
+        "prior_50d_high": 630.8,
+        "trailing_pe": 160.27,
+        "peg_ratio": 0.64,
+        "profit_margin_pct": 15.6,
+        "debt_to_equity": 6.36,
+        "eps_qtr_growth_pct": 163.4,
+        "eps_ann_growth_pct": 159.5,
+        "institutional_pct": 75.4
+      }
+    },
+    {
+      "ticker": "KEYS",
+      "company": "Keysight Technologies, Inc.",
+      "sector": "Technology",
+      "industry": "Scientific & Technical Instruments",
+      "price": 366.43,
+      "pct_chg": -0.06,
+      "rel_vol": 0.76,
+      "rs": 95.0,
+      "trend": "8/8",
+      "trend_n": 8,
+      "qualifies": true,
+      "canslim": "5.0/6",
+      "zanger": "1/3",
+      "qullamaggie": "2/3",
+      "value": "2.5/2.5",
+      "score": 109.0,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 95); C: qtr EPS growth 108%; A: ann EPS growth 109%; N: near new highs; L: RS leader (95); I: institutional 93%; New 20d-high breakout; Top-decile RS (95); 50d breakout; PEG 0.71; Profit margin 19%; Reasonable debt/equity",
+      "trend_criteria": [
+        [
+          "Price above rising 150-day & 200-day average",
+          true
+        ],
+        [
+          "150-day average above 200-day average",
+          true
+        ],
+        [
+          "200-day average trending up vs. 1 month ago",
+          true
+        ],
+        [
+          "50-day average above both 150-day & 200-day",
+          true
+        ],
+        [
+          "Price above 50-day average",
+          true
+        ],
+        [
+          "At least 30% above 52-week low",
+          true
+        ],
+        [
+          "Within 25% of 52-week high",
+          true
+        ],
+        [
+          "RS Rating >= 70 (currently 95)",
+          true
+        ]
+      ],
+      "signals": {
+        "canslim": [
+          "C: qtr EPS growth 108%",
+          "A: ann EPS growth 109%",
+          "N: near new highs",
+          "L: RS leader (95)",
+          "I: institutional 93%"
+        ],
+        "zanger": [
+          "New 20d-high breakout"
+        ],
+        "qullamaggie": [
+          "Top-decile RS (95)",
+          "50d breakout"
+        ],
+        "value": [
+          "PEG 0.71",
+          "Profit margin 19%",
+          "Reasonable debt/equity"
+        ]
+      },
+      "metrics": {
+        "sma50": 329.55,
+        "sma150": 326.08,
+        "sma200": 298.61,
+        "wk52_high": 373.34,
+        "wk52_low": 159.49,
+        "pct_off_52w_high": -1.8,
+        "pct_off_52w_low": 129.9,
+        "adr20_pct": 2.58,
+        "tightness_ratio": 0.92,
+        "ret_3m_pct": 11.6,
+        "ret_6m_pct": 30.5,
+        "ret_9m_pct": 78.6,
+        "ret_12m_pct": 110.2,
+        "avg_vol50": 1231444.0,
+        "avg_dollar_vol20": 351385998.0,
+        "prior_20d_high": 358.74,
+        "prior_50d_high": 366.41,
+        "trailing_pe": 49.5,
+        "peg_ratio": 0.71,
+        "profit_margin_pct": 19.1,
+        "debt_to_equity": 42.09,
+        "eps_qtr_growth_pct": 107.9,
+        "eps_ann_growth_pct": 109.1,
+        "institutional_pct": 93.0
+      }
+    },
+    {
+      "ticker": "DDOG",
+      "company": "Datadog, Inc.",
+      "sector": "Technology",
+      "industry": "Software - Application",
+      "price": 271.9,
+      "pct_chg": -0.02,
+      "rel_vol": 1.09,
       "rs": 97.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
       "canslim": "5.0/6",
       "zanger": "1/3",
-      "qullamaggie": "3/3",
-      "value": "2.5/2.5",
-      "score": 115.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 97); C: qtr EPS growth 38%; A: ann EPS growth 44%; N: near new highs; L: RS leader (97); I: institutional 72%; New 20d-high breakout; Top-decile RS (97); ADR 4.4%; 50d breakout; PEG 1.97; Profit margin 28%; Reasonable debt/equity",
+      "qullamaggie": "2/3",
+      "value": "1.5/2.5",
+      "score": 106.6,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 97); C: qtr EPS growth 1583%; A: ann EPS growth 1498%; N: near new highs; L: RS leader (97); I: institutional 93%; New 20d-high breakout; Top-decile RS (97); ADR 4.7%; PEG 1.30; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -160,71 +360,69 @@
       ],
       "signals": {
         "canslim": [
-          "C: qtr EPS growth 38%",
-          "A: ann EPS growth 44%",
+          "C: qtr EPS growth 1583%",
+          "A: ann EPS growth 1498%",
           "N: near new highs",
           "L: RS leader (97)",
-          "I: institutional 72%"
+          "I: institutional 93%"
         ],
         "zanger": [
           "New 20d-high breakout"
         ],
         "qullamaggie": [
           "Top-decile RS (97)",
-          "ADR 4.4%",
-          "50d breakout"
+          "ADR 4.7%"
         ],
         "value": [
-          "PEG 1.97",
-          "Profit margin 28%",
+          "PEG 1.30",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 161.12,
-        "sma150": 126.78,
-        "sma200": 115.29,
-        "wk52_high": 178.74,
-        "wk52_low": 75.23,
-        "pct_off_52w_high": -0.0,
-        "pct_off_52w_low": 137.5,
-        "adr20_pct": 4.42,
-        "tightness_ratio": 0.83,
-        "ret_3m_pct": 23.0,
-        "ret_6m_pct": 125.2,
-        "ret_9m_pct": 122.7,
-        "ret_12m_pct": 110.2,
-        "avg_vol50": 4907240.0,
-        "avg_dollar_vol20": 780194143.0,
-        "prior_20d_high": 179.35,
-        "prior_50d_high": 179.35,
-        "trailing_pe": 63.36,
-        "peg_ratio": 1.97,
-        "profit_margin_pct": 28.2,
-        "debt_to_equity": 36.19,
-        "eps_qtr_growth_pct": 37.8,
-        "eps_ann_growth_pct": 43.9,
-        "institutional_pct": 71.5
+        "sma50": 242.78,
+        "sma150": 198.68,
+        "sma200": 181.74,
+        "wk52_high": 288.15,
+        "wk52_low": 102.61,
+        "pct_off_52w_high": -5.6,
+        "pct_off_52w_low": 165.0,
+        "adr20_pct": 4.66,
+        "tightness_ratio": 0.77,
+        "ret_3m_pct": 13.4,
+        "ret_6m_pct": 118.8,
+        "ret_9m_pct": 92.6,
+        "ret_12m_pct": 99.1,
+        "avg_vol50": 4281798.0,
+        "avg_dollar_vol20": 822482359.0,
+        "prior_20d_high": 258.39,
+        "prior_50d_high": 292.72,
+        "trailing_pe": 554.9,
+        "peg_ratio": 1.3,
+        "profit_margin_pct": 4.5,
+        "debt_to_equity": 29.26,
+        "eps_qtr_growth_pct": 1583.3,
+        "eps_ann_growth_pct": 1498.5,
+        "institutional_pct": 92.8
       }
     },
     {
-      "ticker": "NTAP",
-      "company": "NetApp, Inc.",
+      "ticker": "ARW",
+      "company": "Arrow Electronics, Inc.",
       "sector": "Technology",
-      "industry": "Software - Infrastructure",
-      "price": 197.3,
-      "pct_chg": 0.03,
-      "rel_vol": 0.75,
+      "industry": "Electronics & Computer Distribution",
+      "price": 232.16,
+      "pct_chg": -0.01,
+      "rel_vol": 0.33,
       "rs": 96.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
       "canslim": "5.0/6",
       "zanger": "1/3",
-      "qullamaggie": "3/3",
-      "value": "1.0/2.5",
-      "score": 111.4,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 96); C: qtr EPS growth 61%; A: ann EPS growth 64%; N: near new highs; L: RS leader (96); I: institutional 102%; New 20d-high breakout; Top-decile RS (96); ADR 4.3%; Tight base (contraction); Profit margin 19%",
+      "qullamaggie": "2/3",
+      "value": "1.5/2.5",
+      "score": 106.6,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 96); C: qtr EPS growth 45%; A: ann EPS growth 46%; N: near new highs; L: RS leader (96); I: institutional 106%; New 20d-high breakout; Top-decile RS (96); 50d breakout; PEG 0.95; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -261,248 +459,49 @@
       ],
       "signals": {
         "canslim": [
-          "C: qtr EPS growth 61%",
-          "A: ann EPS growth 64%",
+          "C: qtr EPS growth 45%",
+          "A: ann EPS growth 46%",
           "N: near new highs",
           "L: RS leader (96)",
-          "I: institutional 102%"
+          "I: institutional 106%"
         ],
         "zanger": [
           "New 20d-high breakout"
         ],
         "qullamaggie": [
           "Top-decile RS (96)",
-          "ADR 4.3%",
-          "Tight base (contraction)"
+          "50d breakout"
         ],
         "value": [
-          "Profit margin 19%"
-        ]
-      },
-      "metrics": {
-        "sma50": 186.02,
-        "sma150": 145.45,
-        "sma200": 135.57,
-        "wk52_high": 207.08,
-        "wk52_low": 94.11,
-        "pct_off_52w_high": -4.8,
-        "pct_off_52w_low": 109.6,
-        "adr20_pct": 4.3,
-        "tightness_ratio": 0.45,
-        "ret_3m_pct": 26.8,
-        "ret_6m_pct": 89.1,
-        "ret_9m_pct": 76.3,
-        "ret_12m_pct": 58.3,
-        "avg_vol50": 2443212.0,
-        "avg_dollar_vol20": 485373385.0,
-        "prior_20d_high": 200.84,
-        "prior_50d_high": 209.06,
-        "trailing_pe": 27.82,
-        "peg_ratio": 2.18,
-        "profit_margin_pct": 19.2,
-        "debt_to_equity": 169.5,
-        "eps_qtr_growth_pct": 60.9,
-        "eps_ann_growth_pct": 63.5,
-        "institutional_pct": 102.0
-      }
-    },
-    {
-      "ticker": "AMD",
-      "company": "Advanced Micro Devices, Inc.",
-      "sector": "Technology",
-      "industry": "Semiconductors",
-      "price": 629.02,
-      "pct_chg": -0.04,
-      "rel_vol": 0.96,
-      "rs": 98.0,
-      "trend": "8/8",
-      "trend_n": 8,
-      "qualifies": true,
-      "canslim": "5.0/6",
-      "zanger": "1/3",
-      "qullamaggie": "2/3",
-      "value": "2.5/2.5",
-      "score": 109.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 98); C: qtr EPS growth 163%; A: ann EPS growth 160%; N: near new highs; L: RS leader (98); I: institutional 75%; New 20d-high breakout; Top-decile RS (98); 50d breakout; CAUTION: 25% above 50MA (extended); PEG 0.64; Profit margin 16%; Reasonable debt/equity",
-      "trend_criteria": [
-        [
-          "Price above rising 150-day & 200-day average",
-          true
-        ],
-        [
-          "150-day average above 200-day average",
-          true
-        ],
-        [
-          "200-day average trending up vs. 1 month ago",
-          true
-        ],
-        [
-          "50-day average above both 150-day & 200-day",
-          true
-        ],
-        [
-          "Price above 50-day average",
-          true
-        ],
-        [
-          "At least 30% above 52-week low",
-          true
-        ],
-        [
-          "Within 25% of 52-week high",
-          true
-        ],
-        [
-          "RS Rating >= 70 (currently 98)",
-          true
-        ]
-      ],
-      "signals": {
-        "canslim": [
-          "C: qtr EPS growth 163%",
-          "A: ann EPS growth 160%",
-          "N: near new highs",
-          "L: RS leader (98)",
-          "I: institutional 75%"
-        ],
-        "zanger": [
-          "New 20d-high breakout"
-        ],
-        "qullamaggie": [
-          "Top-decile RS (98)",
-          "50d breakout",
-          "CAUTION: 25% above 50MA (extended)"
-        ],
-        "value": [
-          "PEG 0.64",
-          "Profit margin 16%",
+          "PEG 0.95",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 502.12,
-        "sma150": 410.19,
-        "sma200": 362.71,
-        "wk52_high": 629.26,
-        "wk52_low": 159.46,
-        "pct_off_52w_high": 0.0,
-        "pct_off_52w_low": 294.6,
-        "adr20_pct": 3.57,
-        "tightness_ratio": 0.79,
-        "ret_3m_pct": 18.2,
-        "ret_6m_pct": 185.7,
-        "ret_9m_pct": 192.7,
-        "ret_12m_pct": 291.1,
-        "avg_vol50": 24059403.0,
-        "avg_dollar_vol20": 11511127034.0,
-        "prior_20d_high": 624.69,
-        "prior_50d_high": 624.69,
-        "trailing_pe": 160.12,
-        "peg_ratio": 0.64,
-        "profit_margin_pct": 15.6,
-        "debt_to_equity": 6.36,
-        "eps_qtr_growth_pct": 163.4,
-        "eps_ann_growth_pct": 159.5,
-        "institutional_pct": 75.4
-      }
-    },
-    {
-      "ticker": "DINO",
-      "company": "HF Sinclair Corporation",
-      "sector": "Energy",
-      "industry": "Oil & Gas Refining & Marketing",
-      "price": 105.77,
-      "pct_chg": -0.02,
-      "rel_vol": 0.79,
-      "rs": 97.0,
-      "trend": "8/8",
-      "trend_n": 8,
-      "qualifies": true,
-      "canslim": "5.0/6",
-      "zanger": "0/3",
-      "qullamaggie": "3/3",
-      "value": "1.5/2.5",
-      "score": 106.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 97); C: qtr EPS growth 329%; A: ann EPS growth 350%; N: near new highs; L: RS leader (97); I: institutional 90%; Top-decile RS (97); ADR 4.4%; Tight base (contraction); PEG 1.13; Reasonable debt/equity",
-      "trend_criteria": [
-        [
-          "Price above rising 150-day & 200-day average",
-          true
-        ],
-        [
-          "150-day average above 200-day average",
-          true
-        ],
-        [
-          "200-day average trending up vs. 1 month ago",
-          true
-        ],
-        [
-          "50-day average above both 150-day & 200-day",
-          true
-        ],
-        [
-          "Price above 50-day average",
-          true
-        ],
-        [
-          "At least 30% above 52-week low",
-          true
-        ],
-        [
-          "Within 25% of 52-week high",
-          true
-        ],
-        [
-          "RS Rating >= 70 (currently 97)",
-          true
-        ]
-      ],
-      "signals": {
-        "canslim": [
-          "C: qtr EPS growth 329%",
-          "A: ann EPS growth 350%",
-          "N: near new highs",
-          "L: RS leader (97)",
-          "I: institutional 90%"
-        ],
-        "zanger": [],
-        "qullamaggie": [
-          "Top-decile RS (97)",
-          "ADR 4.4%",
-          "Tight base (contraction)"
-        ],
-        "value": [
-          "PEG 1.13",
-          "Reasonable debt/equity"
-        ]
-      },
-      "metrics": {
-        "sma50": 96.62,
-        "sma150": 75.21,
-        "sma200": 69.07,
-        "wk52_high": 116.62,
-        "wk52_low": 45.88,
-        "pct_off_52w_high": -9.3,
-        "pct_off_52w_low": 130.6,
-        "adr20_pct": 4.39,
-        "tightness_ratio": 0.48,
-        "ret_3m_pct": 60.9,
-        "ret_6m_pct": 72.2,
-        "ret_9m_pct": 124.1,
-        "ret_12m_pct": 101.9,
-        "avg_vol50": 2839725.0,
-        "avg_dollar_vol20": 298310943.0,
-        "prior_20d_high": 118.39,
-        "prior_50d_high": 118.39,
-        "trailing_pe": 10.08,
-        "peg_ratio": 1.13,
-        "profit_margin_pct": 6.1,
-        "debt_to_equity": 32.26,
-        "eps_qtr_growth_pct": 328.8,
-        "eps_ann_growth_pct": 350.2,
-        "institutional_pct": 89.6
+        "sma50": 213.47,
+        "sma150": 194.46,
+        "sma200": 177.24,
+        "wk52_high": 234.83,
+        "wk52_low": 101.87,
+        "pct_off_52w_high": -1.1,
+        "pct_off_52w_low": 127.9,
+        "adr20_pct": 3.13,
+        "tightness_ratio": 0.77,
+        "ret_3m_pct": 7.9,
+        "ret_6m_pct": 62.1,
+        "ret_9m_pct": 106.5,
+        "ret_12m_pct": 92.0,
+        "avg_vol50": 558825.0,
+        "avg_dollar_vol20": 114542285.0,
+        "prior_20d_high": 230.44,
+        "prior_50d_high": 230.45,
+        "trailing_pe": 14.84,
+        "peg_ratio": 0.95,
+        "profit_margin_pct": 2.3,
+        "debt_to_equity": 30.66,
+        "eps_qtr_growth_pct": 45.3,
+        "eps_ann_growth_pct": 46.5,
+        "institutional_pct": 105.9
       }
     },
     {
@@ -510,9 +509,9 @@
       "company": "Moderna, Inc.",
       "sector": "Healthcare",
       "industry": "Biotechnology",
-      "price": 194.84,
-      "pct_chg": 0.01,
-      "rel_vol": 0.83,
+      "price": 197.64,
+      "pct_chg": -0.05,
+      "rel_vol": 0.71,
       "rs": 99.0,
       "trend": "8/8",
       "trend_n": 8,
@@ -522,7 +521,7 @@
       "qullamaggie": "4/3",
       "value": "0.5/2.5",
       "score": 106.2,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); N: near new highs; L: RS leader (99); I: institutional 80%; New 20d-high breakout; Top-decile RS (99); ADR 7.0%; Tight base (contraction); 50d breakout; CAUTION: 81% above 50MA (extended); Reasonable debt/equity",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); N: near new highs; L: RS leader (99); I: institutional 80%; New 20d-high breakout; Top-decile RS (99); ADR 6.9%; Tight base (contraction); 50d breakout; CAUTION: 80% above 50MA (extended); Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -568,33 +567,33 @@
         ],
         "qullamaggie": [
           "Top-decile RS (99)",
-          "ADR 7.0%",
+          "ADR 6.9%",
           "Tight base (contraction)",
           "50d breakout",
-          "CAUTION: 81% above 50MA (extended)"
+          "CAUTION: 80% above 50MA (extended)"
         ],
         "value": [
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 107.4,
-        "sma150": 71.87,
-        "sma200": 63.4,
-        "wk52_high": 194.82,
+        "sma50": 110.09,
+        "sma150": 72.86,
+        "sma200": 64.25,
+        "wk52_high": 197.73,
         "wk52_low": 22.36,
         "pct_off_52w_high": 0.0,
-        "pct_off_52w_low": 771.3,
-        "adr20_pct": 7.04,
+        "pct_off_52w_low": 784.3,
+        "adr20_pct": 6.94,
         "tightness_ratio": 0.45,
-        "ret_3m_pct": 226.1,
-        "ret_6m_pct": 263.9,
-        "ret_9m_pct": 458.2,
-        "ret_12m_pct": 655.4,
-        "avg_vol50": 18897791.0,
-        "avg_dollar_vol20": 2550201828.0,
-        "prior_20d_high": 192.31,
-        "prior_50d_high": 192.31,
+        "ret_3m_pct": 193.9,
+        "ret_6m_pct": 269.1,
+        "ret_9m_pct": 512.4,
+        "ret_12m_pct": 664.0,
+        "avg_vol50": 18973974.0,
+        "avg_dollar_vol20": 2464733287.0,
+        "prior_20d_high": 195.71,
+        "prior_50d_high": 195.71,
         "trailing_pe": null,
         "peg_ratio": null,
         "profit_margin_pct": -141.4,
@@ -609,9 +608,9 @@
       "company": "Dell Technologies Inc.",
       "sector": "Technology",
       "industry": "Computer Hardware",
-      "price": 536.1,
-      "pct_chg": 0.01,
-      "rel_vol": 0.93,
+      "price": 570.41,
+      "pct_chg": 0.0,
+      "rel_vol": 1.2,
       "rs": 99.0,
       "trend": "8/8",
       "trend_n": 8,
@@ -621,7 +620,7 @@
       "qullamaggie": "3/3",
       "value": "1.0/2.5",
       "score": 105.4,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); C: qtr EPS growth 255%; A: ann EPS growth 273%; N: near new highs; L: RS leader (99); I: institutional 78%; Top-decile RS (99); ADR 5.7%; Tight base (contraction); PEG 0.65",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); C: qtr EPS growth 255%; A: ann EPS growth 273%; N: near new highs; L: RS leader (99); I: institutional 78%; Top-decile RS (99); ADR 5.9%; Tight base (contraction); PEG 0.63",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -667,33 +666,33 @@
         "zanger": [],
         "qullamaggie": [
           "Top-decile RS (99)",
-          "ADR 5.7%",
+          "ADR 5.9%",
           "Tight base (contraction)"
         ],
         "value": [
-          "PEG 0.65"
+          "PEG 0.63"
         ]
       },
       "metrics": {
-        "sma50": 472.29,
-        "sma150": 333.45,
-        "sma200": 280.8,
+        "sma50": 475.87,
+        "sma150": 336.44,
+        "sma200": 282.95,
         "wk52_high": 588.4,
         "wk52_low": 111.07,
-        "pct_off_52w_high": -8.9,
-        "pct_off_52w_low": 382.6,
-        "adr20_pct": 5.75,
-        "tightness_ratio": 0.45,
-        "ret_3m_pct": 30.9,
-        "ret_6m_pct": 191.3,
-        "ret_9m_pct": 323.4,
-        "ret_12m_pct": 299.0,
-        "avg_vol50": 7816235.0,
-        "avg_dollar_vol20": 5787372744.0,
+        "pct_off_52w_high": -3.1,
+        "pct_off_52w_low": 413.5,
+        "adr20_pct": 5.89,
+        "tightness_ratio": 0.4,
+        "ret_3m_pct": 42.8,
+        "ret_6m_pct": 224.4,
+        "ret_9m_pct": 346.9,
+        "ret_12m_pct": 331.8,
+        "avg_vol50": 7817310.0,
+        "avg_dollar_vol20": 5862977799.0,
         "prior_20d_high": 595.51,
         "prior_50d_high": 595.51,
-        "trailing_pe": 31.15,
-        "peg_ratio": 0.65,
+        "trailing_pe": 33.14,
+        "peg_ratio": 0.63,
         "profit_margin_pct": 7.5,
         "debt_to_equity": null,
         "eps_qtr_growth_pct": 255.1,
@@ -702,23 +701,23 @@
       }
     },
     {
-      "ticker": "OKTA",
-      "company": "",
-      "sector": "",
-      "industry": "",
-      "price": 206.65,
-      "pct_chg": 0.0,
-      "rel_vol": 1.35,
-      "rs": 98.0,
+      "ticker": "NTAP",
+      "company": "NetApp, Inc.",
+      "sector": "Technology",
+      "industry": "Software - Infrastructure",
+      "price": 199.1,
+      "pct_chg": -0.05,
+      "rel_vol": 0.3,
+      "rs": 96.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
-      "canslim": "3.0/6",
-      "zanger": "1/3",
-      "qullamaggie": "4/3",
-      "value": "0.0/2.5",
-      "score": 105.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 98); N: near new highs; S: heavy volume / demand; L: RS leader (98); New 20d-high breakout; Top-decile RS (98); ADR 5.5%; Tight base (contraction); 50d breakout; CAUTION: 32% above 50MA (extended)",
+      "canslim": "5.0/6",
+      "zanger": "0/3",
+      "qullamaggie": "3/3",
+      "value": "1.0/2.5",
+      "score": 105.4,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 96); C: qtr EPS growth 61%; A: ann EPS growth 64%; N: near new highs; L: RS leader (96); I: institutional 102%; Top-decile RS (96); ADR 4.2%; Tight base (contraction); Profit margin 19%",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -749,73 +748,73 @@
           true
         ],
         [
-          "RS Rating >= 70 (currently 98)",
+          "RS Rating >= 70 (currently 96)",
           true
         ]
       ],
       "signals": {
         "canslim": [
+          "C: qtr EPS growth 61%",
+          "A: ann EPS growth 64%",
           "N: near new highs",
-          "S: heavy volume / demand",
-          "L: RS leader (98)"
+          "L: RS leader (96)",
+          "I: institutional 102%"
         ],
-        "zanger": [
-          "New 20d-high breakout"
-        ],
+        "zanger": [],
         "qullamaggie": [
-          "Top-decile RS (98)",
-          "ADR 5.5%",
-          "Tight base (contraction)",
-          "50d breakout",
-          "CAUTION: 32% above 50MA (extended)"
+          "Top-decile RS (96)",
+          "ADR 4.2%",
+          "Tight base (contraction)"
         ],
-        "value": []
+        "value": [
+          "Profit margin 19%"
+        ]
       },
       "metrics": {
-        "sma50": 156.33,
-        "sma150": 114.57,
-        "sma200": 108.07,
-        "wk52_high": 206.64,
-        "wk52_low": 62.93,
-        "pct_off_52w_high": 0.0,
-        "pct_off_52w_low": 228.4,
-        "adr20_pct": 5.54,
-        "tightness_ratio": 0.55,
-        "ret_3m_pct": 74.3,
-        "ret_6m_pct": 169.2,
-        "ret_9m_pct": 129.1,
-        "ret_12m_pct": 123.7,
-        "avg_vol50": 3520225.0,
-        "avg_dollar_vol20": 860552682.0,
-        "prior_20d_high": 207.2,
-        "prior_50d_high": 207.2,
-        "trailing_pe": null,
-        "peg_ratio": null,
-        "profit_margin_pct": null,
-        "debt_to_equity": null,
-        "eps_qtr_growth_pct": null,
-        "eps_ann_growth_pct": null,
-        "institutional_pct": null
+        "sma50": 187.43,
+        "sma150": 146.7,
+        "sma200": 136.35,
+        "wk52_high": 207.08,
+        "wk52_low": 94.11,
+        "pct_off_52w_high": -3.8,
+        "pct_off_52w_low": 111.7,
+        "adr20_pct": 4.25,
+        "tightness_ratio": 0.38,
+        "ret_3m_pct": 30.7,
+        "ret_6m_pct": 90.7,
+        "ret_9m_pct": 81.3,
+        "ret_12m_pct": 61.6,
+        "avg_vol50": 2379804.0,
+        "avg_dollar_vol20": 475421381.0,
+        "prior_20d_high": 203.91,
+        "prior_50d_high": 209.06,
+        "trailing_pe": 28.12,
+        "peg_ratio": 2.19,
+        "profit_margin_pct": 19.2,
+        "debt_to_equity": 169.5,
+        "eps_qtr_growth_pct": 60.9,
+        "eps_ann_growth_pct": 63.5,
+        "institutional_pct": 102.0
       }
     },
     {
-      "ticker": "KEYS",
-      "company": "Keysight Technologies, Inc.",
+      "ticker": "AVT",
+      "company": "Avnet, Inc.",
       "sector": "Technology",
-      "industry": "Scientific & Technical Instruments",
-      "price": 357.68,
-      "pct_chg": 0.04,
-      "rel_vol": 0.55,
-      "rs": 94.0,
+      "industry": "Electronics & Computer Distribution",
+      "price": 103.53,
+      "pct_chg": -0.04,
+      "rel_vol": 0.47,
+      "rs": 96.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
       "canslim": "5.0/6",
       "zanger": "1/3",
-      "qullamaggie": "1/3",
-      "value": "2.5/2.5",
-      "score": 103.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 94); C: qtr EPS growth 108%; A: ann EPS growth 109%; N: near new highs; L: RS leader (94); I: institutional 93%; New 20d-high breakout; Top-decile RS (94); PEG 0.70; Profit margin 19%; Reasonable debt/equity",
+      "qullamaggie": "2/3",
+      "value": "0.5/2.5",
+      "score": 104.2,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 96); C: qtr EPS growth 1979%; A: ann EPS growth 1969%; N: near new highs; L: RS leader (96); I: institutional 111%; New 20d-high breakout; Top-decile RS (96); 50d breakout; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -846,75 +845,74 @@
           true
         ],
         [
-          "RS Rating >= 70 (currently 94)",
+          "RS Rating >= 70 (currently 96)",
           true
         ]
       ],
       "signals": {
         "canslim": [
-          "C: qtr EPS growth 108%",
-          "A: ann EPS growth 109%",
+          "C: qtr EPS growth 1979%",
+          "A: ann EPS growth 1969%",
           "N: near new highs",
-          "L: RS leader (94)",
-          "I: institutional 93%"
+          "L: RS leader (96)",
+          "I: institutional 111%"
         ],
         "zanger": [
           "New 20d-high breakout"
         ],
         "qullamaggie": [
-          "Top-decile RS (94)"
+          "Top-decile RS (96)",
+          "50d breakout"
         ],
         "value": [
-          "PEG 0.70",
-          "Profit margin 19%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 327.98,
-        "sma150": 324.54,
-        "sma200": 297.14,
-        "wk52_high": 373.34,
-        "wk52_low": 159.49,
-        "pct_off_52w_high": -4.2,
-        "pct_off_52w_low": 124.2,
-        "adr20_pct": 2.54,
-        "tightness_ratio": 0.79,
-        "ret_3m_pct": 1.8,
-        "ret_6m_pct": 19.7,
-        "ret_9m_pct": 76.6,
-        "ret_12m_pct": 101.1,
-        "avg_vol50": 1258834.0,
-        "avg_dollar_vol20": 363951427.0,
-        "prior_20d_high": 353.67,
-        "prior_50d_high": 366.41,
-        "trailing_pe": 48.38,
-        "peg_ratio": 0.7,
-        "profit_margin_pct": 19.1,
-        "debt_to_equity": 42.09,
-        "eps_qtr_growth_pct": 107.9,
-        "eps_ann_growth_pct": 109.1,
-        "institutional_pct": 93.0
+        "sma50": 92.26,
+        "sma150": 81.93,
+        "sma200": 75.16,
+        "wk52_high": 103.57,
+        "wk52_low": 44.37,
+        "pct_off_52w_high": 0.0,
+        "pct_off_52w_low": 133.4,
+        "adr20_pct": 3.6,
+        "tightness_ratio": 0.72,
+        "ret_3m_pct": 19.9,
+        "ret_6m_pct": 69.2,
+        "ret_9m_pct": 110.9,
+        "ret_12m_pct": 96.0,
+        "avg_vol50": 1217821.0,
+        "avg_dollar_vol20": 121277589.0,
+        "prior_20d_high": 102.7,
+        "prior_50d_high": 102.7,
+        "trailing_pe": 25.82,
+        "peg_ratio": 2.65,
+        "profit_margin_pct": 1.2,
+        "debt_to_equity": 69.2,
+        "eps_qtr_growth_pct": 1978.8,
+        "eps_ann_growth_pct": 1968.9,
+        "institutional_pct": 110.6
       }
     },
     {
-      "ticker": "INTC",
-      "company": "Intel Corporation",
+      "ticker": "MU",
+      "company": "Micron Technology, Inc.",
       "sector": "Technology",
       "industry": "Semiconductors",
-      "price": 127.36,
-      "pct_chg": -0.02,
-      "rel_vol": 1.01,
+      "price": 1082.03,
+      "pct_chg": -0.01,
+      "rel_vol": 0.64,
       "rs": 99.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
-      "canslim": "3.0/6",
+      "canslim": "4.0/6",
       "zanger": "1/3",
-      "qullamaggie": "3/3",
-      "value": "1.5/2.5",
-      "score": 102.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); N: near new highs; L: RS leader (99); I: institutional 63%; New 20d-high breakout; Top-decile RS (99); ADR 4.6%; 50d breakout; CAUTION: 29% above 50MA (extended); PEG 1.36; Reasonable debt/equity",
+      "qullamaggie": "2/3",
+      "value": "2.5/2.5",
+      "score": 104.0,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); C: qtr EPS growth 1398%; A: ann EPS growth 1368%; L: RS leader (99); I: institutional 80%; New 20d-high breakout; Top-decile RS (99); 50d breakout; PEG 0.16; Profit margin 56%; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -951,49 +949,49 @@
       ],
       "signals": {
         "canslim": [
-          "N: near new highs",
+          "C: qtr EPS growth 1398%",
+          "A: ann EPS growth 1368%",
           "L: RS leader (99)",
-          "I: institutional 63%"
+          "I: institutional 80%"
         ],
         "zanger": [
           "New 20d-high breakout"
         ],
         "qullamaggie": [
           "Top-decile RS (99)",
-          "ADR 4.6%",
-          "50d breakout",
-          "CAUTION: 29% above 50MA (extended)"
+          "50d breakout"
         ],
         "value": [
-          "PEG 1.36",
+          "PEG 0.16",
+          "Profit margin 56%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 98.53,
-        "sma150": 90.55,
-        "sma200": 78.79,
-        "wk52_high": 140.94,
-        "wk52_low": 31.22,
-        "pct_off_52w_high": -9.6,
-        "pct_off_52w_low": 308.0,
-        "adr20_pct": 4.59,
-        "tightness_ratio": 0.78,
-        "ret_3m_pct": -4.1,
-        "ret_6m_pct": 170.0,
-        "ret_9m_pct": 250.3,
-        "ret_12m_pct": 334.2,
-        "avg_vol50": 109791982.0,
-        "avg_dollar_vol20": 11132134276.0,
-        "prior_20d_high": 124.73,
-        "prior_50d_high": 124.73,
-        "trailing_pe": null,
-        "peg_ratio": 1.36,
-        "profit_margin_pct": -19.8,
-        "debt_to_equity": 49.0,
-        "eps_qtr_growth_pct": null,
-        "eps_ann_growth_pct": null,
-        "institutional_pct": 62.6
+        "sma50": 941.61,
+        "sma150": 766.59,
+        "sma200": 661.1,
+        "wk52_high": 1213.56,
+        "wk52_low": 156.83,
+        "pct_off_52w_high": -10.8,
+        "pct_off_52w_low": 590.0,
+        "adr20_pct": 3.72,
+        "tightness_ratio": 0.93,
+        "ret_3m_pct": -4.4,
+        "ret_6m_pct": 204.4,
+        "ret_9m_pct": 291.7,
+        "ret_12m_pct": 569.2,
+        "avg_vol50": 32754950.0,
+        "avg_dollar_vol20": 24543708892.0,
+        "prior_20d_high": 1105.5,
+        "prior_50d_high": 1105.5,
+        "trailing_pe": 24.49,
+        "peg_ratio": 0.16,
+        "profit_margin_pct": 55.9,
+        "debt_to_equity": 6.33,
+        "eps_qtr_growth_pct": 1398.3,
+        "eps_ann_growth_pct": 1368.5,
+        "institutional_pct": 79.9
       }
     }
   ],
@@ -1003,10 +1001,10 @@
       "company": "ConocoPhillips",
       "sector": "Energy",
       "industry": "Oil & Gas E&P",
-      "price": 129.34,
-      "pct_chg": 0.0,
-      "rel_vol": 0.62,
-      "rs": 86.0,
+      "price": 127.17,
+      "pct_chg": 0.01,
+      "rel_vol": 0.53,
+      "rs": 83.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
@@ -1015,7 +1013,7 @@
       "qullamaggie": "0/3",
       "value": "2.5/2.5",
       "score": 97.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 86); C: qtr EPS growth 99%; A: ann EPS growth 107%; N: near new highs; L: RS leader (86); I: institutional 87%; PEG 1.08; Profit margin 14%; Reasonable debt/equity",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 83); C: qtr EPS growth 99%; A: ann EPS growth 107%; N: near new highs; L: RS leader (83); I: institutional 87%; PEG 1.09; Profit margin 14%; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -1046,7 +1044,7 @@
           true
         ],
         [
-          "RS Rating >= 70 (currently 86)",
+          "RS Rating >= 70 (currently 83)",
           true
         ]
       ],
@@ -1055,37 +1053,37 @@
           "C: qtr EPS growth 99%",
           "A: ann EPS growth 107%",
           "N: near new highs",
-          "L: RS leader (86)",
+          "L: RS leader (83)",
           "I: institutional 87%"
         ],
         "zanger": [],
         "qullamaggie": [],
         "value": [
-          "PEG 1.08",
+          "PEG 1.09",
           "Profit margin 14%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 126.57,
-        "sma150": 120.94,
-        "sma200": 115.43,
+        "sma50": 127.13,
+        "sma150": 121.14,
+        "sma200": 115.76,
         "wk52_high": 141.22,
         "wk52_low": 85.66,
-        "pct_off_52w_high": -8.4,
-        "pct_off_52w_low": 51.0,
-        "adr20_pct": 2.28,
-        "tightness_ratio": 0.9,
-        "ret_3m_pct": 21.0,
-        "ret_6m_pct": -0.0,
-        "ret_9m_pct": 40.7,
-        "ret_12m_pct": 40.6,
-        "avg_vol50": 6676704.0,
-        "avg_dollar_vol20": 903230991.0,
+        "pct_off_52w_high": -10.0,
+        "pct_off_52w_low": 48.4,
+        "adr20_pct": 2.27,
+        "tightness_ratio": 1.0,
+        "ret_3m_pct": 20.0,
+        "ret_6m_pct": -4.6,
+        "ret_9m_pct": 37.1,
+        "ret_12m_pct": 33.0,
+        "avg_vol50": 6689108.0,
+        "avg_dollar_vol20": 894179912.0,
         "prior_20d_high": 141.62,
         "prior_50d_high": 141.62,
-        "trailing_pe": 17.11,
-        "peg_ratio": 1.08,
+        "trailing_pe": 16.8,
+        "peg_ratio": 1.09,
         "profit_margin_pct": 14.4,
         "debt_to_equity": 35.64,
         "eps_qtr_growth_pct": 99.4,
@@ -1098,9 +1096,9 @@
       "company": "DexCom, Inc.",
       "sector": "Healthcare",
       "industry": "Medical Devices",
-      "price": 87.48,
-      "pct_chg": 0.01,
-      "rel_vol": 0.33,
+      "price": 87.16,
+      "pct_chg": 0.03,
+      "rel_vol": 0.25,
       "rs": 89.0,
       "trend": "8/8",
       "trend_n": 8,
@@ -1110,7 +1108,7 @@
       "qullamaggie": "0/3",
       "value": "2.5/2.5",
       "score": 97.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 89); C: qtr EPS growth 38%; A: ann EPS growth 44%; N: near new highs; L: RS leader (89); I: institutional 106%; PEG 1.35; Profit margin 20%; Reasonable debt/equity",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 89); C: qtr EPS growth 38%; A: ann EPS growth 44%; N: near new highs; L: RS leader (89); I: institutional 106%; PEG 1.34; Profit margin 20%; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -1156,31 +1154,31 @@
         "zanger": [],
         "qullamaggie": [],
         "value": [
-          "PEG 1.35",
+          "PEG 1.34",
           "Profit margin 20%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 84.62,
-        "sma150": 73.41,
-        "sma200": 72.35,
+        "sma50": 85.14,
+        "sma150": 73.62,
+        "sma200": 72.57,
         "wk52_high": 92.34,
         "wk52_low": 54.84,
-        "pct_off_52w_high": -5.3,
-        "pct_off_52w_low": 59.5,
-        "adr20_pct": 2.54,
-        "tightness_ratio": 0.75,
-        "ret_3m_pct": 25.4,
-        "ret_6m_pct": 31.3,
-        "ret_9m_pct": 32.4,
-        "ret_12m_pct": 25.8,
-        "avg_vol50": 4693917.0,
-        "avg_dollar_vol20": 340646206.0,
+        "pct_off_52w_high": -5.6,
+        "pct_off_52w_low": 58.9,
+        "adr20_pct": 2.46,
+        "tightness_ratio": 0.69,
+        "ret_3m_pct": 24.2,
+        "ret_6m_pct": 31.8,
+        "ret_9m_pct": 30.3,
+        "ret_12m_pct": 29.1,
+        "avg_vol50": 4640473.0,
+        "avg_dollar_vol20": 346422876.0,
         "prior_20d_high": 92.34,
         "prior_50d_high": 92.59,
-        "trailing_pe": 34.57,
-        "peg_ratio": 1.35,
+        "trailing_pe": 34.44,
+        "peg_ratio": 1.34,
         "profit_margin_pct": 20.1,
         "debt_to_equity": 53.35,
         "eps_qtr_growth_pct": 38.5,
@@ -1189,23 +1187,23 @@
       }
     },
     {
-      "ticker": "NVDA",
-      "company": "NVIDIA Corporation",
+      "ticker": "FTNT",
+      "company": "Fortinet, Inc.",
       "sector": "Technology",
-      "industry": "Semiconductors",
-      "price": 224.54,
-      "pct_chg": -0.02,
-      "rel_vol": 0.49,
-      "rs": 81.0,
+      "industry": "Software - Infrastructure",
+      "price": 174.85,
+      "pct_chg": 0.0,
+      "rel_vol": 0.38,
+      "rs": 97.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
       "canslim": "5.0/6",
       "zanger": "0/3",
-      "qullamaggie": "0/3",
+      "qullamaggie": "2/3",
       "value": "2.5/2.5",
       "score": 97.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 81); C: qtr EPS growth 126%; A: ann EPS growth 128%; N: near new highs; L: RS leader (81); I: institutional 71%; PEG 0.49; Profit margin 64%; Reasonable debt/equity",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 97); C: qtr EPS growth 38%; A: ann EPS growth 44%; N: near new highs; L: RS leader (97); I: institutional 72%; Top-decile RS (97); ADR 4.0%; PEG 1.96; Profit margin 28%; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -1236,7 +1234,105 @@
           true
         ],
         [
-          "RS Rating >= 70 (currently 81)",
+          "RS Rating >= 70 (currently 97)",
+          true
+        ]
+      ],
+      "signals": {
+        "canslim": [
+          "C: qtr EPS growth 38%",
+          "A: ann EPS growth 44%",
+          "N: near new highs",
+          "L: RS leader (97)",
+          "I: institutional 72%"
+        ],
+        "zanger": [],
+        "qullamaggie": [
+          "Top-decile RS (97)",
+          "ADR 4.0%"
+        ],
+        "value": [
+          "PEG 1.96",
+          "Profit margin 28%",
+          "Reasonable debt/equity"
+        ]
+      },
+      "metrics": {
+        "sma50": 161.59,
+        "sma150": 128.03,
+        "sma200": 116.18,
+        "wk52_high": 178.74,
+        "wk52_low": 75.23,
+        "pct_off_52w_high": -2.2,
+        "pct_off_52w_low": 132.4,
+        "adr20_pct": 4.04,
+        "tightness_ratio": 0.64,
+        "ret_3m_pct": 15.5,
+        "ret_6m_pct": 115.8,
+        "ret_9m_pct": 116.8,
+        "ret_12m_pct": 109.1,
+        "avg_vol50": 4830364.0,
+        "avg_dollar_vol20": 744008624.0,
+        "prior_20d_high": 181.37,
+        "prior_50d_high": 181.37,
+        "trailing_pe": 62.0,
+        "peg_ratio": 1.96,
+        "profit_margin_pct": 28.2,
+        "debt_to_equity": 36.19,
+        "eps_qtr_growth_pct": 37.8,
+        "eps_ann_growth_pct": 43.9,
+        "institutional_pct": 71.5
+      }
+    },
+    {
+      "ticker": "NVDA",
+      "company": "NVIDIA Corporation",
+      "sector": "Technology",
+      "industry": "Semiconductors",
+      "price": 224.73,
+      "pct_chg": 0.03,
+      "rel_vol": 0.6,
+      "rs": 84.0,
+      "trend": "8/8",
+      "trend_n": 8,
+      "qualifies": true,
+      "canslim": "5.0/6",
+      "zanger": "0/3",
+      "qullamaggie": "0/3",
+      "value": "2.5/2.5",
+      "score": 97.0,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 84); C: qtr EPS growth 126%; A: ann EPS growth 128%; N: near new highs; L: RS leader (84); I: institutional 71%; PEG 0.48; Profit margin 64%; Reasonable debt/equity",
+      "trend_criteria": [
+        [
+          "Price above rising 150-day & 200-day average",
+          true
+        ],
+        [
+          "150-day average above 200-day average",
+          true
+        ],
+        [
+          "200-day average trending up vs. 1 month ago",
+          true
+        ],
+        [
+          "50-day average above both 150-day & 200-day",
+          true
+        ],
+        [
+          "Price above 50-day average",
+          true
+        ],
+        [
+          "At least 30% above 52-week low",
+          true
+        ],
+        [
+          "Within 25% of 52-week high",
+          true
+        ],
+        [
+          "RS Rating >= 70 (currently 84)",
           true
         ]
       ],
@@ -1245,37 +1341,37 @@
           "C: qtr EPS growth 126%",
           "A: ann EPS growth 128%",
           "N: near new highs",
-          "L: RS leader (81)",
+          "L: RS leader (84)",
           "I: institutional 71%"
         ],
         "zanger": [],
         "qullamaggie": [],
         "value": [
-          "PEG 0.49",
+          "PEG 0.48",
           "Profit margin 64%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 215.62,
-        "sma150": 204.13,
-        "sma200": 199.28,
+        "sma50": 215.97,
+        "sma150": 204.36,
+        "sma200": 199.47,
         "wk52_high": 235.74,
         "wk52_low": 165.17,
         "pct_off_52w_high": -4.7,
         "pct_off_52w_low": 36.0,
-        "adr20_pct": 2.46,
+        "adr20_pct": 2.33,
         "tightness_ratio": 0.77,
-        "ret_3m_pct": 14.7,
-        "ret_6m_pct": 25.7,
-        "ret_9m_pct": 22.3,
-        "ret_12m_pct": 25.9,
-        "avg_vol50": 122518550.0,
-        "avg_dollar_vol20": 28123820056.0,
+        "ret_3m_pct": 16.7,
+        "ret_6m_pct": 31.2,
+        "ret_9m_pct": 18.7,
+        "ret_12m_pct": 26.9,
+        "avg_vol50": 121082688.0,
+        "avg_dollar_vol20": 25291582339.0,
         "prior_20d_high": 234.76,
         "prior_50d_high": 234.76,
-        "trailing_pe": 28.36,
-        "peg_ratio": 0.49,
+        "trailing_pe": 28.41,
+        "peg_ratio": 0.48,
         "profit_margin_pct": 63.7,
         "debt_to_equity": 16.97,
         "eps_qtr_growth_pct": 125.9,
@@ -1288,19 +1384,19 @@
       "company": "Affiliated Managers Group, Inc.",
       "sector": "Financial Services",
       "industry": "Asset Management",
-      "price": 370.78,
-      "pct_chg": 0.02,
-      "rel_vol": 1.08,
-      "rs": 88.0,
+      "price": 376.14,
+      "pct_chg": 0.07,
+      "rel_vol": 0.62,
+      "rs": 89.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
       "canslim": "5.0/6",
-      "zanger": "0/3",
+      "zanger": "1/3",
       "qullamaggie": "0/3",
       "value": "2.5/2.5",
       "score": 97.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 88); C: qtr EPS growth 120%; A: ann EPS growth 148%; N: near new highs; L: RS leader (88); I: institutional 101%; PEG 0.61; Profit margin 38%; Reasonable debt/equity",
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 89); C: qtr EPS growth 120%; A: ann EPS growth 148%; N: near new highs; L: RS leader (89); I: institutional 101%; New 20d-high breakout; PEG 0.62; Profit margin 38%; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -1331,7 +1427,7 @@
           true
         ],
         [
-          "RS Rating >= 70 (currently 88)",
+          "RS Rating >= 70 (currently 89)",
           true
         ]
       ],
@@ -1340,37 +1436,39 @@
           "C: qtr EPS growth 120%",
           "A: ann EPS growth 148%",
           "N: near new highs",
-          "L: RS leader (88)",
+          "L: RS leader (89)",
           "I: institutional 101%"
         ],
-        "zanger": [],
+        "zanger": [
+          "New 20d-high breakout"
+        ],
         "qullamaggie": [],
         "value": [
-          "PEG 0.61",
+          "PEG 0.62",
           "Profit margin 38%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 363.07,
-        "sma150": 326.22,
-        "sma200": 320.18,
+        "sma50": 362.67,
+        "sma150": 327.06,
+        "sma200": 321.15,
         "wk52_high": 383.42,
         "wk52_low": 230.78,
-        "pct_off_52w_high": -3.3,
-        "pct_off_52w_low": 60.6,
-        "adr20_pct": 2.87,
-        "tightness_ratio": 0.87,
-        "ret_3m_pct": 9.3,
-        "ret_6m_pct": 34.5,
-        "ret_9m_pct": 32.8,
-        "ret_12m_pct": 51.9,
-        "avg_vol50": 273076.0,
-        "avg_dollar_vol20": 101583580.0,
+        "pct_off_52w_high": -2.0,
+        "pct_off_52w_low": 62.9,
+        "adr20_pct": 2.88,
+        "tightness_ratio": 1.0,
+        "ret_3m_pct": 9.9,
+        "ret_6m_pct": 36.0,
+        "ret_9m_pct": 28.6,
+        "ret_12m_pct": 58.4,
+        "avg_vol50": 274918.0,
+        "avg_dollar_vol20": 100943777.0,
         "prior_20d_high": 376.75,
         "prior_50d_high": 392.92,
-        "trailing_pe": 13.01,
-        "peg_ratio": 0.61,
+        "trailing_pe": 13.18,
+        "peg_ratio": 0.62,
         "profit_margin_pct": 37.7,
         "debt_to_equity": 76.1,
         "eps_qtr_growth_pct": 120.5,
@@ -1379,409 +1477,23 @@
       }
     },
     {
-      "ticker": "ANET",
-      "company": "Arista Networks, Inc.",
-      "sector": "Technology",
-      "industry": "Computer Hardware",
-      "price": 205.6,
-      "pct_chg": -0.05,
-      "rel_vol": 0.42,
-      "rs": 94.0,
-      "trend": "8/8",
-      "trend_n": 8,
-      "qualifies": true,
-      "canslim": "5.0/6",
-      "zanger": "1/3",
-      "qullamaggie": "1/3",
-      "value": "2.0/2.5",
-      "score": 94.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 94); C: qtr EPS growth 36%; A: ann EPS growth 36%; N: near new highs; L: RS leader (94); I: institutional 73%; New 20d-high breakout; Top-decile RS (94); PEG 1.52; Profit margin 38%",
-      "trend_criteria": [
-        [
-          "Price above rising 150-day & 200-day average",
-          true
-        ],
-        [
-          "150-day average above 200-day average",
-          true
-        ],
-        [
-          "200-day average trending up vs. 1 month ago",
-          true
-        ],
-        [
-          "50-day average above both 150-day & 200-day",
-          true
-        ],
-        [
-          "Price above 50-day average",
-          true
-        ],
-        [
-          "At least 30% above 52-week low",
-          true
-        ],
-        [
-          "Within 25% of 52-week high",
-          true
-        ],
-        [
-          "RS Rating >= 70 (currently 94)",
-          true
-        ]
-      ],
-      "signals": {
-        "canslim": [
-          "C: qtr EPS growth 36%",
-          "A: ann EPS growth 36%",
-          "N: near new highs",
-          "L: RS leader (94)",
-          "I: institutional 73%"
-        ],
-        "zanger": [
-          "New 20d-high breakout"
-        ],
-        "qullamaggie": [
-          "Top-decile RS (94)"
-        ],
-        "value": [
-          "PEG 1.52",
-          "Profit margin 38%"
-        ]
-      },
-      "metrics": {
-        "sma50": 188.81,
-        "sma150": 163.9,
-        "sma200": 156.27,
-        "wk52_high": 210.5,
-        "wk52_low": 116.13,
-        "pct_off_52w_high": -2.3,
-        "pct_off_52w_low": 77.1,
-        "adr20_pct": 3.42,
-        "tightness_ratio": 0.68,
-        "ret_3m_pct": 27.2,
-        "ret_6m_pct": 57.3,
-        "ret_9m_pct": 56.9,
-        "ret_12m_pct": 41.5,
-        "avg_vol50": 6410198.0,
-        "avg_dollar_vol20": 971654108.0,
-        "prior_20d_high": 206.48,
-        "prior_50d_high": 214.89,
-        "trailing_pe": 65.09,
-        "peg_ratio": 1.52,
-        "profit_margin_pct": 38.4,
-        "debt_to_equity": null,
-        "eps_qtr_growth_pct": 36.5,
-        "eps_ann_growth_pct": 35.7,
-        "institutional_pct": 73.3
-      }
-    },
-    {
-      "ticker": "DVN",
-      "company": "Devon Energy Corporation",
-      "sector": "Energy",
-      "industry": "Oil & Gas E&P",
-      "price": 48.9,
-      "pct_chg": 0.01,
-      "rel_vol": 1.28,
-      "rs": 82.0,
-      "trend": "8/8",
-      "trend_n": 8,
-      "qualifies": true,
-      "canslim": "5.0/6",
-      "zanger": "0/3",
-      "qullamaggie": "1/3",
-      "value": "2.0/2.5",
-      "score": 94.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 82); C: qtr EPS growth 113%; A: ann EPS growth 44%; N: near new highs; L: RS leader (82); I: institutional 95%; Tight base (contraction); PE 10.6; Profit margin 17%; Reasonable debt/equity",
-      "trend_criteria": [
-        [
-          "Price above rising 150-day & 200-day average",
-          true
-        ],
-        [
-          "150-day average above 200-day average",
-          true
-        ],
-        [
-          "200-day average trending up vs. 1 month ago",
-          true
-        ],
-        [
-          "50-day average above both 150-day & 200-day",
-          true
-        ],
-        [
-          "Price above 50-day average",
-          true
-        ],
-        [
-          "At least 30% above 52-week low",
-          true
-        ],
-        [
-          "Within 25% of 52-week high",
-          true
-        ],
-        [
-          "RS Rating >= 70 (currently 82)",
-          true
-        ]
-      ],
-      "signals": {
-        "canslim": [
-          "C: qtr EPS growth 113%",
-          "A: ann EPS growth 44%",
-          "N: near new highs",
-          "L: RS leader (82)",
-          "I: institutional 95%"
-        ],
-        "zanger": [],
-        "qullamaggie": [
-          "Tight base (contraction)"
-        ],
-        "value": [
-          "PE 10.6",
-          "Profit margin 17%",
-          "Reasonable debt/equity"
-        ]
-      },
-      "metrics": {
-        "sma50": 46.52,
-        "sma150": 46.16,
-        "sma200": 44.27,
-        "wk52_high": 52.07,
-        "wk52_low": 31.74,
-        "pct_off_52w_high": -6.1,
-        "pct_off_52w_low": 54.1,
-        "adr20_pct": 2.53,
-        "tightness_ratio": 0.58,
-        "ret_3m_pct": 14.4,
-        "ret_6m_pct": -2.7,
-        "ret_9m_pct": 36.4,
-        "ret_12m_pct": 45.0,
-        "avg_vol50": 11453991.0,
-        "avg_dollar_vol20": 630480566.0,
-        "prior_20d_high": 51.7,
-        "prior_50d_high": 51.7,
-        "trailing_pe": 10.63,
-        "peg_ratio": 2.92,
-        "profit_margin_pct": 17.5,
-        "debt_to_equity": 28.49,
-        "eps_qtr_growth_pct": 112.6,
-        "eps_ann_growth_pct": 44.0,
-        "institutional_pct": 94.7
-      }
-    },
-    {
-      "ticker": "INCY",
-      "company": "Incyte Corporation",
+      "ticker": "HUM",
+      "company": "Humana Inc.",
       "sector": "Healthcare",
-      "industry": "Biotechnology",
-      "price": 124.43,
-      "pct_chg": -0.01,
-      "rel_vol": 0.56,
-      "rs": 88.0,
-      "trend": "8/8",
-      "trend_n": 8,
-      "qualifies": true,
-      "canslim": "5.0/6",
-      "zanger": "0/3",
-      "qullamaggie": "0/3",
-      "value": "2.0/2.5",
-      "score": 94.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 88); C: qtr EPS growth 45%; A: ann EPS growth 38%; N: near new highs; L: RS leader (88); I: institutional 103%; PE 15.9; Profit margin 28%; Reasonable debt/equity",
-      "trend_criteria": [
-        [
-          "Price above rising 150-day & 200-day average",
-          true
-        ],
-        [
-          "150-day average above 200-day average",
-          true
-        ],
-        [
-          "200-day average trending up vs. 1 month ago",
-          true
-        ],
-        [
-          "50-day average above both 150-day & 200-day",
-          true
-        ],
-        [
-          "Price above 50-day average",
-          true
-        ],
-        [
-          "At least 30% above 52-week low",
-          true
-        ],
-        [
-          "Within 25% of 52-week high",
-          true
-        ],
-        [
-          "RS Rating >= 70 (currently 88)",
-          true
-        ]
-      ],
-      "signals": {
-        "canslim": [
-          "C: qtr EPS growth 45%",
-          "A: ann EPS growth 38%",
-          "N: near new highs",
-          "L: RS leader (88)",
-          "I: institutional 103%"
-        ],
-        "zanger": [],
-        "qullamaggie": [],
-        "value": [
-          "PE 15.9",
-          "Profit margin 28%",
-          "Reasonable debt/equity"
-        ]
-      },
-      "metrics": {
-        "sma50": 122.86,
-        "sma150": 107.4,
-        "sma200": 105.99,
-        "wk52_high": 129.93,
-        "wk52_low": 81.66,
-        "pct_off_52w_high": -4.2,
-        "pct_off_52w_low": 52.4,
-        "adr20_pct": 2.48,
-        "tightness_ratio": 0.66,
-        "ret_3m_pct": 14.7,
-        "ret_6m_pct": 37.3,
-        "ret_9m_pct": 21.2,
-        "ret_12m_pct": 46.9,
-        "avg_vol50": 1600523.0,
-        "avg_dollar_vol20": 180296405.0,
-        "prior_20d_high": 130.8,
-        "prior_50d_high": 132.6,
-        "trailing_pe": 15.85,
-        "peg_ratio": 10.82,
-        "profit_margin_pct": 27.7,
-        "debt_to_equity": 0.6,
-        "eps_qtr_growth_pct": 44.6,
-        "eps_ann_growth_pct": 37.7,
-        "institutional_pct": 103.5
-      }
-    },
-    {
-      "ticker": "LLY",
-      "company": "Eli Lilly and Company",
-      "sector": "Healthcare",
-      "industry": "Drug Manufacturers - General",
-      "price": 1183.09,
-      "pct_chg": 0.1,
-      "rel_vol": 0.78,
-      "rs": 83.0,
-      "trend": "8/8",
-      "trend_n": 8,
-      "qualifies": true,
-      "canslim": "5.0/6",
-      "zanger": "0/3",
-      "qullamaggie": "1/3",
-      "value": "2.0/2.5",
-      "score": 94.6,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 83); C: qtr EPS growth 25%; A: ann EPS growth 26%; N: near new highs; L: RS leader (83); I: institutional 85%; Tight base (contraction); PEG 1.16; Profit margin 34%",
-      "trend_criteria": [
-        [
-          "Price above rising 150-day & 200-day average",
-          true
-        ],
-        [
-          "150-day average above 200-day average",
-          true
-        ],
-        [
-          "200-day average trending up vs. 1 month ago",
-          true
-        ],
-        [
-          "50-day average above both 150-day & 200-day",
-          true
-        ],
-        [
-          "Price above 50-day average",
-          true
-        ],
-        [
-          "At least 30% above 52-week low",
-          true
-        ],
-        [
-          "Within 25% of 52-week high",
-          true
-        ],
-        [
-          "RS Rating >= 70 (currently 83)",
-          true
-        ]
-      ],
-      "signals": {
-        "canslim": [
-          "C: qtr EPS growth 25%",
-          "A: ann EPS growth 26%",
-          "N: near new highs",
-          "L: RS leader (83)",
-          "I: institutional 85%"
-        ],
-        "zanger": [],
-        "qullamaggie": [
-          "Tight base (contraction)"
-        ],
-        "value": [
-          "PEG 1.16",
-          "Profit margin 34%"
-        ]
-      },
-      "metrics": {
-        "sma50": 1176.86,
-        "sma150": 1074.48,
-        "sma200": 1068.36,
-        "wk52_high": 1280.34,
-        "wk52_low": 714.59,
-        "pct_off_52w_high": -7.7,
-        "pct_off_52w_low": 65.4,
-        "adr20_pct": 2.34,
-        "tightness_ratio": 0.47,
-        "ret_3m_pct": 5.8,
-        "ret_6m_pct": 30.9,
-        "ret_9m_pct": 10.3,
-        "ret_12m_pct": 56.6,
-        "avg_vol50": 2548104.0,
-        "avg_dollar_vol20": 2781389835.0,
-        "prior_20d_high": 1264.73,
-        "prior_50d_high": 1292.65,
-        "trailing_pe": 39.65,
-        "peg_ratio": 1.16,
-        "profit_margin_pct": 33.5,
-        "debt_to_equity": 162.07,
-        "eps_qtr_growth_pct": 25.3,
-        "eps_ann_growth_pct": 26.2,
-        "institutional_pct": 85.3
-      }
-    },
-    {
-      "ticker": "APA",
-      "company": "APA Corporation",
-      "sector": "Energy",
-      "industry": "Oil & Gas E&P",
-      "price": 43.68,
-      "pct_chg": 0.0,
-      "rel_vol": 0.88,
+      "industry": "Healthcare Plans",
+      "price": 402.54,
+      "pct_chg": -0.07,
+      "rel_vol": 1.4,
       "rs": 95.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
-      "canslim": "4.0/6",
+      "canslim": "6.0/6",
       "zanger": "0/3",
       "qullamaggie": "1/3",
-      "value": "2.5/2.5",
-      "score": 94.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 95); A: ann EPS growth 26%; N: near new highs; L: RS leader (95); I: institutional 110%; Top-decile RS (95); PEG 1.18; Profit margin 20%; Reasonable debt/equity",
+      "value": "1.5/2.5",
+      "score": 95.2,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 95); C: qtr EPS growth 27%; A: ann EPS growth 27%; N: near new highs; S: heavy volume / demand; L: RS leader (95); I: institutional 101%; Top-decile RS (95); PEG 1.27; Reasonable debt/equity",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -1818,66 +1530,67 @@
       ],
       "signals": {
         "canslim": [
-          "A: ann EPS growth 26%",
+          "C: qtr EPS growth 27%",
+          "A: ann EPS growth 27%",
           "N: near new highs",
+          "S: heavy volume / demand",
           "L: RS leader (95)",
-          "I: institutional 110%"
+          "I: institutional 101%"
         ],
         "zanger": [],
         "qullamaggie": [
           "Top-decile RS (95)"
         ],
         "value": [
-          "PEG 1.18",
-          "Profit margin 20%",
+          "PEG 1.27",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 40.56,
-        "sma150": 37.76,
-        "sma200": 34.76,
-        "wk52_high": 47.41,
-        "wk52_low": 21.66,
-        "pct_off_52w_high": -7.9,
-        "pct_off_52w_low": 101.7,
-        "adr20_pct": 3.14,
-        "tightness_ratio": 0.61,
-        "ret_3m_pct": 31.1,
-        "ret_6m_pct": 7.1,
-        "ret_9m_pct": 81.1,
-        "ret_12m_pct": 85.0,
-        "avg_vol50": 5605160.0,
-        "avg_dollar_vol20": 243770328.0,
-        "prior_20d_high": 47.44,
-        "prior_50d_high": 47.44,
-        "trailing_pe": 9.54,
-        "peg_ratio": 1.18,
-        "profit_margin_pct": 19.6,
-        "debt_to_equity": 48.85,
-        "eps_qtr_growth_pct": 23.9,
-        "eps_ann_growth_pct": 26.3,
-        "institutional_pct": 110.1
+        "sma50": 386.83,
+        "sma150": 307.35,
+        "sma200": 290.23,
+        "wk52_high": 409.8,
+        "wk52_low": 163.67,
+        "pct_off_52w_high": -1.7,
+        "pct_off_52w_low": 146.1,
+        "adr20_pct": 3.26,
+        "tightness_ratio": 0.92,
+        "ret_3m_pct": 4.9,
+        "ret_6m_pct": 130.0,
+        "ret_9m_pct": 56.7,
+        "ret_12m_pct": 53.8,
+        "avg_vol50": 1155254.0,
+        "avg_dollar_vol20": 364477900.0,
+        "prior_20d_high": 419.97,
+        "prior_50d_high": 428.88,
+        "trailing_pe": 38.08,
+        "peg_ratio": 1.27,
+        "profit_margin_pct": 0.9,
+        "debt_to_equity": 76.48,
+        "eps_qtr_growth_pct": 27.3,
+        "eps_ann_growth_pct": 27.1,
+        "institutional_pct": 100.9
       }
     },
     {
-      "ticker": "MU",
-      "company": "Micron Technology, Inc.",
+      "ticker": "APH",
+      "company": "Amphenol Corporation",
       "sector": "Technology",
-      "industry": "Semiconductors",
-      "price": 1078.62,
-      "pct_chg": -0.18,
-      "rel_vol": 0.59,
-      "rs": 99.0,
+      "industry": "Electronic Components",
+      "price": 84.22,
+      "pct_chg": 0.05,
+      "rel_vol": 0.45,
+      "rs": 81.0,
       "trend": "8/8",
       "trend_n": 8,
       "qualifies": true,
-      "canslim": "4.0/6",
-      "zanger": "0/3",
-      "qullamaggie": "1/3",
-      "value": "2.5/2.5",
-      "score": 94.0,
-      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 99); C: qtr EPS growth 1398%; A: ann EPS growth 1368%; L: RS leader (99); I: institutional 80%; Top-decile RS (99); PEG 0.16; Profit margin 56%; Reasonable debt/equity",
+      "canslim": "5.0/6",
+      "zanger": "1/3",
+      "qullamaggie": "0/3",
+      "value": "2.0/2.5",
+      "score": 94.6,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 81); C: qtr EPS growth 62%; A: ann EPS growth 59%; N: near new highs; L: RS leader (81); I: institutional 97%; New 20d-high breakout; PEG 0.95; Profit margin 18%",
       "trend_criteria": [
         [
           "Price above rising 150-day & 200-day average",
@@ -1908,52 +1621,341 @@
           true
         ],
         [
-          "RS Rating >= 70 (currently 99)",
+          "RS Rating >= 70 (currently 81)",
           true
         ]
       ],
       "signals": {
         "canslim": [
-          "C: qtr EPS growth 1398%",
-          "A: ann EPS growth 1368%",
-          "L: RS leader (99)",
-          "I: institutional 80%"
+          "C: qtr EPS growth 62%",
+          "A: ann EPS growth 59%",
+          "N: near new highs",
+          "L: RS leader (81)",
+          "I: institutional 97%"
         ],
-        "zanger": [],
+        "zanger": [
+          "New 20d-high breakout"
+        ],
+        "qullamaggie": [],
+        "value": [
+          "PEG 0.95",
+          "Profit margin 18%"
+        ]
+      },
+      "metrics": {
+        "sma50": 80.38,
+        "sma150": 74.55,
+        "sma200": 73.7,
+        "wk52_high": 88.16,
+        "wk52_low": 59.58,
+        "pct_off_52w_high": -4.5,
+        "pct_off_52w_low": 41.3,
+        "adr20_pct": 2.96,
+        "tightness_ratio": 0.8,
+        "ret_3m_pct": 2.8,
+        "ret_6m_pct": 36.7,
+        "ret_9m_pct": 22.8,
+        "ret_12m_pct": 36.7,
+        "avg_vol50": 12439066.0,
+        "avg_dollar_vol20": 945667614.0,
+        "prior_20d_high": 84.48,
+        "prior_50d_high": 88.17,
+        "trailing_pe": 42.09,
+        "peg_ratio": 0.95,
+        "profit_margin_pct": 17.7,
+        "debt_to_equity": 120.42,
+        "eps_qtr_growth_pct": 62.1,
+        "eps_ann_growth_pct": 59.3,
+        "institutional_pct": 96.8
+      }
+    },
+    {
+      "ticker": "ANET",
+      "company": "Arista Networks, Inc.",
+      "sector": "Technology",
+      "industry": "Computer Hardware",
+      "price": 208.68,
+      "pct_chg": -0.05,
+      "rel_vol": 0.58,
+      "rs": 95.0,
+      "trend": "8/8",
+      "trend_n": 8,
+      "qualifies": true,
+      "canslim": "5.0/6",
+      "zanger": "1/3",
+      "qullamaggie": "1/3",
+      "value": "2.0/2.5",
+      "score": 94.6,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 95); C: qtr EPS growth 36%; A: ann EPS growth 36%; N: near new highs; L: RS leader (95); I: institutional 73%; New 20d-high breakout; Top-decile RS (95); PEG 1.54; Profit margin 38%",
+      "trend_criteria": [
+        [
+          "Price above rising 150-day & 200-day average",
+          true
+        ],
+        [
+          "150-day average above 200-day average",
+          true
+        ],
+        [
+          "200-day average trending up vs. 1 month ago",
+          true
+        ],
+        [
+          "50-day average above both 150-day & 200-day",
+          true
+        ],
+        [
+          "Price above 50-day average",
+          true
+        ],
+        [
+          "At least 30% above 52-week low",
+          true
+        ],
+        [
+          "Within 25% of 52-week high",
+          true
+        ],
+        [
+          "RS Rating >= 70 (currently 95)",
+          true
+        ]
+      ],
+      "signals": {
+        "canslim": [
+          "C: qtr EPS growth 36%",
+          "A: ann EPS growth 36%",
+          "N: near new highs",
+          "L: RS leader (95)",
+          "I: institutional 73%"
+        ],
+        "zanger": [
+          "New 20d-high breakout"
+        ],
         "qullamaggie": [
-          "Top-decile RS (99)"
+          "Top-decile RS (95)"
         ],
         "value": [
-          "PEG 0.16",
-          "Profit margin 56%",
+          "PEG 1.54",
+          "Profit margin 38%"
+        ]
+      },
+      "metrics": {
+        "sma50": 190.28,
+        "sma150": 164.86,
+        "sma200": 157.05,
+        "wk52_high": 210.5,
+        "wk52_low": 116.13,
+        "pct_off_52w_high": -0.8,
+        "pct_off_52w_low": 79.8,
+        "adr20_pct": 3.22,
+        "tightness_ratio": 0.84,
+        "ret_3m_pct": 32.5,
+        "ret_6m_pct": 70.4,
+        "ret_9m_pct": 59.0,
+        "ret_12m_pct": 46.4,
+        "avg_vol50": 6221286.0,
+        "avg_dollar_vol20": 919869370.0,
+        "prior_20d_high": 208.26,
+        "prior_50d_high": 214.89,
+        "trailing_pe": 66.24,
+        "peg_ratio": 1.54,
+        "profit_margin_pct": 38.4,
+        "debt_to_equity": null,
+        "eps_qtr_growth_pct": 36.5,
+        "eps_ann_growth_pct": 35.7,
+        "institutional_pct": 73.3
+      }
+    },
+    {
+      "ticker": "INCY",
+      "company": "Incyte Corporation",
+      "sector": "Healthcare",
+      "industry": "Biotechnology",
+      "price": 123.91,
+      "pct_chg": 0.0,
+      "rel_vol": 0.39,
+      "rs": 87.0,
+      "trend": "8/8",
+      "trend_n": 8,
+      "qualifies": true,
+      "canslim": "5.0/6",
+      "zanger": "0/3",
+      "qullamaggie": "0/3",
+      "value": "2.0/2.5",
+      "score": 94.6,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 87); C: qtr EPS growth 45%; A: ann EPS growth 38%; N: near new highs; L: RS leader (87); I: institutional 103%; PE 15.8; Profit margin 28%; Reasonable debt/equity",
+      "trend_criteria": [
+        [
+          "Price above rising 150-day & 200-day average",
+          true
+        ],
+        [
+          "150-day average above 200-day average",
+          true
+        ],
+        [
+          "200-day average trending up vs. 1 month ago",
+          true
+        ],
+        [
+          "50-day average above both 150-day & 200-day",
+          true
+        ],
+        [
+          "Price above 50-day average",
+          true
+        ],
+        [
+          "At least 30% above 52-week low",
+          true
+        ],
+        [
+          "Within 25% of 52-week high",
+          true
+        ],
+        [
+          "RS Rating >= 70 (currently 87)",
+          true
+        ]
+      ],
+      "signals": {
+        "canslim": [
+          "C: qtr EPS growth 45%",
+          "A: ann EPS growth 38%",
+          "N: near new highs",
+          "L: RS leader (87)",
+          "I: institutional 103%"
+        ],
+        "zanger": [],
+        "qullamaggie": [],
+        "value": [
+          "PE 15.8",
+          "Profit margin 28%",
           "Reasonable debt/equity"
         ]
       },
       "metrics": {
-        "sma50": 937.03,
-        "sma150": 762.23,
-        "sma200": 656.92,
-        "wk52_high": 1213.56,
-        "wk52_low": 156.83,
-        "pct_off_52w_high": -11.0,
-        "pct_off_52w_low": 589.0,
-        "adr20_pct": 3.89,
-        "tightness_ratio": 0.93,
-        "ret_3m_pct": -11.0,
-        "ret_6m_pct": 182.8,
-        "ret_9m_pct": 290.7,
-        "ret_12m_pct": 549.3,
-        "avg_vol50": 33401380.0,
-        "avg_dollar_vol20": 25113487662.0,
-        "prior_20d_high": 1105.5,
-        "prior_50d_high": 1105.5,
-        "trailing_pe": 24.41,
-        "peg_ratio": 0.16,
-        "profit_margin_pct": 55.9,
-        "debt_to_equity": 6.33,
-        "eps_qtr_growth_pct": 1398.3,
-        "eps_ann_growth_pct": 1368.5,
-        "institutional_pct": 79.9
+        "sma50": 123.24,
+        "sma150": 107.72,
+        "sma200": 106.25,
+        "wk52_high": 129.93,
+        "wk52_low": 81.66,
+        "pct_off_52w_high": -4.6,
+        "pct_off_52w_low": 51.7,
+        "adr20_pct": 2.59,
+        "tightness_ratio": 0.66,
+        "ret_3m_pct": 8.9,
+        "ret_6m_pct": 34.3,
+        "ret_9m_pct": 22.8,
+        "ret_12m_pct": 47.2,
+        "avg_vol50": 1584205.0,
+        "avg_dollar_vol20": 184042950.0,
+        "prior_20d_high": 130.0,
+        "prior_50d_high": 132.6,
+        "trailing_pe": 15.78,
+        "peg_ratio": 10.82,
+        "profit_margin_pct": 27.7,
+        "debt_to_equity": 0.6,
+        "eps_qtr_growth_pct": 44.6,
+        "eps_ann_growth_pct": 37.7,
+        "institutional_pct": 103.5
+      }
+    },
+    {
+      "ticker": "NDSN",
+      "company": "Nordson Corporation",
+      "sector": "Industrials",
+      "industry": "Specialty Industrial Machinery",
+      "price": 326.08,
+      "pct_chg": 0.0,
+      "rel_vol": 0.42,
+      "rs": 86.0,
+      "trend": "8/8",
+      "trend_n": 8,
+      "qualifies": true,
+      "canslim": "4.0/6",
+      "zanger": "0/3",
+      "qullamaggie": "1/3",
+      "value": "2.5/2.5",
+      "score": 94.0,
+      "why": "Price above rising 150-day & 200-day average; 150-day average above 200-day average; 200-day average trending up vs. 1 month ago; 50-day average above both 150-day & 200-day; Price above 50-day average; At least 30% above 52-week low; Within 25% of 52-week high; RS Rating >= 70 (currently 86); A: ann EPS growth 23%; N: near new highs; L: RS leader (86); I: institutional 78%; Tight base (contraction); PEG 1.84; Profit margin 19%; Reasonable debt/equity",
+      "trend_criteria": [
+        [
+          "Price above rising 150-day & 200-day average",
+          true
+        ],
+        [
+          "150-day average above 200-day average",
+          true
+        ],
+        [
+          "200-day average trending up vs. 1 month ago",
+          true
+        ],
+        [
+          "50-day average above both 150-day & 200-day",
+          true
+        ],
+        [
+          "Price above 50-day average",
+          true
+        ],
+        [
+          "At least 30% above 52-week low",
+          true
+        ],
+        [
+          "Within 25% of 52-week high",
+          true
+        ],
+        [
+          "RS Rating >= 70 (currently 86)",
+          true
+        ]
+      ],
+      "signals": {
+        "canslim": [
+          "A: ann EPS growth 23%",
+          "N: near new highs",
+          "L: RS leader (86)",
+          "I: institutional 78%"
+        ],
+        "zanger": [],
+        "qullamaggie": [
+          "Tight base (contraction)"
+        ],
+        "value": [
+          "PEG 1.84",
+          "Profit margin 19%",
+          "Reasonable debt/equity"
+        ]
+      },
+      "metrics": {
+        "sma50": 311.36,
+        "sma150": 291.75,
+        "sma200": 284.79,
+        "wk52_high": 334.7,
+        "wk52_low": 221.52,
+        "pct_off_52w_high": -2.6,
+        "pct_off_52w_low": 47.2,
+        "adr20_pct": 1.72,
+        "tightness_ratio": 0.57,
+        "ret_3m_pct": 8.2,
+        "ret_6m_pct": 23.1,
+        "ret_9m_pct": 34.8,
+        "ret_12m_pct": 46.1,
+        "avg_vol50": 368774.0,
+        "avg_dollar_vol20": 111453721.0,
+        "prior_20d_high": 337.54,
+        "prior_50d_high": 339.12,
+        "trailing_pe": 32.97,
+        "peg_ratio": 1.84,
+        "profit_margin_pct": 18.6,
+        "debt_to_equity": 55.62,
+        "eps_qtr_growth_pct": 21.5,
+        "eps_ann_growth_pct": 23.0,
+        "institutional_pct": 78.3
       }
     }
   ]
