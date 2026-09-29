@@ -2,25 +2,28 @@ name: Scheduled scan
 
 on:
   # ---------------------------------------------------------------------
-  # Hourly during US market hours, weekdays.
+  # PRIMARY TRIGGER: workflow_dispatch, called on time by the Cloudflare
+  # Worker in scheduler/ (hourly during market hours + a post-close run).
   #
-  # WHY MINUTE :17 AND NOT :00 --- deliberate. GitHub's documentation says:
-  # "The schedule event can be delayed during periods of high loads of
-  # GitHub Actions workflow runs. High load times include the start of
-  # every hour. If the load is sufficiently high enough, some queued jobs
-  # may be dropped. To decrease the chance of delay, schedule your workflow
-  # to run at a different time of the hour."
-  #
-  # :00, :15, :30 and :45 are the crowded slots where public-repo jobs get
-  # deprioritised or dropped. :17 gives the same hourly cadence with a much
-  # better chance of firing on time.
-  #
-  # 13:00-21:00 UTC is roughly 9am-5pm ET. UTC does not shift for daylight
-  # saving, so this window drifts an hour between EDT and EST.
+  # Why not just use GitHub's cron? Because GitHub does not honour it for
+  # this repo. The old schedule asked for 9 runs every weekday; the Actions
+  # history shows GitHub actually ran it 2-3 times a day, usually starting
+  # 3-4 hours late (first run ~1-2pm ET), and some days not at all. GitHub
+  # documents that scheduled runs "can be delayed" and "may be dropped"
+  # under load, and on free public repos that happens constantly. An
+  # external scheduler calling the API is the standard fix.
+  # ---------------------------------------------------------------------
+  workflow_dispatch: {}
+
+  # ---------------------------------------------------------------------
+  # BACKUP TRIGGER: GitHub's own cron. Kept so the site still gets a few
+  # updates a day if the Worker ever stops (e.g. its token expires). The
+  # "freshness guard" step below makes these runs exit in seconds when the
+  # Worker has already produced recent data, so they don't double the load
+  # on Yahoo. Off-the-hour minute on purpose (:00 is GitHub's busiest).
   # ---------------------------------------------------------------------
   schedule:
-    - cron: "17 13-21 * * 1-5"
-  workflow_dispatch: {}
+    - cron: "37 13-21 * * 1-5"
 
 permissions:
   contents: write
@@ -34,25 +37,74 @@ concurrency:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
+    env:
+      PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v5
 
+      # Only the backup cron can skip. Manual / Worker runs always scan.
+      - name: Freshness guard (backup schedule only)
+        id: guard
+        if: github.event_name == 'schedule'
+        run: |
+          python3 - <<'EOF'
+          import json, os, datetime as dt
+          skip = False
+          try:
+              with open("docs/data/latest.json") as f:
+                  gen = dt.datetime.fromisoformat(json.load(f)["generated_at"])
+              age_min = (dt.datetime.now(dt.timezone.utc) - gen).total_seconds() / 60
+              print(f"Published data is {age_min:.0f} minutes old.")
+              skip = age_min < 50
+          except Exception as e:
+              print(f"Could not read the current data file ({e}); scanning.")
+          print("Skipping: the Worker already refreshed recently." if skip else "Running scan.")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as out:
+              out.write(f"skip={'true' if skip else 'false'}\n")
+          EOF
+
       - uses: actions/setup-python@v6
+        if: steps.guard.outputs.skip != 'true'
         with:
           python-version: "3.11"
           cache: pip
 
       - name: Install dependencies
+        if: steps.guard.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
+      # Fundamentals (company name, sector, P/E, growth...) change at most
+      # daily, but the cache file lived only inside each throwaway runner, so
+      # EVERY run re-downloaded all ~900 of them - the heaviest and most
+      # rate-limit-prone part of the scan. Carry the cache between runs.
+      - name: Restore fundamentals cache
+        if: steps.guard.outputs.skip != 'true'
+        uses: actions/cache/restore@v5
+        with:
+          path: fundamentals_cache.json
+          key: fundamentals-${{ github.run_id }}
+          restore-keys: |
+            fundamentals-
+
       - name: Run scan
-        run: python sepa_scanner.py --json-out docs/data/latest.json
-        # No continue-on-error on purpose. An earlier version suppressed
-        # failures to avoid email noise, which meant a scan failing every
-        # time still reported success and the site went stale silently.
+        id: scan
+        if: steps.guard.outputs.skip != 'true'
+        # Exit code 2 = the scanner refused to publish a degraded scan (e.g.
+        # Yahoo throttled this runner). The run fails loudly - GitHub emails
+        # you - and the commit step is skipped, so the site keeps the last
+        # good data instead of an empty screen.
+        run: python sepa_scanner.py --json-out docs/data/latest.json --fundamentals-ttl-hours 20
+
+      - name: Save fundamentals cache
+        if: always() && steps.guard.outputs.skip != 'true' && hashFiles('fundamentals_cache.json') != ''
+        uses: actions/cache/save@v5
+        with:
+          path: fundamentals_cache.json
+          key: fundamentals-${{ github.run_id }}-${{ github.run_attempt }}
 
       - name: Commit updated data
+        if: steps.guard.outputs.skip != 'true'
         run: |
           set -e
           git config user.name "trend-ledger-bot"
@@ -70,7 +122,7 @@ jobs:
 
           # Retry loop: a push can be rejected if another commit lands in the
           # seconds between our fetch and our push. Rather than failing the
-          # whole run (which is what kept happening), re-sync and try again.
+          # whole run, re-sync and try again.
           for attempt in 1 2 3 4 5; do
             echo "--- push attempt $attempt ---"
 

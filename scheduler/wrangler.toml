@@ -1,0 +1,16 @@
+# Only needed if you deploy the scheduler with the Wrangler CLI instead of
+# pasting scan-trigger.js into the Cloudflare dashboard.
+#
+#   cd scheduler
+#   npx wrangler deploy
+#   npx wrangler secret put GITHUB_TOKEN     (paste the token when asked)
+
+name = "stonks-run-scheduler"
+main = "scan-trigger.js"
+compatibility_date = "2025-06-01"
+
+[triggers]
+crons = ["17,47 * * * *"]
+
+[observability]
+enabled = true

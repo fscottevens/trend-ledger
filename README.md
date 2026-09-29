@@ -14,7 +14,10 @@ several published trading frameworks, then publishes the results as a static sit
 ## How it fits together
 
 ```
-.github/workflows/scan.yml   (hourly schedule)
+scheduler/scan-trigger.js  (Cloudflare Worker, cron: on time, every market hour)
+            |  calls GitHub API: workflow_dispatch
+            v
+.github/workflows/scan.yml   (also has a GitHub cron as a backup)
             |
             v
      sepa_scanner.py  ---writes--->  docs/data/latest.json
@@ -28,8 +31,9 @@ several published trading frameworks, then publishes the results as a static sit
 
 Nothing here needs a paid server:
 
-- **GitHub Actions** runs the Python scanner on a schedule and commits the fresh
-  JSON back to the repo.
+- **A Cloudflare Worker** (free plan) starts the scan on time via GitHub's API.
+- **GitHub Actions** runs the Python scanner and commits the fresh JSON back to
+  the repo.
 - **GitHub Pages** serves `docs/` as the site root at the custom domain.
 
 ---
@@ -40,7 +44,9 @@ Nothing here needs a paid server:
 |---|---|
 | `sepa_scanner.py` | The scanner. Single file, no local imports. |
 | `requirements.txt` | Python dependencies. |
-| `.github/workflows/scan.yml` | Scheduled scan + commit. |
+| `.github/workflows/scan.yml` | Scan + commit. Triggered by the Worker; GitHub cron as backup. |
+| `scheduler/scan-trigger.js` | Cloudflare Worker that triggers the scan on schedule. |
+| `scheduler/wrangler.toml` | Optional: deploy the Worker from the command line. |
 | `docs/index.html` | The screen itself. |
 | `docs/styles.css` | Shared stylesheet for every page. |
 | `docs/*.html` | Guides, methodology, about, legal pages. |
@@ -73,6 +79,7 @@ Useful flags:
 | `--min-trend-criteria N` | Set the Trend Template threshold explicitly |
 | `--extra-tickers A,B` | Add tickers outside the index universe |
 | `--json-out PATH` | Where to write the dashboard feed |
+| `--min-coverage 0.6` | Refuse to publish if less than this share of stocks was scored |
 | `--verbose` | Debug logging |
 
 ---
@@ -81,16 +88,38 @@ Useful flags:
 
 ### Schedule
 
-The workflow runs at **:17 past each hour, 13:00–21:00 UTC, weekdays**.
+Scans start at **9:47, 10:47 ... 15:47 and 16:17 US Eastern, Monday-Friday**
+(8 per day). The times live in `SLOTS_ET` in `scheduler/scan-trigger.js`.
 
-The odd minute is deliberate. GitHub's documentation states that scheduled
-workflows are delayed or dropped during high load, and that *"high load times
-include the start of every hour."* Scheduling at `:00`, `:15`, `:30` or `:45`
-puts the job in the most contended slots. If you change the cadence, keep it off
-those four minutes.
+**Why a Cloudflare Worker instead of GitHub's cron:** GitHub treats `schedule:`
+as best-effort. The Actions history for this repo showed a cron asking for 9
+runs per weekday actually running 2-3 times, usually 3-4 hours late, and some
+days not at all. The Worker's cron trigger fires on time and calls the GitHub
+API to start the workflow (`workflow_dispatch`). It converts to Eastern time
+itself, so daylight saving needs no edits.
 
-UTC does not observe daylight saving, so the window drifts by an hour between EDT
-and EST. Adjust the hour range in `scan.yml` if you want tighter alignment.
+The GitHub cron in `scan.yml` is kept as a **backup**. Its first step checks the
+age of the published data and exits in seconds if the Worker refreshed it in the
+last 50 minutes, so the two don't double up.
+
+The Worker needs one secret, `GITHUB_TOKEN`: a fine-grained personal access
+token limited to this repository with **Actions: Read and write**. When the
+token expires the Worker's status page (its workers.dev URL) says so, and the
+site falls back to the backup cron until you replace it.
+
+### Data quality gate
+
+If Yahoo throttles the runner and fewer than 60% of stocks can be scored (or
+SPY is missing), the scanner exits with code 2 **without** touching
+`latest.json`. The run shows as failed (GitHub emails you) and the site keeps
+the last good scan, labelled with its real age. Batches that come back mostly
+empty are retried twice with a pause first.
+
+### Fundamentals cache
+
+`fundamentals_cache.json` (company name, sector, P/E, growth, ...) is carried
+between runs with `actions/cache` and refreshed once a day (`--fundamentals-ttl-hours 20`),
+instead of re-downloading ~900 company profiles every run.
 
 ### The commit step
 
@@ -109,10 +138,13 @@ workflow file exists in `.github/workflows/` — duplicate files with the same
 `name:` look identical in the Actions sidebar and can race each other.
 
 **Site shows stale data.**
-The page displays the age of the data and warns when it is more than a few hours
-old. Check the Actions tab for failed runs. Yahoo Finance occasionally rate-limits
-shared cloud IPs; an isolated failure is expected and self-corrects on the next
-run.
+Outside market hours the page shows a neutral "Market closed" note - that is
+normal. A red banner means scans really have stopped. Check, in order:
+1. The Actions tab: are there `workflow_dispatch` runs at the slot times? If
+   not, open the Worker's URL - it reports whether its token still works.
+2. Failed runs: exit code 2 means Yahoo throttled that runner; it retries on the
+   next slot. Repeated failures across a whole day point at a yfinance or Yahoo
+   change - `pip install -U yfinance` and run `python sepa_scanner.py` locally.
 
 **A ticker fails to download.**
 Logged as a single summary line, not a crash. Index membership is hardcoded in

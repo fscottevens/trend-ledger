@@ -1,43 +1,167 @@
-STONKS RUN - COMPLETE PROJECT
-=============================
+STONKS RUN - REDEPLOY INSTRUCTIONS  (update of Sept 28, 2026)
+==============================================================
 
-Copy these into C:\Users\fscot\Documents\trend-ledger\ :
+WHY THE SITE WENT STALE
+-----------------------
+1. GitHub was skipping most scheduled scans. The workflow asked for 9 runs
+   every weekday. GitHub actually ran 2-3, the first one usually around
+   1-2pm ET, and on Mon Sept 28 none at all by 3:45pm. Every run that
+   did happen worked fine. The trigger was the problem, not the code.
+   FIX: a free Cloudflare Worker now starts each scan on time. GitHub's
+   own schedule stays on as a backup.
+2. "% Chg" was always about 0.00%. The scanner compared today's price
+   with today's own daily bar instead of yesterday's close. Fresh data
+   looked frozen because of this.
+   FIX: sepa_scanner.py now uses the prior session's close. Relative
+   volume on pre-open runs is fixed too (it used to read ~390x).
+3. A red "stale" warning showed every night and all weekend. The page
+   treated any data older than 6 hours as stale, even with the market
+   closed.
+   FIX: index.html is now market-aware. When the market is closed it
+   shows a neutral "Market closed" note. The red banner only appears
+   when scans have actually stopped.
 
-  docs\                 -> replace the whole docs folder contents
-  sepa_scanner.py       -> repo root
-  requirements.txt      -> repo root
-  README.md             -> repo root
-  .gitignore            -> repo root
-  .github\workflows\scan.yml  -> THE IMPORTANT ONE (see below)
+Also hardened:
+- If Yahoo throttles a run, the scanner retries. If most stocks still
+  fail, it refuses to publish and leaves the last good data on the site.
+  It no longer overwrites good data with a broken scan.
+- Company fundamentals are cached between runs instead of being
+  re-downloaded about 900 times an hour.
+- The methodology page said scans ran "every 15 minutes". It now says
+  hourly.
+
+Files changed: .github/workflows/scan.yml, sepa_scanner.py,
+requirements.txt, docs/index.html, docs/styles.css,
+docs/methodology.html, README.md, and this file. The new workflow is
+in scan.yml.COPY-INTO-.github-workflows until you copy it into place
+(Part 1).
+New folder: scheduler\  (the Cloudflare Worker).
+
+IMPORTANT: do NOT copy anything from the older folders
+(Downloads\stonks-run-*, Documents\partially updated,
+Documents\trend-ledger_all the new files) into this repo. They are
+older versions and would undo these fixes.
 
 
-ABOUT scan.yml
---------------
-The .github folder starts with a dot. Windows Explorer sometimes fails to
-extract or copy dot-folders, which is why this file kept not updating.
+PART 1 - PUSH THE CODE  (about 5 minutes)
+-----------------------------------------
+Open Command Prompt and run these one at a time:
 
-If you cannot see a .github folder after extracting this zip:
-  use the file named  scan.yml.COPY-INTO-.github-workflows
-  rename it to        scan.yml
-  and place it in     C:\Users\fscot\Documents\trend-ledger\.github\workflows\
-
-To create that folder from Command Prompt if it does not exist:
   cd C:\Users\fscot\Documents\trend-ledger
-  mkdir .github\workflows
+  git pull
 
-To confirm the file is really there:
-  dir /a .github\workflows
-  findstr /C:"for attempt in" .github\workflows\scan.yml
+    Your copy is behind GitHub because the bot commits new scan data
+    every run. The pull only brings in docs\data\latest.json, and that
+    doesn't clash with the edited files.
+    If git says latest.json "would be overwritten", run
+        git checkout -- docs/data/latest.json
+    and then run  git pull  again.
 
-That findstr must print a line. If it prints nothing, the file is not there.
+  copy /Y scan.yml.COPY-INTO-.github-workflows .github\workflows\scan.yml
+  findstr /C:"Freshness guard" .github\workflows\scan.yml
+
+    Claude couldn't write the workflow file directly (files in .github
+    are protected), so the new version was saved in the helper file and
+    this command copies it into place. The findstr MUST print a line.
+    If it prints nothing, the copy didn't work. Don't continue until it
+    does.
+
+  git add -A
+  git commit -m "Reliable scan trigger, fix %Chg, market-aware freshness banner"
+  git push
+
+To check that it worked, open
+https://github.com/fscottevens/trend-ledger/blob/main/.github/workflows/scan.yml
+It should say "PRIMARY TRIGGER" near the top. Also open
+https://github.com/fscottevens/trend-ledger/tree/main/scheduler
+You should see scan-trigger.js and wrangler.toml.
 
 
-BEFORE YOU PUSH - check for a duplicate workflow
-------------------------------------------------
-Scans have been failing because an old workflow file appears to still be
-running. Check this page in your browser:
+PART 2 - RUN ONE SCAN BY HAND  (about 5 minutes, mostly waiting)
+---------------------------------------------------------------
+1. Go to https://github.com/fscottevens/trend-ledger/actions
+2. Click "Scheduled scan" in the left sidebar.
+3. Click "Run workflow", keep branch = main, then click the green
+   "Run workflow" button.
+4. Wait for the green check (about 3 minutes). A "pages build and
+   deployment" run then starts on its own (about 1 minute).
+5. Open https://stonks.run and press Ctrl+F5.
+   - "Last refresh" should show the current time in ET.
+   - The % Chg column should show real moves, not a column of 0.0x%.
+   GitHub's cache can take up to 10 minutes, so if it still looks old,
+   wait a few minutes and press Ctrl+F5 again.
 
-  https://github.com/fscottevens/trend-ledger/tree/main/.github/workflows
+If that run fails with "exit code 2", Yahoo throttled that particular
+GitHub machine. Run it again. The site keeps the last good data either
+way.
 
-There should be exactly ONE file: scan.yml
-If there are others, delete them on GitHub (open file -> trash icon -> commit).
+
+PART 3 - CREATE A GITHUB TOKEN FOR THE SCHEDULER  (about 3 minutes)
+------------------------------------------------------------------
+1. Go to https://github.com/settings/personal-access-tokens/new
+   (or: profile picture > Settings > Developer settings >
+   Personal access tokens > Fine-grained tokens > Generate new token)
+2. Token name:          stonks-run-scheduler
+   Expiration:          1 year (set a calendar reminder to renew it)
+   Repository access:   Only select repositories > trend-ledger
+   Permissions:         Repository permissions > Actions > Read and write
+                        (GitHub adds "Metadata: Read-only" automatically.
+                         Nothing else is needed.)
+3. Click Generate token and COPY it. It starts with github_pat_.
+   GitHub shows it only once. Don't put it in any file in the repo.
+
+
+PART 4 - CREATE THE CLOUDFLARE WORKER  (about 10 minutes, free plan)
+-------------------------------------------------------------------
+1. Log in at https://dash.cloudflare.com (same account as stonks.run).
+2. Open "Workers & Pages" in the left sidebar (under Compute), click
+   "Create", then choose Create Worker / "Start with Hello World".
+3. Name it  stonks-run-scheduler  and click Deploy.
+4. Click "Edit code". Delete everything in the editor. Open
+   C:\Users\fscot\Documents\trend-ledger\scheduler\scan-trigger.js
+   in Notepad, press Ctrl+A then Ctrl+C, paste it into the editor, and
+   click Deploy.
+5. Go back to the Worker, then Settings > Variables and Secrets > Add:
+       Type:  Secret
+       Name:  GITHUB_TOKEN
+       Value: (paste the token from Part 3)
+   Click Deploy (or Save).
+6. Still in Settings, open "Trigger Events" (older dashboards say
+   "Triggers"). Click Add > Cron Triggers, enter
+       17,47 * * * *
+   and click Add. Leave it exactly like that: the Worker itself decides
+   which of those times are scan times, in Eastern time, so daylight
+   saving is handled automatically.
+7. Open the Worker's URL (shown at the top of its page, like
+   https://stonks-run-scheduler.<something>.workers.dev). It should say
+       GitHub token: OK (can see the workflow)
+   If it says MISSING or ERROR, redo step 5 or check the token's repo
+   access from Part 3.
+
+(Command-line alternative, if you prefer Wrangler:
+    cd C:\Users\fscot\Documents\trend-ledger\scheduler
+    npx wrangler deploy
+    npx wrangler secret put GITHUB_TOKEN
+ wrangler.toml already has the cron trigger in it.)
+
+
+PART 5 - CONFIRM THE NEXT TRADING DAY
+------------------------------------
+Scans now start at these times on weekdays:
+    Eastern: 9:47, 10:47, 11:47, 12:47, 1:47, 2:47, 3:47, 4:17 pm
+    Chicago: 8:47, 9:47, 10:47, 11:47, 12:47, 1:47, 2:47, 3:17 pm
+
+On the next weekday after 9:47 ET, the Actions page should show a
+"Scheduled scan" run whose trigger is "workflow_dispatch" (the Worker),
+and the site should update a few minutes later. Now and then you'll also
+see short (~20 second) green runs triggered by "schedule". Those are the
+GitHub backup noticing the data is already fresh and skipping. That's
+expected.
+
+IF THE SITE EVER SHOWS A RED BANNER DURING MARKET HOURS
+1. Open the Worker URL and look at the "GitHub token:" line. Tokens
+   expire, so make a new one (Part 3) and update the secret (Part 4,
+   step 5).
+2. Check the Actions page for red runs and open the "Run scan" step.
+   "NOT publishing this scan" means Yahoo throttled that run, and the
+   next hourly run usually fixes it.

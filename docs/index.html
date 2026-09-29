@@ -614,35 +614,105 @@ function updateStatus(status) {
 }
 
 /* ---------- data freshness ----------
-   The scan runs on a schedule that can be delayed or skipped by the CI
-   provider. Rather than silently presenting stale numbers as if they were
-   current, show the actual age of the data whenever it is meaningfully old.
-   Honest staleness beats confident wrongness on a finance site. */
-function describeAge(generatedAt) {
+   Market-aware. Scans run hourly while the US market is open plus once
+   after the close, and not at all overnight or on weekends. So "how old is
+   the data" only matters while the market is open; when it is closed the
+   right question is "does the data include the last session's close?".
+   The previous version flagged anything over 6 hours old as stale, which
+   put a red warning on the site every night and all weekend even when
+   nothing was wrong. Honest staleness still beats confident wrongness:
+   a scan that really is missing is still called out. */
+const ET_TZ = 'America/New_York';
+const OPEN_MIN = 9 * 60 + 30;   // 9:30 ET
+const CLOSE_MIN = 16 * 60;      // 16:00 ET
+
+function etParts(date) {
+  const f = new Intl.DateTimeFormat('en-US', {
+    timeZone: ET_TZ, year: 'numeric', month: '2-digit', day: '2-digit',
+    weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  });
+  const p = {};
+  f.formatToParts(date).forEach(x => { p[x.type] = x.value; });
+  return {
+    ymd: p.year + '-' + p.month + '-' + p.day,
+    weekday: !['Sat', 'Sun'].includes(p.weekday),
+    mins: (parseInt(p.hour, 10) % 24) * 60 + parseInt(p.minute, 10)
+  };
+}
+
+function fmtET(date) {
+  return date.toLocaleString('en-US', {
+    timeZone: ET_TZ, weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+  }) + ' ET';
+}
+
+function fmtAge(mins) {
+  if (mins < 90) return mins + ' min ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 48) return hrs + (hrs === 1 ? ' hour ago' : ' hours ago');
+  return Math.floor(hrs / 24) + ' days ago';
+}
+
+/* The most recent weekday (ET) whose 4:00pm close has already happened. */
+function lastCloseYmd(now) {
+  const n = etParts(now);
+  if (n.weekday && n.mins >= CLOSE_MIN) return n.ymd;
+  let d = new Date(now.getTime());
+  for (let i = 0; i < 7; i++) {
+    d = new Date(d.getTime() - 24 * 3600 * 1000);
+    const p = etParts(d);
+    if (p.weekday) return p.ymd;
+  }
+  return n.ymd;
+}
+
+function assessFreshness(generatedAt, now) {
   const then = new Date(generatedAt);
   if (isNaN(then)) return null;
-  const mins = Math.floor((Date.now() - then.getTime()) / 60000);
-  if (mins < 0) return { mins, text: 'just now', level: 'fresh' };
-  if (mins < 90) return { mins, text: mins + ' min ago', level: 'fresh' };
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return { mins, text: hrs + ' hour' + (hrs === 1 ? '' : 's') + ' ago', level: hrs >= 6 ? 'stale' : 'aging' };
-  const days = Math.floor(hrs / 24);
-  return { mins, text: days + ' day' + (days === 1 ? '' : 's') + ' ago', level: 'stale' };
+  now = now || new Date();
+  const ageMins = Math.max(0, Math.floor((now - then) / 60000));
+  const n = etParts(now);
+  const g = etParts(then);
+  const marketOpen = n.weekday && n.mins >= OPEN_MIN && n.mins < CLOSE_MIN;
+
+  // Recent enough under any conditions: say nothing.
+  if (ageMins < 100) return { level: 'fresh', ageMins, then };
+
+  if (marketOpen) {
+    // First scan of the day starts ~9:47 ET and takes a few minutes to publish.
+    const fromBeforeToday = g.ymd < n.ymd;
+    if (fromBeforeToday && n.mins < 10 * 60 + 20) return { level: 'opening', ageMins, then };
+    return { level: ageMins < 180 ? 'aging' : 'stale', ageMins, then };
+  }
+
+  // Market closed (overnight, pre-open, weekend): is the last close covered?
+  const closeYmd = lastCloseYmd(now);
+  const coversClose = g.ymd > closeYmd || (g.ymd === closeYmd && g.mins >= CLOSE_MIN);
+  if (coversClose) return { level: 'closed', ageMins, then };
+  const duringLastSession = g.ymd === closeYmd && g.mins >= OPEN_MIN;
+  return { level: duringLastSession ? 'aging' : 'stale', ageMins, then };
 }
 
 function renderFreshness(generatedAt) {
   const host = document.getElementById('freshness-banner');
   if (!host) return;
-  const age = describeAge(generatedAt);
-  if (!age || age.level === 'fresh') { host.innerHTML = ''; return; }
+  const f = assessFreshness(generatedAt);
+  if (!f || f.level === 'fresh') { host.innerHTML = ''; return; }
+  const when = fmtET(f.then);
 
-  if (age.level === 'stale') {
-    host.innerHTML = '<div class="freshness stale"><strong>This data is ' + age.text + '.</strong> ' +
-      'The scheduled scan has not completed recently, so the figures below do not reflect current market conditions. ' +
-      'Treat them as a historical snapshot, not live data.</div>';
+  if (f.level === 'closed') {
+    host.innerHTML = '<div class="freshness closed"><strong>Market closed.</strong> Showing the post-close scan from ' +
+      when + '. Updates resume hourly after the next open.</div>';
+  } else if (f.level === 'opening') {
+    host.innerHTML = '<div class="freshness closed"><strong>Market open.</strong> Showing the previous session\'s ' +
+      'closing scan (' + when + '). The first scan of today publishes shortly before 10:00 ET.</div>';
+  } else if (f.level === 'aging') {
+    host.innerHTML = '<div class="freshness aging">Last successful scan was <strong>' + fmtAge(f.ageMins) +
+      '</strong> (' + when + '). Figures may not reflect the latest prices.</div>';
   } else {
-    host.innerHTML = '<div class="freshness aging">Last successful scan was <strong>' + age.text + '</strong>. ' +
-      'Figures may not reflect the most recent session.</div>';
+    host.innerHTML = '<div class="freshness stale"><strong>Last successful scan: ' + fmtAge(f.ageMins) + '</strong> (' +
+      when + '). Scheduled scans have not completed since then, so the figures below do not reflect current ' +
+      'market conditions. Treat them as a historical snapshot, not live data.</div>';
   }
 }
 
@@ -655,7 +725,7 @@ async function loadData() {
     const updated = new Date(data.generated_at);
     const el = document.getElementById('updated-at');
     if (el) el.textContent = isNaN(updated) ? data.generated_at :
-      updated.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+      updated.toLocaleString('en-US', { timeZone: ET_TZ, month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + ' ET';
 
     updateStatus(data.market_status);
     renderFreshness(data.generated_at);

@@ -131,7 +131,21 @@ class Config:
     fundamentals_cache_path: str = "fundamentals_cache.json"
 
     batch_size: int = 100
-    max_workers_fundamentals: int = 16
+    # 8, not 16: fundamentals are the heaviest Yahoo call (one request per
+    # ticker). Fewer parallel workers makes rate-limiting on shared cloud
+    # IPs much less likely, and with the cross-run cache in the workflow
+    # most runs refresh very few tickers anyway.
+    max_workers_fundamentals: int = 8
+
+    # A yf.download batch where fewer than this share of tickers came back
+    # with data is treated as rate-limited/failed and retried.
+    batch_min_success: float = 0.5
+    batch_attempts: int = 3
+    retry_backoff_seconds: float = 20.0
+
+    # Publish gate: refuse to overwrite the site's data unless at least this
+    # share of the universe was actually scored this run (see main()).
+    min_coverage: float = 0.6
 
     top_n_section: int = 10
     output_dir: str = "scan_logs"
@@ -281,40 +295,93 @@ def get_universe(cfg: Config) -> List[str]:
 # Daily history + indicators (used for the whole universe every run)
 # --------------------------------------------------------------------------
 
-def _batched_daily_download(tickers: List[str], cfg: Config) -> Dict[str, pd.DataFrame]:
-    out: Dict[str, pd.DataFrame] = {}
-    all_failed: List[str] = []
-    for i in range(0, len(tickers), cfg.batch_size):
-        chunk = tickers[i:i + cfg.batch_size]
-        LOG.info(f"Daily bars: {i + 1}-{i + len(chunk)} / {len(tickers)}")
+def _frame_for(data: Optional[pd.DataFrame], ticker: str) -> Optional[pd.DataFrame]:
+    """Pulls one ticker's OHLCV frame out of a yf.download result.
+
+    With group_by="ticker", yfinance returns (ticker, field) MultiIndex
+    columns - and current versions do that even for a single-ticker call -
+    so always look the ticker up by name instead of assuming a flat frame
+    when the batch happens to contain one symbol."""
+    if data is None or data.empty:
+        return None
+    try:
+        if isinstance(data.columns, pd.MultiIndex):
+            if ticker not in data.columns.get_level_values(0):
+                return None
+            df = data[ticker]
+        else:
+            df = data
+        df = df.dropna(how="all")
+        return df if not df.empty else None
+    except Exception:
+        return None
+
+
+def _download_batch(chunk: List[str], cfg: Config, *, period: str, interval: str,
+                    what: str, offset: int) -> Optional[pd.DataFrame]:
+    """yf.download with retry.
+
+    When Yahoo rate-limits a shared cloud IP, yfinance usually does NOT
+    raise: it returns a frame of empty columns for the affected tickers and
+    reports the problem through its own logger (which setup_logging
+    silences). So a call that "succeeded" can still be mostly empty. A
+    batch where most tickers came back empty is treated as a failure and
+    retried after a pause, instead of quietly scoring a fraction of the
+    universe."""
+    need = max(1, int(len(chunk) * cfg.batch_min_success))
+    best: Optional[pd.DataFrame] = None
+    best_ok = -1
+    for attempt in range(1, cfg.batch_attempts + 1):
+        data = None
         try:
             data = yf.download(
-                tickers=chunk, period=cfg.lookback_period, interval="1d",
+                tickers=chunk, period=period, interval=interval,
                 group_by="ticker", threads=True, progress=False, auto_adjust=False,
             )
         except Exception as e:
-            LOG.warning(f"Daily batch download failed at offset {i}: {e}")
-            all_failed.extend(chunk)
-            continue
+            LOG.warning(f"{what} batch at offset {offset} raised on attempt {attempt}: {e}")
 
-        if len(chunk) == 1:
-            t = chunk[0]
-            df = data.dropna(how="all")
-            if not df.empty:
+        ok = sum(1 for t in chunk if _frame_for(data, t) is not None) if data is not None else 0
+        if ok > best_ok:
+            best, best_ok = data, ok
+        if ok >= need:
+            return data
+
+        if attempt < cfg.batch_attempts:
+            wait = cfg.retry_backoff_seconds * attempt
+            LOG.warning(f"{what} batch at offset {offset}: only {ok}/{len(chunk)} tickers returned data "
+                        f"(attempt {attempt}/{cfg.batch_attempts}) - likely rate-limited, retrying in {wait:.0f}s")
+            time.sleep(wait)
+
+    LOG.warning(f"{what} batch at offset {offset}: giving up with {max(best_ok, 0)}/{len(chunk)} tickers")
+    return best
+
+
+def _batched_daily_download(tickers: List[str], cfg: Config) -> Dict[str, pd.DataFrame]:
+    out: Dict[str, pd.DataFrame] = {}
+    all_failed: List[str] = []
+    dead_batches = 0
+    for i in range(0, len(tickers), cfg.batch_size):
+        chunk = tickers[i:i + cfg.batch_size]
+        LOG.info(f"Daily bars: {i + 1}-{i + len(chunk)} / {len(tickers)}")
+        data = _download_batch(chunk, cfg, period=cfg.lookback_period, interval="1d",
+                               what="Daily", offset=i)
+        got = 0
+        for t in chunk:
+            df = _frame_for(data, t)
+            if df is not None and len(df) > 60:
                 out[t] = df
+                got += 1
             else:
                 all_failed.append(t)
-            continue
-
-        for t in chunk:
-            try:
-                df = data[t].dropna(how="all")
-                if not df.empty and len(df) > 60:
-                    out[t] = df
-                else:
-                    all_failed.append(t)
-            except Exception:
-                all_failed.append(t)
+        # Circuit breaker: if Yahoo returned nothing at all for two batches in
+        # a row even after retries, it is blocking this runner. Stop instead
+        # of spending ten more minutes on retries that will also fail.
+        dead_batches = dead_batches + 1 if got == 0 else 0
+        if dead_batches >= 2 and i + cfg.batch_size < len(tickers):
+            LOG.error("Yahoo returned no daily data for two batches in a row after retries - stopping early.")
+            all_failed.extend(tickers[i + cfg.batch_size:])
+            break
 
     if all_failed:
         LOG.info(f"{len(all_failed)} ticker(s) had no usable data (delisted/renamed/no history): "
@@ -385,6 +452,17 @@ def compute_indicators(df: pd.DataFrame) -> Optional[dict]:
     prior_20d_high = float(high.iloc[-21:-1].max())
     prior_50d_high = float(high.iloc[-51:-1].max())
 
+    # During (and after) a trading day, Yahoo's daily history already
+    # contains TODAY's bar. The intraday step therefore cannot use
+    # last_close as "yesterday's close" - doing so compared today's price
+    # with itself and pinned every %Chg at ~0.00%. Keep the last few dated
+    # closes so _parse_intraday_frame can pick the true prior-session close,
+    # and a 50-day volume average that excludes the newest bar for the same
+    # reason (today's partial volume should not be in its own baseline).
+    recent_bars = [(pd.Timestamp(ts).date().isoformat(), float(c))
+                   for ts, c in close.iloc[-3:].items()]
+    avg_vol50_ex_last = float(vol.iloc[:-1].rolling(50).mean().iloc[-1])
+
     return {
         "last_close": last_close, "sma50": float(sma50.iloc[-1]),
         "sma150": float(sma150.iloc[-1]), "sma200": sma200_now,
@@ -393,6 +471,7 @@ def compute_indicators(df: pd.DataFrame) -> Optional[dict]:
         "ret_3m": ret_3m, "ret_6m": ret_6m, "ret_9m": ret_9m, "ret_12m": ret_12m,
         "tightness_ratio": tightness_ratio,
         "prior_20d_high": prior_20d_high, "prior_50d_high": prior_50d_high,
+        "recent_bars": recent_bars, "avg_vol50_ex_last": avg_vol50_ex_last,
     }
 
 
@@ -426,23 +505,58 @@ def market_health(spy_ind: Optional[dict]) -> str:
 # Intraday ("up to the minute") data - pulled for the WHOLE candidate pool
 # --------------------------------------------------------------------------
 
-def _elapsed_session_fraction() -> float:
-    now_et = datetime.now(ET)
+def _elapsed_session_fraction(session_date=None, now_et: Optional[datetime] = None) -> float:
+    """Share of the regular session (9:30-16:00 ET) that has elapsed for the
+    session the intraday data belongs to. If that session is an EARLIER day
+    (a pre-open run, a weekend, a holiday) it is complete: 1.0. The old
+    version always measured from today's 9:30, so a pre-open run divided a
+    full day of volume by one minute's worth and reported RelVol ~390x."""
+    now_et = now_et or datetime.now(ET)
+    if session_date is not None and session_date < now_et.date():
+        return 1.0
     session_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
     elapsed_min = max((now_et - session_open).total_seconds() / 60.0, 1.0)
     return min(elapsed_min / 390.0, 1.0)
 
 
-def _parse_intraday_frame(df: pd.DataFrame, ind: dict, elapsed_frac: float) -> Optional[dict]:
+def _session_date(df: pd.DataFrame):
+    """Trading date (ET) of the last bar in an intraday frame."""
+    ts = pd.Timestamp(df.index[-1])
+    if ts.tzinfo is not None:
+        ts = ts.tz_convert(ET)
+    return ts.date()
+
+
+def _parse_intraday_frame(df: pd.DataFrame, ind: dict,
+                          now_et: Optional[datetime] = None) -> Optional[dict]:
     if df is None or df.empty:
         return None
-    day_open = float(df["Open"].iloc[0])
+    needed = ["Open", "High", "Close", "Volume"]
+    if not all(c in df.columns for c in needed):
+        return None
+    df = df.dropna(subset=["Close"])
+    if df.empty:
+        return None
+
+    day_open = float(df["Open"].dropna().iloc[0]) if df["Open"].notna().any() else float(df["Close"].iloc[0])
     day_high = float(df["High"].max())
     last_price = float(df["Close"].iloc[-1])
-    cum_volume = float(df["Volume"].sum())
+    cum_volume = float(df["Volume"].fillna(0).sum())
 
-    prev_close = ind.get("last_close")
-    avg_vol50 = ind.get("avg_vol50")
+    # Pick the close of the session BEFORE the one this intraday data is
+    # from. If the daily history already includes this session's bar (it
+    # does whenever the scan runs during or after the trading day), that
+    # is the second-to-last daily bar, not the last one.
+    session_date = _session_date(df)
+    bars = ind.get("recent_bars") or []
+    if len(bars) >= 2 and bars[-1][0] == session_date.isoformat():
+        prev_close = bars[-2][1]
+        avg_vol50 = ind.get("avg_vol50_ex_last") or ind.get("avg_vol50")
+    else:
+        prev_close = ind.get("last_close")
+        avg_vol50 = ind.get("avg_vol50")
+
+    elapsed_frac = _elapsed_session_fraction(session_date, now_et)
 
     pct_change = ((last_price / prev_close) - 1.0) * 100.0 if prev_close else None
     gap_pct = ((day_open / prev_close) - 1.0) * 100.0 if prev_close else None
@@ -452,7 +566,8 @@ def _parse_intraday_frame(df: pd.DataFrame, ind: dict, elapsed_frac: float) -> O
     return {
         "last_price": last_price, "day_open": day_open, "day_high": day_high,
         "cum_volume": cum_volume, "pct_change": pct_change, "gap_pct": gap_pct,
-        "rel_volume": rel_volume,
+        "rel_volume": rel_volume, "prev_close": prev_close,
+        "session_date": session_date.isoformat(),
     }
 
 
@@ -462,29 +577,21 @@ def fetch_intraday(tickers: List[str], daily_ind: Dict[str, dict], cfg: Config) 
     out: Dict[str, dict] = {}
     if not tickers:
         return out
-    elapsed_frac = _elapsed_session_fraction()
+    now_et = datetime.now(ET)
     failed: List[str] = []
 
     for i in range(0, len(tickers), cfg.batch_size):
         chunk = tickers[i:i + cfg.batch_size]
         LOG.info(f"Intraday quotes: {i + 1}-{i + len(chunk)} / {len(tickers)}")
-        try:
-            data = yf.download(
-                tickers=chunk, period="1d", interval="1m",
-                group_by="ticker", threads=True, progress=False, auto_adjust=False,
-            )
-        except Exception as e:
-            LOG.warning(f"Intraday batch download failed at offset {i}: {e}")
-            failed.extend(chunk)
-            continue
+        data = _download_batch(chunk, cfg, period="1d", interval="1m",
+                               what="Intraday", offset=i)
 
         for t in chunk:
             try:
-                df = data[t].dropna(how="all") if len(chunk) > 1 else data.dropna(how="all")
                 ind = daily_ind.get(t)
                 if ind is None:
                     continue
-                parsed = _parse_intraday_frame(df, ind, elapsed_frac)
+                parsed = _parse_intraday_frame(_frame_for(data, t), ind, now_et)
                 if parsed:
                     out[t] = parsed
                 else:
@@ -501,6 +608,23 @@ def fetch_intraday(tickers: List[str], daily_ind: Dict[str, dict], cfg: Config) 
 # Fundamentals - threaded pull + on-disk JSON cache (persists across runs
 # the same day so re-running the script isn't a full 500-ticker re-pull)
 # --------------------------------------------------------------------------
+
+# Only the fields the scorers and the dashboard actually read. Yahoo's
+# .info payload has ~150 keys per ticker; keeping all of them made the cache
+# file several MB, which matters now that the workflow carries it between
+# runs with actions/cache.
+FUND_FIELDS = (
+    "longName", "shortName", "sector", "industry",
+    "earningsQuarterlyGrowth", "earningsGrowth", "heldPercentInstitutions",
+    "trailingPE", "pegRatio", "trailingPegRatio", "profitMargins", "debtToEquity",
+)
+
+
+def _peg(fund: dict):
+    """Yahoo has published PEG under both keys over time."""
+    v = fund.get("pegRatio")
+    return v if v is not None else fund.get("trailingPegRatio")
+
 
 class FundamentalsCache:
     def __init__(self, cfg: Config):
@@ -542,20 +666,35 @@ class FundamentalsCache:
 
             def _fetch_one(t):
                 try:
-                    return t, (yf.Ticker(t).get_info() or {})
+                    info = yf.Ticker(t).get_info() or {}
+                    return t, {k: info[k] for k in FUND_FIELDS if info.get(k) is not None}
                 except Exception as e:
                     LOG.debug(f"fundamentals failed for {t}: {e}")
                     return t, {}
 
+            refreshed = kept_old = missing = 0
             with ThreadPoolExecutor(max_workers=self.max_workers) as ex:
                 futures = [ex.submit(_fetch_one, t) for t in need]
                 done = 0
                 for fut in as_completed(futures):
                     t, info = fut.result()
-                    self._data[t] = (now, info)
+                    if info:
+                        self._data[t] = (now, info)
+                        refreshed += 1
+                    elif t in self._data:
+                        # Fetch failed (often a rate-limit). Keep the older
+                        # copy rather than replacing good data with nothing;
+                        # its timestamp is untouched so it retries next run.
+                        kept_old += 1
+                    else:
+                        # Never cache an empty result - that used to blank a
+                        # company's name/sector/fundamentals for the whole TTL.
+                        missing += 1
                     done += 1
-                    if done % 50 == 0:
+                    if done % 100 == 0:
                         LOG.info(f"  fundamentals progress: {done}/{len(need)}")
+            LOG.info(f"Fundamentals: {refreshed} refreshed, {kept_old} kept from cache after a failed "
+                     f"refresh, {missing} unavailable")
             self._save()
 
         return {t: self._data[t][1] for t in tickers if t in self._data}
@@ -667,7 +806,7 @@ def score_value(fund: dict) -> Tuple[float, List[str]]:
     notes = []
     score = 0.0
     pe = fund.get("trailingPE")
-    peg = fund.get("pegRatio")
+    peg = _peg(fund)
     if peg is not None and 0 < peg < 2.0:
         score += 1; notes.append(f"PEG {peg:.2f}")
     elif pe is not None and 0 < pe < 25:
@@ -739,14 +878,15 @@ def _num(v, digits: int = 2):
     return round(v, digits) if v is not None else None
 
 
-def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
+def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, dict]:
     """Runs one full pass over the entire universe. Every candidate that
     clears the basic price/liquidity filter gets scored - none are
     dropped for failing the Minervini gate. Instead each row is flagged
     Qualifies=Yes/No, so if fewer than 20 names fully qualify (or none do)
     you still get a ranked top-20 of the CLOSEST candidates rather than
     an empty result. Returns
-    (section1_df, section2_df, market_status, total_scored, qualifying_count)."""
+    (section1_df, section2_df, market_status, total_scored, qualifying_count, stats)
+    where stats describes data coverage for the publish gate in main()."""
     universe = get_universe(cfg)
     LOG.info(f"Universe size: {len(universe)} tickers (+ benchmark {cfg.benchmark})")
 
@@ -798,6 +938,7 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
             continue
 
         rs = rs_ratings.get(t)
+        fund = dict(fund)  # don't write scan-specific flags into the cache's dict
         fund["_rel_volume_ok"] = (intr.get("rel_volume") or 0) >= 1.3
 
         mini_passed, mini_criteria = score_minervini(ind, rs)
@@ -868,7 +1009,7 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
                 "prior_20d_high": _num(ind.get("prior_20d_high")),
                 "prior_50d_high": _num(ind.get("prior_50d_high")),
                 "trailing_pe": _num(fund.get("trailingPE")),
-                "peg_ratio": _num(fund.get("pegRatio")),
+                "peg_ratio": _num(_peg(fund)),
                 "profit_margin_pct": _pct(fund.get("profitMargins")),
                 "debt_to_equity": _num(fund.get("debtToEquity")),
                 "eps_qtr_growth_pct": _pct(fund.get("earningsQuarterlyGrowth")),
@@ -877,9 +1018,22 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
             },
         })
 
+    # Which trading session the intraday numbers describe (the most common
+    # session date across tickers). Lets the website say "results from
+    # Friday's session" instead of guessing from the timestamp alone.
+    session_dates = pd.Series([v.get("session_date") for v in intraday.values() if v.get("session_date")])
+    stats = {
+        "universe": len(universe),
+        "with_history": len(indicators),
+        "with_intraday": len(intraday),
+        "scored": len(rows),
+        "benchmark_ok": cfg.benchmark in indicators,
+        "session_date": session_dates.mode().iloc[0] if not session_dates.empty else None,
+    }
+
     if not rows:
         empty = pd.DataFrame()
-        return empty, empty, market_status, 0, 0
+        return empty, empty, market_status, 0, 0, stats
 
     pool = pd.DataFrame(rows)
     qualifying_count = int((pool["Qualifies"] == "Yes").sum())
@@ -903,7 +1057,22 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int]:
     section2 = section2.drop(columns=["_TrendN"]).reset_index(drop=True)
 
     return (section1, section2,
-            market_status, len(pool), qualifying_count)
+            market_status, len(pool), qualifying_count, stats)
+
+
+def publish_problem(stats: dict, cfg: Config) -> Optional[str]:
+    """Returns a reason string if this scan is too degraded to publish, else
+    None. Without this, a run where Yahoo throttled most requests would
+    still 'succeed' and overwrite a good screen with a thin or empty one -
+    and the site would look freshly updated while showing garbage."""
+    universe = max(stats.get("universe", 0), 1)
+    coverage = stats.get("scored", 0) / universe
+    if not stats.get("benchmark_ok"):
+        return "no benchmark (SPY) data, so market status and RS ratings are unreliable"
+    if coverage < cfg.min_coverage:
+        return (f"only {stats.get('scored', 0)} of {universe} stocks could be scored "
+                f"({coverage:.0%} < required {cfg.min_coverage:.0%})")
+    return None
 
 
 # --------------------------------------------------------------------------
@@ -1014,12 +1183,18 @@ def _rows_for_json(df: pd.DataFrame, score_col: str) -> List[dict]:
 
 
 def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: str,
-                 total_scored: int, qualifying_count: int, min_needed: int, path: str) -> None:
+                 total_scored: int, qualifying_count: int, min_needed: int, path: str,
+                 stats: Optional[dict] = None) -> None:
     """Writes the dashboard's data feed - overwrites the SAME file every run
     (not timestamped) so the website always reads the latest scan."""
+    stats = stats or {}
     payload = {
         "generated_at": datetime.now(ET).isoformat(),
+        # Trading date (ET) the prices describe. Differs from generated_at's
+        # date on pre-open, weekend and holiday runs.
+        "session_date": stats.get("session_date"),
         "market_status": market_status,
+        "universe_size": stats.get("universe"),
         "total_scored": total_scored,
         "qualifying_count": qualifying_count,
         "min_trend_needed": min_needed,
@@ -1029,8 +1204,12 @@ def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: s
     out_dir = os.path.dirname(path)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
-    with open(path, "w") as f:
+    # Write to a temp file and swap it in, so an interrupted run can never
+    # leave a half-written (unparseable) latest.json for the site to load.
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w") as f:
         json.dump(payload, f, indent=2, default=str)
+    os.replace(tmp_path, path)
     LOG.info(f"Wrote dashboard data -> {path}")
 
 
@@ -1118,6 +1297,37 @@ def run_selftest() -> None:
     check("Section-2 (quality) weighting excludes momentum triggers by construction",
           Config().w2_trend + Config().w2_canslim + Config().w2_value > 0)
 
+    # --- %Chg must be measured against the PRIOR session's close ---------
+    # Daily history whose last bar is "today" (what Yahoo returns during
+    # and after the session), plus a 1-minute frame for that same day.
+    session_day = pd.Timestamp(ind_strong["recent_bars"][-1][0])
+    prior_close = ind_strong["recent_bars"][-2][1]
+    today_close = ind_strong["recent_bars"][-1][1]
+    idx = pd.date_range(session_day + pd.Timedelta(hours=9, minutes=30), periods=390, freq="min", tz=ET)
+    intraday_df = pd.DataFrame({"Open": today_close, "High": today_close * 1.01, "Low": today_close * 0.99,
+                                "Close": today_close, "Volume": 1000.0}, index=idx)
+    after_close = datetime.combine(session_day.date(), datetime.min.time(), ET) + timedelta(hours=17)
+    parsed = _parse_intraday_frame(intraday_df, ind_strong, now_et=after_close)
+    expected = (today_close / prior_close - 1.0) * 100.0
+    check("%Chg uses the prior session's close, not today's own daily bar",
+          parsed is not None and abs(parsed["pct_change"] - expected) < 1e-6 and abs(expected) > 0.01)
+    next_morning = after_close + timedelta(hours=16)   # 9:00 ET next day, pre-open
+    check("Pre-open run treats yesterday's session as complete (no inflated RelVol)",
+          _elapsed_session_fraction(session_day.date(), next_morning) == 1.0)
+
+    # --- single-ticker MultiIndex frames are still found ------------------
+    mi = pd.concat({"ONE": strong}, axis=1)
+    check("_frame_for finds a ticker in a one-symbol MultiIndex download",
+          _frame_for(mi, "ONE") is not None and _frame_for(mi, "TWO") is None)
+
+    # --- publish gate ------------------------------------------------------
+    good = {"universe": 900, "scored": 880, "benchmark_ok": True}
+    thin = {"universe": 900, "scored": 120, "benchmark_ok": True}
+    no_spy = {"universe": 900, "scored": 880, "benchmark_ok": False}
+    check("Publish gate accepts a normal scan", publish_problem(good, Config()) is None)
+    check("Publish gate rejects a mostly-empty (rate-limited) scan", publish_problem(thin, Config()) is not None)
+    check("Publish gate rejects a scan with no SPY data", publish_problem(no_spy, Config()) is not None)
+
     print()
     if failures:
         print(f"SELF-TEST FAILED: {len(failures)} check(s) failed -> {failures}")
@@ -1145,6 +1355,9 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--json-out", type=str, default="docs/data/latest.json",
                    help="Path to write the dashboard's JSON data feed (overwritten every run). "
                         "Set to '' to skip.")
+    p.add_argument("--min-coverage", type=float, default=0.6,
+                   help="Refuse to publish (exit code 2, JSON left untouched) unless at least this "
+                        "share of the universe was scored (default 0.6)")
     p.add_argument("--verbose", action="store_true")
     return p.parse_args()
 
@@ -1165,6 +1378,7 @@ def main() -> None:
         fundamentals_ttl_hours=args.fundamentals_ttl_hours,
         include_sp400=not args.sp500_only,
         extra_tickers=[t.strip() for t in args.extra_tickers.split(",")] if args.extra_tickers else [],
+        min_coverage=args.min_coverage,
     )
 
     universe_desc = "S&P 500 + S&P 400 MidCap (~900 tickers)" if cfg.include_sp400 else "S&P 500 only (~500 tickers)"
@@ -1174,12 +1388,25 @@ def main() -> None:
     if not is_market_open():
         LOG.info("Note: market is currently closed - intraday figures reflect the most recent session.")
 
-    section1, section2, market_status, total, qualifying = run_scan(cfg)
+    started = time.time()
+    section1, section2, market_status, total, qualifying, stats = run_scan(cfg)
     min_needed = 8 if cfg.strict_trend_template else cfg.min_trend_criteria
     print_results(section1, section2, market_status, total, qualifying, min_needed)
     save_results(section1, section2, cfg)
+    LOG.info(f"Coverage: {stats['scored']}/{stats['universe']} scored, "
+             f"{stats['with_history']} with daily history, {stats['with_intraday']} with intraday, "
+             f"session {stats.get('session_date')}, {time.time() - started:.0f}s")
+
+    problem = publish_problem(stats, cfg)
+    if problem:
+        # Non-zero exit fails the GitHub Actions run (so you get an email)
+        # and the commit step never runs, so the site keeps showing the last
+        # GOOD scan - with its real age - instead of a broken one.
+        LOG.error(f"NOT publishing this scan: {problem}. Leaving {args.json_out or 'the data file'} unchanged.")
+        sys.exit(2)
+
     if args.json_out:
-        export_json(section1, section2, market_status, total, qualifying, min_needed, args.json_out)
+        export_json(section1, section2, market_status, total, qualifying, min_needed, args.json_out, stats)
 
 
 if __name__ == "__main__":
