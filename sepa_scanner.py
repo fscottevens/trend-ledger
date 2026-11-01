@@ -35,6 +35,13 @@ This is a single file, one manual run per execution (no background
 looping) - a full run takes a few minutes; a same-day re-run is faster
 since fundamentals are cached to a local JSON file.
 
+OUTPUTS (docs/data/, read by the website)
+  latest.json     the two ranked lists with full per-stock detail, plus
+                  market breadth and sector/industry leadership
+  history.json    every session's final list + forward returns vs SPY
+  universe.json   every scored stock (compact), for lookup + watchlist
+  companies.json  company profiles (rewritten only when they change)
+
 UNIVERSE: S&P 500 + S&P 400 MidCap (hardcoded, ~903 tickers)
 ----------------------------------------------------------------
   Hardcoded snapshot (SP500_TICKERS / SP400_TICKERS below), not scraped
@@ -69,6 +76,7 @@ import argparse
 import json
 import logging
 import os
+import re
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -94,6 +102,47 @@ except ImportError:
 
 ET = ZoneInfo("America/New_York")
 LOG = logging.getLogger("sepa_scanner")
+
+# NYSE full-day closures. Used only to work out which trading session an
+# old snapshot belongs to (history backfill) and for the market-hours note -
+# live scans take their session date from the intraday data itself, so a
+# missing future year here never mislabels a live scan. Extend yearly from
+# https://www.nyse.com/markets/hours-calendars
+NYSE_HOLIDAYS = {
+    # 2026
+    "2026-01-01", "2026-01-19", "2026-02-16", "2026-04-03", "2026-05-25",
+    "2026-06-19", "2026-07-03", "2026-09-07", "2026-11-26", "2026-12-25",
+    # 2027
+    "2027-01-01", "2027-01-18", "2027-02-15", "2027-03-26", "2027-05-31",
+    "2027-06-18", "2027-07-05", "2027-09-06", "2027-11-25", "2027-12-24",
+}
+
+
+def is_trading_day(d) -> bool:
+    return d.weekday() < 5 and d.isoformat() not in NYSE_HOLIDAYS
+
+
+def session_for_timestamp(ts: datetime):
+    """The trading session a scan taken at `ts` describes: today's session
+    once the market has opened on a trading day, otherwise the most recent
+    earlier trading day (pre-open, weekend, holiday)."""
+    ts = ts.astimezone(ET)
+    d = ts.date()
+    opened = (ts.hour, ts.minute) >= (9, 30)
+    if is_trading_day(d) and opened:
+        return d
+    d -= timedelta(days=1)
+    while not is_trading_day(d):
+        d -= timedelta(days=1)
+    return d
+
+
+def is_post_close(ts: datetime, session_date) -> bool:
+    """True when a scan taken at `ts` saw the session's closing prices."""
+    ts = ts.astimezone(ET)
+    if ts.date() > session_date:
+        return True
+    return ts.date() == session_date and (ts.hour, ts.minute) >= (16, 0)
 
 
 def setup_logging(verbose: bool = False) -> None:
@@ -617,7 +666,26 @@ FUND_FIELDS = (
     "longName", "shortName", "sector", "industry",
     "earningsQuarterlyGrowth", "earningsGrowth", "heldPercentInstitutions",
     "trailingPE", "pegRatio", "trailingPegRatio", "profitMargins", "debtToEquity",
+    # Company profile + context for the drill-down. All of these arrive in
+    # the SAME get_info() response the scanner already requests, so adding
+    # them costs no extra Yahoo calls.
+    "longBusinessSummary", "website", "fullTimeEmployees", "marketCap",
+    "city", "state", "country",
+    "earningsTimestamp", "earningsTimestampStart", "earningsTimestampEnd",
+    "isEarningsDateEstimate",
+    "forwardPE", "revenueGrowth", "grossMargins", "operatingMargins", "returnOnEquity",
+    "recommendationKey", "recommendationMean", "numberOfAnalystOpinions", "targetMeanPrice",
+    "shortPercentOfFloat", "beta",
 )
+
+# Bump whenever FUND_FIELDS changes. Cache entries written under an older
+# schema are treated as expired (but kept as a fallback if the refresh
+# fails), so new fields appear on the next run instead of up to a day later.
+FUND_SCHEMA = 2
+
+# Business summaries can run to several thousand characters; the site shows
+# a short paragraph, so the cache keeps only the opening portion.
+SUMMARY_CACHE_CHARS = 1500
 
 
 def _peg(fund: dict):
@@ -632,6 +700,7 @@ class FundamentalsCache:
         self.ttl = timedelta(hours=cfg.fundamentals_ttl_hours)
         self.max_workers = cfg.max_workers_fundamentals
         self._data: Dict[str, Tuple[datetime, dict]] = {}
+        self._schema: Dict[str, int] = {}
         self._load()
 
     def _load(self) -> None:
@@ -640,25 +709,34 @@ class FundamentalsCache:
         try:
             with open(self.path, "r") as f:
                 raw = json.load(f)
+            old = 0
             for t, entry in raw.items():
                 ts = datetime.fromisoformat(entry["ts"])
                 self._data[t] = (ts, entry["data"])
-            LOG.info(f"Loaded fundamentals cache: {len(self._data)} tickers")
+                self._schema[t] = int(entry.get("v", 1))
+                old += self._schema[t] != FUND_SCHEMA
+            LOG.info(f"Loaded fundamentals cache: {len(self._data)} tickers"
+                     + (f" ({old} from an older schema, will refresh)" if old else ""))
         except Exception as e:
             LOG.warning(f"Could not load fundamentals cache ({e}); starting fresh")
 
     def _save(self) -> None:
         try:
-            raw = {t: {"ts": ts.isoformat(), "data": d} for t, (ts, d) in self._data.items()}
+            raw = {t: {"ts": ts.isoformat(), "v": self._schema.get(t, FUND_SCHEMA), "data": d}
+                   for t, (ts, d) in self._data.items()}
             with open(self.path, "w") as f:
                 json.dump(raw, f, default=str)
         except Exception as e:
             LOG.warning(f"Could not save fundamentals cache: {e}")
 
+    def _expired(self, t: str, now: datetime) -> bool:
+        return (t not in self._data
+                or self._schema.get(t, 1) != FUND_SCHEMA
+                or now - self._data[t][0] > self.ttl)
+
     def get_many(self, tickers: List[str]) -> Dict[str, dict]:
         now = datetime.now()
-        need = [t for t in tickers
-                if t not in self._data or now - self._data[t][0] > self.ttl]
+        need = [t for t in tickers if self._expired(t, now)]
 
         if need:
             LOG.info(f"Refreshing fundamentals for {len(need)} tickers "
@@ -667,7 +745,11 @@ class FundamentalsCache:
             def _fetch_one(t):
                 try:
                     info = yf.Ticker(t).get_info() or {}
-                    return t, {k: info[k] for k in FUND_FIELDS if info.get(k) is not None}
+                    kept = {k: info[k] for k in FUND_FIELDS if info.get(k) is not None}
+                    s = kept.get("longBusinessSummary")
+                    if isinstance(s, str) and len(s) > SUMMARY_CACHE_CHARS:
+                        kept["longBusinessSummary"] = s[:SUMMARY_CACHE_CHARS]
+                    return t, kept
                 except Exception as e:
                     LOG.debug(f"fundamentals failed for {t}: {e}")
                     return t, {}
@@ -680,6 +762,7 @@ class FundamentalsCache:
                     t, info = fut.result()
                     if info:
                         self._data[t] = (now, info)
+                        self._schema[t] = FUND_SCHEMA
                         refreshed += 1
                     elif t in self._data:
                         # Fetch failed (often a rate-limit). Keep the older
@@ -878,6 +961,96 @@ def _num(v, digits: int = 2):
     return round(v, digits) if v is not None else None
 
 
+def trim_summary(text, max_chars: int = 520) -> str:
+    """Opening sentences of a business description, cut at a sentence end so
+    the site shows a clean paragraph rather than a mid-word fragment."""
+    if not isinstance(text, str):
+        return ""
+    text = re.sub(r"\s+", " ", text).strip()
+    if len(text) <= max_chars:
+        return text
+    # A sentence ends at . ! ? followed by a space and a capital letter, which
+    # keeps "Inc. designs" and "U.S. and" intact.
+    sentences = re.split(r"(?<=[.!?])\s+(?=[A-Z])", text)
+    out = ""
+    for s in sentences:
+        if len(out) + len(s) + 1 > max_chars:
+            break
+        out = (out + " " + s).strip()
+    if not out:  # first sentence alone is too long: cut at a word boundary
+        out = text[:max_chars].rsplit(" ", 1)[0].rstrip(",;:") + "…"
+    return out
+
+
+def company_profile(fund: dict) -> Optional[dict]:
+    """Who the company is, for the drill-down. None when Yahoo had nothing."""
+    if not fund:
+        return None
+    city, state, country = fund.get("city"), fund.get("state"), fund.get("country")
+    if city and country in ("United States", "USA", None) and state:
+        hq = f"{city}, {state}"
+    elif city and country:
+        hq = f"{city}, {country}"
+    else:
+        hq = city or country or None
+    prof = {
+        "summary": trim_summary(fund.get("longBusinessSummary")) or None,
+        "website": fund.get("website") or None,
+        "employees": _clean_num(fund.get("fullTimeEmployees")),
+        "hq": hq,
+        "market_cap": _num(fund.get("marketCap"), 0),
+    }
+    return prof if any(v is not None for v in prof.values()) else None
+
+
+def earnings_info(fund: dict, today=None) -> Optional[dict]:
+    """Next (and very recent) earnings date from Yahoo's epoch timestamps.
+    Earnings proximity is the single most practical risk fact for anyone
+    reading a momentum screen: a stock reporting in two days can gap 15%
+    either way regardless of how good its chart is."""
+    if not fund:
+        return None
+    today = today or datetime.now(ET).date()
+    dates = set()
+    for k in ("earningsTimestamp", "earningsTimestampStart", "earningsTimestampEnd"):
+        v = fund.get(k)
+        try:
+            if v is not None and float(v) > 0:
+                secs = float(v) / 1000.0 if float(v) > 1e11 else float(v)  # tolerate milliseconds
+                dates.add(datetime.fromtimestamp(secs, ET).date())
+        except (TypeError, ValueError, OverflowError, OSError):
+            continue
+    if not dates:
+        return None
+    out = {}
+    upcoming = sorted(d for d in dates if d >= today)
+    past = sorted(d for d in dates if d < today)
+    if upcoming and (upcoming[0] - today).days <= 120:
+        out["next"] = upcoming[0].isoformat()
+        out["days"] = (upcoming[0] - today).days
+        out["estimate"] = bool(fund.get("isEarningsDateEstimate"))
+    if past and (today - past[-1]).days <= 30:
+        out["last"] = past[-1].isoformat()
+        out["days_ago"] = (today - past[-1]).days
+    return out or None
+
+
+def spark_series(close: Optional[pd.Series], dates: List[str]) -> Optional[dict]:
+    """Closing prices and the 50-day average aligned to the shared date axis,
+    for the drill-down's price chart. Missing sessions are null."""
+    if close is None or close.empty or not dates:
+        return None
+    s = close.copy()
+    s.index = [pd.Timestamp(ts).date().isoformat() for ts in s.index]
+    s = s[~s.index.duplicated(keep="last")]
+    sma = s.rolling(50).mean()
+    c = [_num(s.get(d)) for d in dates]
+    m = [_num(sma.get(d)) for d in dates]
+    if sum(v is not None for v in c) < 20:
+        return None
+    return {"c": c, "sma50": m}
+
+
 def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, dict]:
     """Runs one full pass over the entire universe. Every candidate that
     clears the basic price/liquidity filter gets scored - none are
@@ -892,10 +1065,15 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
 
     daily_hist = fetch_daily_history(universe, cfg)
     indicators: Dict[str, dict] = {}
+    closes: Dict[str, pd.Series] = {}   # for the history tracker + price charts
     for t, df in daily_hist.items():
         ind = compute_indicators(df)
         if ind is not None:
             indicators[t] = ind
+            try:
+                closes[t] = df["Close"].dropna()
+            except Exception:
+                pass
     LOG.info(f"Computed indicators for {len(indicators)} / {len(daily_hist)} tickers "
               f"(some are dropped for insufficient history)")
 
@@ -952,7 +1130,13 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
 
         qualifies = mini_passed >= min_needed
 
+        price_now = intr["last_price"]
+        target = _clean_num(fund.get("targetMeanPrice"))
         rows.append({
+            "_Profile": company_profile(fund),
+            "_Earnings": earnings_info(fund),
+            "_MiniBits": sum(1 << i for i, (_, met) in enumerate(mini_criteria) if met),
+            "_MarketCap": _clean_num(fund.get("marketCap")),
             "Ticker": t,
             # Company identity: already present in the fundamentals payload we
             # fetch, previously discarded. Showing a bare ticker with no company
@@ -1015,6 +1199,19 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
                 "eps_qtr_growth_pct": _pct(fund.get("earningsQuarterlyGrowth")),
                 "eps_ann_growth_pct": _pct(fund.get("earningsGrowth")),
                 "institutional_pct": _pct(fund.get("heldPercentInstitutions")),
+                # Context beyond the scoring inputs (same get_info payload).
+                "forward_pe": _num(fund.get("forwardPE")),
+                "revenue_growth_pct": _pct(fund.get("revenueGrowth")),
+                "gross_margin_pct": _pct(fund.get("grossMargins")),
+                "operating_margin_pct": _pct(fund.get("operatingMargins")),
+                "roe_pct": _pct(fund.get("returnOnEquity")),
+                "short_pct_float": _pct(fund.get("shortPercentOfFloat")),
+                "beta": _num(fund.get("beta")),
+                "analyst_rating": fund.get("recommendationKey") or None,
+                "analyst_mean": _num(fund.get("recommendationMean")),
+                "analyst_count": _clean_num(fund.get("numberOfAnalystOpinions")),
+                "target_mean": _num(target),
+                "target_upside_pct": _pct(target / price_now - 1.0) if target and price_now else None,
             },
         })
 
@@ -1031,12 +1228,21 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
         "session_date": session_dates.mode().iloc[0] if not session_dates.empty else None,
     }
 
+    extras = {"closes": closes, "benchmark": cfg.benchmark}
+
     if not rows:
         empty = pd.DataFrame()
-        return empty, empty, market_status, 0, 0, stats
+        return empty, empty, market_status, 0, 0, stats, extras
 
     pool = pd.DataFrame(rows)
     qualifying_count = int((pool["Qualifies"] == "Yes").sum())
+
+    # Universe-wide rank on each list's own ordering, so a looked-up stock
+    # can say "#147 of 887" rather than just "not in the top 10".
+    for col, score in (("_MomRank", "MomentumScore"), ("_QualRank", "QualityScore")):
+        order = pool.sort_values(["_TrendN", score], ascending=[False, False]).index
+        pool.loc[order, col] = range(1, len(order) + 1)
+        pool[col] = pool[col].astype(int)
 
     # Rank the WHOLE pool (qualifying and non-qualifying alike) so a name
     # that's close to the Minervini gate but not quite there still shows
@@ -1050,6 +1256,32 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
     remaining = pool[~pool["Ticker"].isin(section1["Ticker"])]
     section2 = remaining.sort_values(["_TrendN", "QualityScore"], ascending=[False, False]).head(cfg.top_n_section)
 
+    # Everything below is context for the website (breadth, sector
+    # leadership, the searchable universe, price charts). None of it changes
+    # the ranking, and a failure here must never stop the core screen from
+    # publishing, so each piece is computed defensively.
+    top_tickers = set(section1["Ticker"]) | set(section2["Ticker"])
+    try:
+        stats["breadth"] = compute_breadth(indicators, intraday, pool, cfg.benchmark)
+    except Exception as e:
+        LOG.warning(f"Breadth stats skipped: {e}")
+    try:
+        stats["sectors"], stats["industries"] = compute_group_stats(pool, top_tickers)
+    except Exception as e:
+        LOG.warning(f"Sector stats skipped: {e}")
+    try:
+        bench = closes.get(cfg.benchmark)
+        spark_dates = ([pd.Timestamp(ts).date().isoformat() for ts in bench.index[-126:]]
+                       if bench is not None else [])
+        stats["spark_dates"] = spark_dates
+        sparks = {t: spark_series(closes.get(t), spark_dates) for t in top_tickers}
+        section1 = section1.assign(_Spark=[sparks.get(t) for t in section1["Ticker"]])
+        section2 = section2.assign(_Spark=[sparks.get(t) for t in section2["Ticker"]])
+    except Exception as e:
+        LOG.warning(f"Price-chart data skipped: {e}")
+    extras["pool"] = pool
+    extras["fundamentals"] = fundamentals
+
     # _TrendN was only needed for sorting; drop it now. The other hidden
     # _Xxx columns are kept - export_json still needs to read them - and
     # are stripped later, right before console printing / CSV export.
@@ -1057,7 +1289,74 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
     section2 = section2.drop(columns=["_TrendN"]).reset_index(drop=True)
 
     return (section1, section2,
-            market_status, len(pool), qualifying_count, stats)
+            market_status, len(pool), qualifying_count, stats, extras)
+
+
+def compute_breadth(indicators: Dict[str, dict], intraday: Dict[str, dict],
+                    pool: pd.DataFrame, benchmark: str) -> dict:
+    """Market breadth across the whole universe - how many stocks are
+    participating, not just how the index looks. Minervini and O'Neil both
+    lean on this: a rising index with shrinking participation is a warning,
+    and the count of stocks passing the Trend Template is itself a breadth
+    gauge."""
+    inds = [v for t, v in indicators.items() if t != benchmark]
+    n = len(inds)
+    if n == 0:
+        return {}
+    above50 = sum(1 for v in inds if v["last_close"] > v["sma50"])
+    above200 = sum(1 for v in inds if v["last_close"] > v["sma200"])
+    new_hi = sum(1 for v in inds if v["last_close"] >= v["wk52_high"] * 0.9999)
+    new_lo = sum(1 for v in inds if v["last_close"] <= v["wk52_low"] * 1.0001)
+    chg = [v.get("pct_change") for t, v in intraday.items() if t != benchmark and v.get("pct_change") is not None]
+    trend_counts = pool["_TrendN"].value_counts().to_dict()
+    return {
+        "n": n,
+        "pct_above_50": round(above50 / n * 100, 1),
+        "pct_above_200": round(above200 / n * 100, 1),
+        "new_highs": new_hi,
+        "new_lows": new_lo,
+        "advancers": sum(1 for c in chg if c > 0),
+        "decliners": sum(1 for c in chg if c < 0),
+        "trend_8": int(trend_counts.get(8, 0)),
+        "trend_dist": [int(trend_counts.get(k, 0)) for k in range(9)],
+    }
+
+
+def compute_group_stats(pool: pd.DataFrame, top_tickers: set) -> Tuple[List[dict], List[dict]]:
+    """Leadership by sector and by industry. CANSLIM's 'L' and O'Neil's
+    industry-group work both say strong stocks cluster: a name in a group
+    where many peers also pass the Trend Template is better supported than a
+    lone outlier."""
+    df = pool.copy()
+    df["_r3"] = [m.get("ret_3m_pct") if isinstance(m, dict) else None for m in df["_Metrics"]]
+    df["_q"] = df["Qualifies"] == "Yes"
+    df = df.sort_values(["_TrendN", "MomentumScore"], ascending=[False, False])
+
+    def summarize(g: pd.DataFrame) -> dict:
+        rs = pd.to_numeric(g["RS"], errors="coerce").dropna()
+        r3 = pd.to_numeric(g["_r3"], errors="coerce").dropna()
+        return {
+            "n": int(len(g)),
+            "qualified": int(g["_q"].sum()),
+            "pct_qualified": round(float(g["_q"].mean()) * 100, 1),
+            "avg_rs": round(float(rs.mean()), 1) if len(rs) else None,
+            "median_ret_3m": round(float(r3.median()), 1) if len(r3) else None,
+            "in_top": int(g["Ticker"].isin(top_tickers).sum()),
+            "leaders": list(g["Ticker"].head(3)),
+        }
+
+    sectors = []
+    for name, g in df[df["Sector"].astype(str) != ""].groupby("Sector", sort=False):
+        sectors.append({"name": name, **summarize(g)})
+    sectors.sort(key=lambda s: (s["pct_qualified"], s["avg_rs"] or 0), reverse=True)
+
+    industries = []
+    for name, g in df[df["Industry"].astype(str) != ""].groupby("Industry", sort=False):
+        if len(g) < 4:  # too few members to say anything about a group
+            continue
+        industries.append({"name": name, "sector": g["Sector"].iloc[0], **summarize(g)})
+    industries.sort(key=lambda s: (s["avg_rs"] or 0), reverse=True)
+    return sectors, industries[:12]
 
 
 def publish_problem(stats: dict, cfg: Config) -> Optional[str]:
@@ -1080,7 +1379,7 @@ def publish_problem(stats: dict, cfg: Config) -> Optional[str]:
 # --------------------------------------------------------------------------
 
 def _print_table(df: pd.DataFrame, score_col: str, drop_cols: List[str]) -> None:
-    display_df = df.drop(columns=[c for c in drop_cols if c in df.columns])
+    display_df = df.drop(columns=[c for c in df.columns if c in drop_cols or c.startswith("_")])
     if HAVE_TABULATE:
         print(tabulate(display_df, headers="keys", tablefmt="simple", showindex=False))
     else:
@@ -1129,10 +1428,9 @@ def save_results(section1: pd.DataFrame, section2: pd.DataFrame, cfg: Config) ->
         return
     os.makedirs(cfg.output_dir, exist_ok=True)
     fname = os.path.join(cfg.output_dir, f"scan_{datetime.now(ET).strftime('%Y%m%d_%H%M%S')}.csv")
-    hidden_cols = ["_MiniCriteria", "_CanNotes", "_ZanNotes", "_QmNotes", "_ValNotes", "_Metrics"]
-    s1 = section1.drop(columns=[c for c in hidden_cols if c in section1.columns]).copy()
+    s1 = section1.drop(columns=[c for c in section1.columns if c.startswith("_")]).copy()
     s1.insert(0, "Section", "1_Momentum")
-    s2 = section2.drop(columns=[c for c in hidden_cols if c in section2.columns]).copy()
+    s2 = section2.drop(columns=[c for c in section2.columns if c.startswith("_")]).copy()
     s2.insert(0, "Section", "2_ValueQuality")
     combined = pd.concat([s1, s2], ignore_index=True)
     combined.insert(0, "timestamp", datetime.now(ET).isoformat())
@@ -1140,13 +1438,33 @@ def save_results(section1: pd.DataFrame, section2: pd.DataFrame, cfg: Config) ->
     LOG.info(f"Saved results -> {fname}")
 
 
-def _rows_for_json(df: pd.DataFrame, score_col: str) -> List[dict]:
+def _opt(row, key):
+    """A hidden column's value, or None if the column is absent/NaN."""
+    v = row.get(key) if hasattr(row, "get") else None
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return None
+    return v
+
+
+def _rows_for_json(df: pd.DataFrame, score_col: str,
+                   list_stats: Optional[Dict[str, dict]] = None) -> List[dict]:
     if df.empty:
         return []
     out = []
+    list_stats = list_stats or {}
     for _, row in df.iterrows():
         trend_n = int(str(row["Trend"]).split("/")[0])
-        out.append({
+        extra = {
+            # Company profile, earnings calendar, 6-month price series, and
+            # this ticker's record on the screen. Optional by design: older
+            # scans and failed lookups simply omit them.
+            "profile": _opt(row, "_Profile"),
+            "earnings": _opt(row, "_Earnings"),
+            "spark": _opt(row, "_Spark"),
+            "universe_rank": {"momentum": _opt(row, "_MomRank"), "quality": _opt(row, "_QualRank")},
+            "history": list_stats.get(row["Ticker"]),
+        }
+        out.append({**{k: v for k, v in extra.items() if v is not None}, **{
             "ticker": row["Ticker"],
             "company": row.get("Company", ""),
             "sector": row.get("Sector", ""),
@@ -1177,19 +1495,44 @@ def _rows_for_json(df: pd.DataFrame, score_col: str) -> List[dict]:
                 "value": list(row["_ValNotes"]),
             },
             "metrics": dict(row["_Metrics"]),
-        })
+        }})
     return out
 
+
+def write_json_atomic(path: str, payload, indent: Optional[int] = None) -> None:
+    """Write to a temp file and swap it in, so an interrupted run can never
+    leave a half-written (unparseable) file for the site to load."""
+    out_dir = os.path.dirname(path)
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+    tmp_path = path + ".tmp"
+    with open(tmp_path, "w") as f:
+        if indent is None:
+            json.dump(payload, f, default=_json_default, separators=(",", ":"))
+        else:
+            json.dump(payload, f, default=_json_default, indent=indent)
+    os.replace(tmp_path, path)
+
+
+def _json_default(o):
+    if isinstance(o, (np.integer,)):
+        return int(o)
+    if isinstance(o, (np.floating,)):
+        return None if (np.isnan(o) or np.isinf(o)) else float(o)
+    if isinstance(o, (np.bool_,)):
+        return bool(o)
+    return str(o)
 
 
 def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: str,
                  total_scored: int, qualifying_count: int, min_needed: int, path: str,
-                 stats: Optional[dict] = None) -> None:
+                 stats: Optional[dict] = None, generated_at: Optional[datetime] = None,
+                 list_stats: Optional[Dict[str, dict]] = None) -> None:
     """Writes the dashboard's data feed - overwrites the SAME file every run
     (not timestamped) so the website always reads the latest scan."""
     stats = stats or {}
     payload = {
-        "generated_at": datetime.now(ET).isoformat(),
+        "generated_at": (generated_at or datetime.now(ET)).isoformat(),
         # Trading date (ET) the prices describe. Differs from generated_at's
         # date on pre-open, weekend and holiday runs.
         "session_date": stats.get("session_date"),
@@ -1198,19 +1541,244 @@ def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: s
         "total_scored": total_scored,
         "qualifying_count": qualifying_count,
         "min_trend_needed": min_needed,
-        "section1": _rows_for_json(section1, "MomentumScore"),
-        "section2": _rows_for_json(section2, "QualityScore"),
+        # Market-wide context (optional; absent if it could not be computed).
+        **{k: stats[k] for k in ("breadth", "sectors", "industries", "spark_dates") if stats.get(k)},
+        "section1": _rows_for_json(section1, "MomentumScore", list_stats),
+        "section2": _rows_for_json(section2, "QualityScore", list_stats),
     }
-    out_dir = os.path.dirname(path)
-    if out_dir:
-        os.makedirs(out_dir, exist_ok=True)
-    # Write to a temp file and swap it in, so an interrupted run can never
-    # leave a half-written (unparseable) latest.json for the site to load.
-    tmp_path = path + ".tmp"
-    with open(tmp_path, "w") as f:
-        json.dump(payload, f, indent=2, default=str)
-    os.replace(tmp_path, path)
+    write_json_atomic(path, payload)
     LOG.info(f"Wrote dashboard data -> {path}")
+
+
+# --------------------------------------------------------------------------
+# Site extras: searchable universe, company profiles, daily history
+# --------------------------------------------------------------------------
+
+UNIVERSE_FIELDS = ["t", "n", "s", "i", "p", "c", "rv", "rs", "tn", "tb", "q", "ms", "qs", "mr", "qr",
+                   "r3", "r12", "hi", "adr", "s50", "s150", "s200", "h52", "l52", "mc", "ed"]
+
+
+def build_universe_payload(pool: pd.DataFrame, generated_at: datetime, session_date) -> dict:
+    """Every scored stock in compact column form (~100 KB), so visitors can
+    look up any of the ~900 names - not just the 20 that made the lists.
+    The top-20 keep their full breakdown in latest.json."""
+    sectors: List[str] = []
+    industries: List[str] = []
+
+    def idx(lst, v):
+        if not v:
+            return None
+        if v not in lst:
+            lst.append(v)
+        return lst.index(v)
+
+    rows = []
+    for _, r in pool.sort_values("_MomRank").iterrows():
+        m = r["_Metrics"] if isinstance(r["_Metrics"], dict) else {}
+        e = r.get("_Earnings") if isinstance(r.get("_Earnings"), dict) else {}
+        mc = _clean_num(r.get("_MarketCap"))
+        rows.append([
+            r["Ticker"], r.get("Company") or "", idx(sectors, r.get("Sector")), idx(industries, r.get("Industry")),
+            _num(r["Price"]), _num(r["%Chg"]), _num(r["RelVol"]), _clean_num(r["RS"]),
+            int(r["_TrendN"]), int(r["_MiniBits"]), 1 if r["Qualifies"] == "Yes" else 0,
+            _num(r["MomentumScore"], 1), _num(r["QualityScore"], 1), int(r["_MomRank"]), int(r["_QualRank"]),
+            m.get("ret_3m_pct"), m.get("ret_12m_pct"), m.get("pct_off_52w_high"), m.get("adr20_pct"),
+            m.get("sma50"), m.get("sma150"), m.get("sma200"), m.get("wk52_high"), m.get("wk52_low"),
+            round(mc / 1e9, 2) if mc else None, e.get("days") if e else None,
+        ])
+    return {
+        "generated_at": generated_at.isoformat(),
+        "session_date": session_date,
+        "fields": UNIVERSE_FIELDS,
+        "sectors": sectors,
+        "industries": industries,
+        "rows": rows,
+    }
+
+
+def build_companies_payload(fundamentals: Dict[str, dict], existing: Optional[dict]) -> dict:
+    """Company profiles keyed by ticker, merged onto the previous file so a
+    stock that left the index keeps its description on the History page."""
+    comp = dict((existing or {}).get("c") or {})
+    for t, f in fundamentals.items():
+        if not f:
+            continue
+        p = company_profile(f) or {}
+        name = f.get("longName") or f.get("shortName")
+        if not (name or p.get("summary")):
+            continue
+        entry = {"n": name, "s": f.get("sector"), "i": f.get("industry"),
+                 "d": trim_summary(f.get("longBusinessSummary"), 420) or None,
+                 "w": p.get("website"), "hq": p.get("hq"), "e": p.get("employees")}
+        entry = {k: v for k, v in entry.items() if v is not None}
+        # Never replace a richer old entry with a thinner one from a partial
+        # Yahoo response.
+        old = comp.get(t) or {}
+        if len(entry) >= len(old) or "d" in entry:
+            comp[t] = {**old, **entry}
+    return {"c": dict(sorted(comp.items()))}
+
+
+HISTORY_HORIZONS = (1, 5, 10, 20)   # trading days after the session a stock appeared
+
+
+def history_picks(section1: List[dict], section2: List[dict]) -> List[dict]:
+    """Compact record of one session's two lists (from latest.json-style rows)."""
+    picks = []
+    for sec, rows in ((1, section1), (2, section2)):
+        for i, r in enumerate(rows or []):
+            picks.append({
+                "t": r.get("ticker"), "sec": sec, "r": i + 1,
+                "p": r.get("price"), "c": r.get("pct_chg"), "rs": r.get("rs"),
+                "tn": r.get("trend_n"), "sc": r.get("score"), "q": bool(r.get("qualifies")),
+            })
+    return picks
+
+
+def upsert_history_day(history: dict, day: dict) -> bool:
+    """Insert or replace one session in history. Each run rewrites the
+    current session, so whichever scan runs LAST that day (normally the
+    post-close run) becomes the session's permanent record. A finished
+    session is never overwritten by a later weekend, holiday or next-morning
+    rerun of the same data. Returns True if history changed."""
+    days = history.setdefault("days", [])
+    for i, d in enumerate(days):
+        if d.get("date") == day["date"]:
+            if d.get("final") and not day.get("same_day_final", day.get("final")):
+                return False
+            days[i] = {k: v for k, v in day.items() if k != "same_day_final"}
+            return True
+    days.append({k: v for k, v in day.items() if k != "same_day_final"})
+    days.sort(key=lambda d: d["date"])
+    return True
+
+
+def _date_index(close: pd.Series) -> Tuple[Dict[str, int], List[float]]:
+    dates = [pd.Timestamp(ts).date().isoformat() for ts in close.index]
+    vals = [float(v) for v in close.values]
+    return {d: i for i, d in enumerate(dates)}, vals
+
+
+def compute_history_perf(history: dict, closes: Dict[str, pd.Series], benchmark: str,
+                         last_bar_complete: bool) -> int:
+    """Forward returns for every stock in history, measured close-to-close
+    from the session it appeared: +1, +5, +10 and +20 trading days, and to
+    date. The benchmark gets the same windows. A horizon that has not
+    elapsed yet stays null. Values computed on an earlier run are kept when
+    the current price data no longer reaches back that far.
+    Returns the number of picks updated."""
+    cache: Dict[str, Tuple[Dict[str, int], List[float]]] = {}
+
+    def series(t):
+        if t not in cache:
+            s = closes.get(t)
+            cache[t] = _date_index(s) if s is not None and not s.empty else ({}, [])
+        return cache[t]
+
+    def returns(t, date):
+        pos_map, vals = series(t)
+        i = pos_map.get(date)
+        if i is None or not vals[i]:
+            return None
+        last = len(vals) - 1
+        out = {}
+        for h in HISTORY_HORIZONS:
+            j = i + h
+            ok = j <= last and (last_bar_complete or j < last)
+            if ok:
+                out[str(h)] = round((vals[j] / vals[i] - 1) * 100, 2)
+        if last > i:
+            out["td"] = round((vals[last] / vals[i] - 1) * 100, 2)
+        return out
+
+    updated = 0
+    for day in history.get("days", []):
+        b = returns(benchmark, day["date"])
+        if b:
+            day["spy"] = b
+        for p in day.get("picks", []):
+            f = returns(p["t"], day["date"])
+            if f:
+                p["f"] = f
+                updated += 1
+    return updated
+
+
+def ticker_list_stats(history: dict, session_date: str) -> Dict[str, dict]:
+    """Each ticker's record on the lists as of `session_date`: first session
+    seen, sessions on the lists, current streak, and yesterday's rank."""
+    days = [d for d in history.get("days", []) if d["date"] <= session_date]
+    if not days:
+        return {}
+    by_day = [{p["t"]: p for p in d.get("picks", [])} for d in days]
+    today = by_day[-1]
+    prev = by_day[-2] if len(by_day) > 1 else {}
+    out = {}
+    for t, p in today.items():
+        total = sum(1 for d in by_day if t in d)
+        first = next(days[i]["date"] for i, d in enumerate(by_day) if t in d)
+        streak = 0
+        for d in reversed(by_day):
+            if t not in d:
+                break
+            streak += 1
+        pp = prev.get(t)
+        out[t] = {"first_seen": first, "sessions": total, "streak": streak,
+                  "prev_rank": pp["r"] if pp else None, "prev_section": pp["sec"] if pp else None}
+    return out
+
+
+def update_history(path: str, session_date: Optional[str], generated_at: datetime,
+                   payload_rows: Tuple[List[dict], List[dict]], market_status: str,
+                   total_scored: int, qualifying_count: int, stats: dict,
+                   closes: Dict[str, pd.Series], benchmark: str,
+                   fundamentals: Dict[str, dict]) -> Tuple[dict, bool]:
+    """Load history.json, record this session, refresh forward returns."""
+    history = {}
+    if os.path.exists(path):
+        try:
+            with open(path) as f:
+                history = json.load(f)
+        except Exception as e:
+            # Don't silently start over and wipe months of records.
+            raise RuntimeError(f"history file unreadable ({e}); not overwriting it") from e
+    history.setdefault("version", 1)
+    history["horizons"] = list(HISTORY_HORIZONS)
+
+    if not session_date:
+        return history, False
+    sd = datetime.fromisoformat(session_date).date()
+    final = is_post_close(generated_at, sd)
+    day = {
+        "date": session_date,
+        "generated_at": generated_at.isoformat(),
+        "final": final,
+        # Only a post-close run ON the session date may replace a final record.
+        "same_day_final": final and generated_at.astimezone(ET).date() == sd,
+        "market": market_status.split(" (")[0] if market_status else None,
+        "scored": total_scored,
+        "qualified": qualifying_count,
+        "picks": history_picks(*payload_rows),
+    }
+    if stats.get("breadth"):
+        day["breadth"] = {k: v for k, v in stats["breadth"].items() if k != "trend_dist"}
+    if stats.get("sectors"):
+        day["sectors"] = {s["name"]: s["qualified"] for s in stats["sectors"]}
+    changed = upsert_history_day(history, day)
+
+    # Names for every ticker ever listed (the History page shows them).
+    names = history.setdefault("names", {})
+    for d in history["days"]:
+        for p in d.get("picks", []):
+            f = fundamentals.get(p["t"]) or {}
+            nm = f.get("longName") or f.get("shortName")
+            if nm:
+                names[p["t"]] = [nm, f.get("sector") or "", f.get("industry") or ""]
+
+    compute_history_perf(history, closes, benchmark, last_bar_complete=final)
+    history["updated_at"] = generated_at.isoformat()
+    history["as_of"] = session_date
+    return history, changed
 
 
 # --------------------------------------------------------------------------
@@ -1328,6 +1896,68 @@ def run_selftest() -> None:
     check("Publish gate rejects a mostly-empty (rate-limited) scan", publish_problem(thin, Config()) is not None)
     check("Publish gate rejects a scan with no SPY data", publish_problem(no_spy, Config()) is not None)
 
+    # --- session dating (history backfill) -------------------------------
+    sat = datetime(2026, 9, 5, 12, 0, tzinfo=ET)
+    labor_day = datetime(2026, 9, 7, 17, 39, tzinfo=ET)
+    tue_pre_open = datetime(2026, 9, 8, 8, 0, tzinfo=ET)
+    check("Weekend and holiday scans map to the prior trading session",
+          session_for_timestamp(sat).isoformat() == "2026-09-04"
+          and session_for_timestamp(labor_day).isoformat() == "2026-09-04"
+          and session_for_timestamp(tue_pre_open).isoformat() == "2026-09-04")
+    check("A 4:20pm scan counts as post-close; a 2pm scan does not",
+          is_post_close(datetime(2026, 10, 30, 16, 20, tzinfo=ET), datetime(2026, 10, 30).date())
+          and not is_post_close(datetime(2026, 10, 30, 14, 0, tzinfo=ET), datetime(2026, 10, 30).date()))
+
+    # --- history record keeping -------------------------------------------
+    hist = {"days": []}
+    upsert_history_day(hist, {"date": "2026-10-30", "final": False, "same_day_final": False, "picks": [{"t": "A"}]})
+    upsert_history_day(hist, {"date": "2026-10-30", "final": True, "same_day_final": True, "picks": [{"t": "B"}]})
+    kept = upsert_history_day(hist, {"date": "2026-10-30", "final": True, "same_day_final": False, "picks": [{"t": "C"}]})
+    check("History keeps the same-day post-close scan; a weekend rerun cannot replace it",
+          hist["days"][0]["picks"][0]["t"] == "B" and kept is False and len(hist["days"]) == 1)
+
+    idx = pd.bdate_range("2026-09-01", periods=30)
+    px = pd.Series([100.0 + i for i in range(30)], index=idx)
+    spy_px = pd.Series([500.0] * 30, index=idx)
+    d0 = idx[0].date().isoformat()
+    hist = {"days": [{"date": d0, "picks": [{"t": "X", "r": 1, "sec": 1}]}]}
+    compute_history_perf(hist, {"X": px, "SPY": spy_px}, "SPY", last_bar_complete=False)
+    f = hist["days"][0]["picks"][0].get("f", {})
+    check("Forward returns are close-to-close from the session the stock appeared",
+          abs(f.get("5", 0) - 5.0) < 1e-9 and abs(f.get("20", 0) - 20.0) < 1e-9
+          and abs(f.get("td", 0) - 29.0) < 1e-9 and hist["days"][0]["spy"]["20"] == 0.0)
+    hist2 = {"days": [{"date": idx[-6].date().isoformat(), "picks": [{"t": "X", "r": 1, "sec": 1}]}]}
+    compute_history_perf(hist2, {"X": px}, "SPY", last_bar_complete=False)
+    check("A horizon ending on today's still-open bar is left blank",
+          "5" not in hist2["days"][0]["picks"][0].get("f", {}) and "1" in hist2["days"][0]["picks"][0]["f"])
+
+    hist3 = {"days": [
+        {"date": "2026-10-28", "picks": [{"t": "A", "r": 3, "sec": 1}]},
+        {"date": "2026-10-29", "picks": [{"t": "A", "r": 2, "sec": 1}, {"t": "B", "r": 1, "sec": 2}]},
+        {"date": "2026-10-30", "picks": [{"t": "A", "r": 1, "sec": 1}, {"t": "C", "r": 4, "sec": 2}]},
+    ]}
+    ls = ticker_list_stats(hist3, "2026-10-30")
+    check("List stats report streak, first session and yesterday's rank",
+          ls["A"]["streak"] == 3 and ls["A"]["first_seen"] == "2026-10-28" and ls["A"]["prev_rank"] == 2
+          and ls["C"]["streak"] == 1 and ls["C"]["prev_rank"] is None and "B" not in ls)
+
+    # --- company profile + earnings -----------------------------------------
+    long_text = "Acme Inc. makes rockets in the U.S. and abroad. " * 30
+    s = trim_summary(long_text, 120)
+    check("Business summaries are trimmed at a sentence end",
+          len(s) <= 120 and s.endswith(".") and "Inc. makes" in s)
+    today = datetime(2026, 10, 30).date()
+    ts_next = datetime(2026, 11, 4, 16, 5, tzinfo=ET).timestamp()
+    ts_prev = datetime(2026, 10, 27, 7, 0, tzinfo=ET).timestamp()
+    e1 = earnings_info({"earningsTimestamp": ts_next, "isEarningsDateEstimate": True}, today)
+    e2 = earnings_info({"earningsTimestamp": ts_prev}, today)
+    check("Earnings dates resolve to days-until and days-since",
+          e1 == {"next": "2026-11-04", "days": 5, "estimate": True} and e2 == {"last": "2026-10-27", "days_ago": 3})
+    rich = {"c": {"Z": {"n": "Zed Corp", "d": "Zed makes things.", "s": "Technology"}}}
+    merged = build_companies_payload({"Z": {"shortName": "Zed"}}, rich)
+    check("A thin Yahoo response never erases a stored company description",
+          merged["c"]["Z"].get("d") == "Zed makes things.")
+
     print()
     if failures:
         print(f"SELF-TEST FAILED: {len(failures)} check(s) failed -> {failures}")
@@ -1358,6 +1988,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--min-coverage", type=float, default=0.6,
                    help="Refuse to publish (exit code 2, JSON left untouched) unless at least this "
                         "share of the universe was scored (default 0.6)")
+    p.add_argument("--no-extras", action="store_true",
+                   help="Write only latest.json (skip history.json, universe.json, companies.json)")
     p.add_argument("--verbose", action="store_true")
     return p.parse_args()
 
@@ -1389,7 +2021,7 @@ def main() -> None:
         LOG.info("Note: market is currently closed - intraday figures reflect the most recent session.")
 
     started = time.time()
-    section1, section2, market_status, total, qualifying, stats = run_scan(cfg)
+    section1, section2, market_status, total, qualifying, stats, extras = run_scan(cfg)
     min_needed = 8 if cfg.strict_trend_template else cfg.min_trend_criteria
     print_results(section1, section2, market_status, total, qualifying, min_needed)
     save_results(section1, section2, cfg)
@@ -1406,7 +2038,67 @@ def main() -> None:
         sys.exit(2)
 
     if args.json_out:
-        export_json(section1, section2, market_status, total, qualifying, min_needed, args.json_out, stats)
+        publish(section1, section2, market_status, total, qualifying, min_needed, stats, extras,
+                args.json_out, write_extras=not args.no_extras)
+
+
+def publish(section1: pd.DataFrame, section2: pd.DataFrame, market_status: str, total: int,
+            qualifying: int, min_needed: int, stats: dict, extras: dict, json_out: str,
+            write_extras: bool = True, generated_at: Optional[datetime] = None) -> None:
+    """Writes latest.json (the core screen) plus the site extras next to it:
+    history.json, universe.json and companies.json. The extras are strictly
+    best-effort - any failure is logged and the core screen still publishes."""
+    generated_at = generated_at or datetime.now(ET)
+    data_dir = os.path.dirname(json_out) or "."
+    list_stats: Dict[str, dict] = {}
+    history = None
+
+    if write_extras:
+        try:
+            rows = (_rows_for_json(section1, "MomentumScore"), _rows_for_json(section2, "QualityScore"))
+            history, changed = update_history(
+                os.path.join(data_dir, "history.json"), stats.get("session_date"), generated_at, rows,
+                market_status, total, qualifying, stats, extras.get("closes", {}),
+                extras.get("benchmark", "SPY"), extras.get("fundamentals", {}))
+            if stats.get("session_date"):
+                list_stats = ticker_list_stats(history, stats["session_date"])
+            LOG.info(f"History: {len(history.get('days', []))} sessions"
+                     + ("" if changed else " (kept the existing final record for this session)"))
+        except Exception as e:
+            history = None
+            LOG.warning(f"History update skipped: {e}")
+
+    export_json(section1, section2, market_status, total, qualifying, min_needed, json_out, stats,
+                generated_at=generated_at, list_stats=list_stats)
+
+    if not write_extras:
+        return
+    if history is not None:
+        try:
+            write_json_atomic(os.path.join(data_dir, "history.json"), history)
+        except Exception as e:
+            LOG.warning(f"Could not write history.json: {e}")
+    if extras.get("pool") is not None:
+        try:
+            write_json_atomic(os.path.join(data_dir, "universe.json"),
+                              build_universe_payload(extras["pool"], generated_at, stats.get("session_date")))
+        except Exception as e:
+            LOG.warning(f"Could not write universe.json: {e}")
+    if extras.get("fundamentals"):
+        try:
+            cpath = os.path.join(data_dir, "companies.json")
+            existing = None
+            if os.path.exists(cpath):
+                with open(cpath) as f:
+                    existing = json.load(f)
+            new = build_companies_payload(extras["fundamentals"], existing)
+            # Only rewrite when something changed, so the repo isn't bloated
+            # by a fresh copy of a ~400 KB file every half hour.
+            if new != existing:
+                write_json_atomic(cpath, new)
+                LOG.info(f"Wrote company profiles -> {cpath} ({len(new['c'])} companies)")
+        except Exception as e:
+            LOG.warning(f"Could not write companies.json: {e}")
 
 
 if __name__ == "__main__":

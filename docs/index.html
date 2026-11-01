@@ -72,6 +72,7 @@
       <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html" class="active" aria-current="page">Screen</a>
+        <a href="history.html">History</a>
         <a href="learn.html">Learn</a>
         <a href="methodology.html">Methodology</a>
         <a href="about.html">About</a>
@@ -97,8 +98,9 @@
     price and volume &mdash; the breakout and relative-strength signals short-term traders watch. <strong>Trend Quality
     &amp; Value</strong> re-ranks the same pool on fundamentals and traditional valuation instead. Why both exist is
     covered in <a href="momentum-vs-value.html">Momentum vs. Value</a>.</p>
-    <p>Neither list is a signal to buy or sell anything. Select any stock to see precisely why it ranked where it did
-    &mdash; every moving average, return period, and criterion met or missed. If this is your first visit, start with
+    <p>Neither list is a signal to buy or sell anything. Select any stock to see what the company does and precisely why it
+    ranked where it did &mdash; every moving average, return period, and criterion met or missed. You can also look up any
+    of the ~900 scanned stocks, and the <a href="history.html">History</a> page shows every past list and what happened next. If this is your first visit, start with
     <a href="reading-the-screen.html">How to Read the Screen</a>, which covers what this data does <em>not</em> tell you.</p>
   </section>
 
@@ -121,6 +123,16 @@
       <div id="freshness-banner"></div>
       <div id="scan-summary"></div>
 
+      <div class="lookup" role="search">
+        <label for="lookup-input">Look up any scanned stock</label>
+        <input id="lookup-input" type="search" autocomplete="off" spellcheck="false"
+          placeholder="Ticker or company, e.g. NVDA"
+          role="combobox" aria-expanded="false" aria-controls="lookup-results" aria-autocomplete="list">
+        <div class="lookup-results" id="lookup-results" role="listbox" hidden></div>
+      </div>
+
+      <section class="pulse" id="market-pulse" aria-label="Market breadth" hidden></section>
+
       <div class="section-head" id="momentum">
         <p class="section-eyebrow">01</p>
         <h2 class="section-title">Momentum Leaders</h2>
@@ -138,10 +150,31 @@
       </div>
       <div class="term-screen"><div id="section2-mount"></div></div>
 
+      <div class="section-head" id="sectors" hidden>
+        <p class="section-eyebrow">03</p>
+        <h2 class="section-title">Where Leadership Is</h2>
+        <p class="section-sub">Strong stocks tend to move in groups &mdash; the idea behind CANSLIM's &ldquo;L&rdquo; and
+        O'Neil's industry-group research. A name whose peers are also passing the Trend Template has more company than a
+        lone outlier. Hover a sector for detail.</p>
+      </div>
+      <div id="sector-mount"></div>
+
 
     </div>
 
     <aside class="rail">
+      <div class="rail-card" id="watchlist-card">
+        <h3>Your Watchlist</h3>
+        <div id="watchlist-mount"></div>
+      </div>
+
+      <div class="rail-card">
+        <h3>Screen History</h3>
+        <p>Every session's final list since August 26, 2026 &mdash; and how those stocks did over the following days and weeks
+        compared with the S&amp;P 500.</p>
+        <a href="history.html" class="discord-link">See the track record &rarr;</a>
+      </div>
+
       <div class="rail-card">
         <h3>New Here?</h3>
         <p>These guides explain what the rankings actually mean and where the frameworks break down:</p>
@@ -192,6 +225,7 @@
   </div>
 </div>
 
+<script src="common.js?v=2"></script>
 <script>
 const DATA_URL = 'data/latest.json';
 const REFRESH_MS = 5 * 60 * 1000; // poll for fresh data every 5 minutes
@@ -213,43 +247,38 @@ const TIP = {
   avgdollarvol: "Average daily dollar volume over the past 20 sessions — a common liquidity filter.",
   breakout50: "Highest price over the prior 50 sessions. A move above this on volume is a classic breakout level.",
   pe: "Share price divided by trailing twelve months earnings per share.",
+  fpe: "Share price divided by analysts' expected earnings per share for the next fiscal year.",
   peg: "P/E divided by expected earnings growth. Near or below 1 is conventionally read as reasonable relative to growth.",
   margin: "Net income as a percentage of revenue.",
+  gross: "Revenue minus cost of goods sold, as a percentage of revenue.",
+  opmargin: "Operating income as a percentage of revenue.",
+  roe: "Net income relative to shareholder equity — how efficiently the company turns equity into profit.",
+  revgrowth: "Year-over-year revenue growth for the most recent quarter.",
   debtEquity: "Total debt relative to shareholder equity — a leverage measure.",
   epsQtr: "Year-over-year quarterly earnings-per-share growth.",
   epsAnn: "Year-over-year annual earnings-per-share growth.",
   inst: "Percentage of shares held by institutions. CANSLIM treats rising sponsorship as a demand signal.",
+  short: "Shares sold short as a percentage of the tradable float. High readings mean more bearish positioning — and more potential for short-covering rallies.",
+  beta: "How much the stock has tended to move relative to the overall market. 1.0 moves with the market; 1.5 swings about 50% more.",
 };
 function tipAttr(key) {
   const t = TIP[key];
   return t ? ' data-tip="' + t.replace(/"/g, '&quot;') + '" tabindex="0"' : '';
 }
 
-function esc(str) {
-  if (str == null) return '';
-  return String(str)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-}
+const esc = SR.esc, fmtPct = SR.fmtPct, fmtNum = SR.fmtNum, fmtMoney = SR.fmtMoney, fmtVol = SR.fmtVol;
 
-function fmtPct(v) {
-  if (v === null || v === undefined) return '—';
-  return (v >= 0 ? '+' : '') + v.toFixed(2) + '%';
-}
-function fmtNum(v, digits) {
-  if (v === null || v === undefined) return '—';
-  return Number(v).toLocaleString(undefined, { maximumFractionDigits: digits ?? 2 });
-}
-function fmtMoney(v) {
-  if (v === null || v === undefined) return '—';
-  return '$' + fmtNum(v, 2);
-}
-function fmtVol(v) {
-  if (v === null || v === undefined) return '—';
-  if (v >= 1e9) return (v / 1e9).toFixed(2) + 'B';
-  if (v >= 1e6) return (v / 1e6).toFixed(2) + 'M';
-  if (v >= 1e3) return (v / 1e3).toFixed(1) + 'K';
-  return String(Math.round(v));
+/* Page state */
+let LATEST = null;     // latest.json
+let HISTORY = null;    // history.json (optional)
+let RECORDS = null;    // per-ticker record derived from history
+let UNIVERSE = null;   // universe.json (optional)
+let UNIVERSE_FAILED = false;
+let PENDING_HASH = parseHashTicker();
+
+function parseHashTicker() {
+  const m = /[#&]t=([A-Za-z0-9.\-]{1,10})/.exec(location.hash || '');
+  return m ? m[1].toUpperCase() : null;
 }
 
 function trendBarHtml(n) {
@@ -287,7 +316,6 @@ function buildReadout(r) {
   const m = r.metrics || {};
   const lines = [];
 
-  // Trend structure
   if (r.trend_n >= 7) {
     lines.push('<strong>Trend structure:</strong> meets ' + r.trend_n + ' of 8 Trend Template criteria — the moving averages are in the stacked arrangement the framework associates with a confirmed uptrend.');
   } else if (r.trend_n >= 5) {
@@ -296,7 +324,6 @@ function buildReadout(r) {
     lines.push('<strong>Trend structure:</strong> meets only ' + r.trend_n + ' of 8. The framework would not consider this a confirmed uptrend.');
   }
 
-  // Extension from 50-day
   if (m.sma50 != null && r.price != null) {
     const ext = ((r.price / m.sma50) - 1) * 100;
     if (ext > 25) {
@@ -308,7 +335,6 @@ function buildReadout(r) {
     }
   }
 
-  // Position in 52-week range
   if (m.wk52_high != null && m.wk52_low != null && r.price != null && m.wk52_high > m.wk52_low) {
     const pos = ((r.price - m.wk52_low) / (m.wk52_high - m.wk52_low)) * 100;
     if (pos >= 90) {
@@ -320,7 +346,6 @@ function buildReadout(r) {
     }
   }
 
-  // Momentum shape
   if (m.ret_3m_pct != null && m.ret_12m_pct != null) {
     if (m.ret_12m_pct > 0 && m.ret_3m_pct > m.ret_12m_pct * 0.7) {
       lines.push('<strong>Momentum shape:</strong> most of the trailing 12-month gain came in the last 3 months — a recent acceleration rather than a steady climb.');
@@ -329,7 +354,6 @@ function buildReadout(r) {
     }
   }
 
-  // Volatility context for sizing
   if (m.adr20_pct != null) {
     if (m.adr20_pct >= 5) {
       lines.push('<strong>Volatility:</strong> average daily range of ' + m.adr20_pct.toFixed(1) + '% is high — position sizing and stop distance would need to account for much larger daily swings than a typical large-cap.');
@@ -338,18 +362,19 @@ function buildReadout(r) {
     }
   }
 
+  const e = r.earnings;
+  if (e && e.days != null && e.days <= 14 && (e.next || r.lite)) {
+    lines.push('<strong>Event risk:</strong> earnings are due ' + (e.days === 0 ? 'today' : 'in ' + e.days + (e.days === 1 ? ' day' : ' days')) + '. Momentum frameworks generally treat an imminent report as a separate risk from the chart: the stock can gap well beyond its normal daily range.');
+  }
+
   if (!r.qualifies) {
-    lines.push('<strong>Note:</strong> this name does not fully clear the Trend Template gate. It appears as one of the closest available candidates, not as a confirmed setup.');
+    lines.push('<strong>Note:</strong> this name does not fully clear the Trend Template gate. ' + (r.lite ? 'It is shown because you looked it up.' : 'It appears as one of the closest available candidates, not as a confirmed setup.'));
   }
 
   return '<div class="readout">' + lines.map(l => '<div class="rd-line">' + l + '</div>').join('') + '</div>';
 }
 
-/* ---------- moving-average stack ----------
-   Minervini's fourth criterion is about the ORDER of the averages, which a
-   grid of numbers doesn't convey. This lists price and the three averages
-   sorted high-to-low, so "proper order" (price > 50 > 150 > 200) is
-   visible at a glance rather than something you compute in your head. */
+/* ---------- moving-average stack ---------- */
 function maStackHtml(price, m) {
   const rows = [
     { label: 'Price', v: price, isPrice: true },
@@ -369,7 +394,7 @@ function maStackHtml(price, m) {
   const span = max - min || 1;
 
   let bars = sorted.map(r => {
-    const w = 22 + ((r.v - min) / span) * 78; // never zero-width
+    const w = 22 + ((r.v - min) / span) * 78;
     return '<div class="ma-row">' +
       '<span class="ma-name' + (r.isPrice ? ' is-price' : '') + '">' + r.label + '</span>' +
       '<span class="ma-bar-wrap"><span class="ma-bar' + (r.isPrice ? ' is-price' : '') + '" style="width:' + w.toFixed(1) + '%"></span></span>' +
@@ -383,13 +408,13 @@ function maStackHtml(price, m) {
   return '<div class="ma-stack">' + bars + '<div class="ma-verdict">' + verdict + '</div></div>';
 }
 
-/* ---------- modal ---------- */
+/* ---------- modal building blocks ---------- */
 function signalSection(title, items) {
   let html = '<div class="signal-block"><div class="signal-block-head">' + title + '</div>';
   if (!items || items.length === 0) {
     html += '<p class="signal-empty">No signals triggered.</p>';
   } else {
-    html += '<ul class="signal-list">' + items.map(s => '<li>' + s + '</li>').join('') + '</ul>';
+    html += '<ul class="signal-list">' + items.map(s => '<li>' + esc(s) + '</li>').join('') + '</ul>';
   }
   return html + '</div>';
 }
@@ -400,85 +425,219 @@ function metricCell(labelKey, labelText, value, sub) {
          '<div class="m-value">' + value + '</div>' + subHtml + '</div>';
 }
 
-// distance of price from a moving average, as a labeled sub-line
 function maDistance(price, ma) {
   if (price == null || ma == null || ma === 0) return null;
   const d = ((price / ma) - 1) * 100;
   return { text: (d >= 0 ? '+' : '') + d.toFixed(1) + '% vs price', cls: d >= 0 ? 'm-above' : 'm-below' };
 }
 
-function metricsGridHtml(m, price) {
+const RATING_LABEL = { strong_buy: 'Strong Buy', buy: 'Buy', hold: 'Hold', underperform: 'Underperform', sell: 'Sell', none: null };
+
+function metricsGridHtml(m, price, lite) {
   if (!m) return '';
   let html = '<div class="modal-group-title">Technicals</div>';
 
   html += '<div class="modal-subsection-title">Price &amp; Trend</div>';
   html += rangeBarHtml(price, m.wk52_low, m.wk52_high);
-  const trendCells = [
+  html += '<div class="metric-grid">' + [
     metricCell('sma50', '50-Day Avg', fmtMoney(m.sma50), maDistance(price, m.sma50)),
     metricCell('sma150', '150-Day Avg', fmtMoney(m.sma150), maDistance(price, m.sma150)),
     metricCell('sma200', '200-Day Avg', fmtMoney(m.sma200), maDistance(price, m.sma200)),
-  ];
-  html += '<div class="metric-grid">' + trendCells.join('') + '</div>';
+  ].join('') + '</div>';
+
+  if (lite) {
+    html += '<div class="modal-subsection-title">Momentum &amp; Volatility</div><div class="metric-grid">' + [
+      metricCell('ret3m', '3-Mo Return', fmtPct(m.ret_3m_pct)),
+      metricCell('ret12m', '12-Mo Return', fmtPct(m.ret_12m_pct)),
+      metricCell('adr', 'ADR (20d)', m.adr20_pct != null ? fmtNum(m.adr20_pct, 2) + '%' : '—'),
+    ].join('') + '</div>';
+    return html;
+  }
 
   html += '<div class="modal-subsection-title">Volatility &amp; Liquidity</div>';
-  const volCells = [
+  html += '<div class="metric-grid">' + [
     metricCell('adr', 'ADR (20d)', m.adr20_pct != null ? fmtNum(m.adr20_pct, 2) + '%' : '—'),
     metricCell('avgvol', 'Avg Vol (50d)', fmtVol(m.avg_vol50)),
     metricCell('avgdollarvol', 'Avg $ Vol (20d)', m.avg_dollar_vol20 != null ? '$' + fmtVol(m.avg_dollar_vol20) : '—'),
-  ];
-  html += '<div class="metric-grid">' + volCells.join('') + '</div>';
+  ].join('') + '</div>';
 
   html += '<div class="modal-subsection-title">Momentum</div>';
-  const momCells = [
+  html += '<div class="metric-grid">' + [
     metricCell('ret3m', '3-Mo Return', fmtPct(m.ret_3m_pct)),
     metricCell('ret6m', '6-Mo Return', fmtPct(m.ret_6m_pct)),
     metricCell('ret12m', '12-Mo Return', fmtPct(m.ret_12m_pct)),
     metricCell('breakout50', '50d Breakout Lvl', fmtMoney(m.prior_50d_high), maDistance(price, m.prior_50d_high)),
-  ];
-  html += '<div class="metric-grid">' + momCells.join('') + '</div>';
+  ].join('') + '</div>';
 
-  const fundCells = [];
-  if (m.trailing_pe != null) fundCells.push(metricCell('pe', 'P/E (TTM)', fmtNum(m.trailing_pe, 1)));
-  if (m.peg_ratio != null) fundCells.push(metricCell('peg', 'PEG Ratio', fmtNum(m.peg_ratio, 2)));
-  if (m.profit_margin_pct != null) fundCells.push(metricCell('margin', 'Profit Margin', fmtNum(m.profit_margin_pct, 1) + '%'));
-  if (m.debt_to_equity != null) fundCells.push(metricCell('debtEquity', 'Debt/Equity', fmtNum(m.debt_to_equity, 1)));
-  if (m.eps_qtr_growth_pct != null) fundCells.push(metricCell('epsQtr', 'EPS Qtr Growth', fmtPct(m.eps_qtr_growth_pct)));
-  if (m.eps_ann_growth_pct != null) fundCells.push(metricCell('epsAnn', 'EPS Ann Growth', fmtPct(m.eps_ann_growth_pct)));
-  if (m.institutional_pct != null) fundCells.push(metricCell('inst', 'Institutional', fmtNum(m.institutional_pct, 1) + '%'));
+  const cells = [];
+  const add = (v, key, label, fmt) => { if (v != null) cells.push(metricCell(key, label, fmt(v))); };
+  const pctFmt = v => fmtNum(v, 1) + '%';
+  add(m.trailing_pe, 'pe', 'P/E (TTM)', v => fmtNum(v, 1));
+  add(m.forward_pe, 'fpe', 'Forward P/E', v => fmtNum(v, 1));
+  add(m.peg_ratio, 'peg', 'PEG Ratio', v => fmtNum(v, 2));
+  add(m.eps_qtr_growth_pct, 'epsQtr', 'EPS Qtr Growth', fmtPct);
+  add(m.eps_ann_growth_pct, 'epsAnn', 'EPS Ann Growth', fmtPct);
+  add(m.revenue_growth_pct, 'revgrowth', 'Revenue Growth', fmtPct);
+  add(m.gross_margin_pct, 'gross', 'Gross Margin', pctFmt);
+  add(m.operating_margin_pct, 'opmargin', 'Operating Margin', pctFmt);
+  add(m.profit_margin_pct, 'margin', 'Profit Margin', pctFmt);
+  add(m.roe_pct, 'roe', 'Return on Equity', pctFmt);
+  add(m.debt_to_equity, 'debtEquity', 'Debt/Equity', v => fmtNum(v, 1));
+  add(m.institutional_pct, 'inst', 'Institutional', pctFmt);
+  add(m.short_pct_float, 'short', 'Short % Float', pctFmt);
+  add(m.beta, 'beta', 'Beta', v => fmtNum(v, 2));
 
-  if (fundCells.length > 0) {
-    html += '<div class="modal-group-title">Fundamentals</div>' +
-      '<div class="modal-group-sub">Traditional valuation and quality metrics, where published.</div>' +
-      '<div class="metric-grid">' + fundCells.join('') + '</div>';
+  html += '<div class="modal-group-title">Fundamentals</div>';
+  if (cells.length > 0) {
+    html += '<div class="modal-group-sub">Traditional valuation and quality metrics, where published.</div>' +
+      '<div class="metric-grid">' + cells.join('') + '</div>';
   } else {
-    html += '<div class="modal-group-title">Fundamentals</div>' +
-      '<div class="modal-group-sub">No fundamental data was available for this stock in this scan. Missing fields are skipped rather than counted against a stock.</div>';
+    html += '<div class="modal-group-sub">No fundamental data was available for this stock in this scan. Missing fields are skipped rather than counted against a stock.</div>';
+  }
+
+  const rating = RATING_LABEL[m.analyst_rating] || null;
+  if (rating || m.target_mean != null) {
+    const parts = [];
+    if (rating) parts.push('consensus <b>' + rating + '</b>' + (m.analyst_count ? ' from ' + m.analyst_count + ' analysts' : ''));
+    if (m.target_mean != null) parts.push('mean price target <b>' + fmtMoney(m.target_mean) + '</b>' +
+      (m.target_upside_pct != null ? ' (<span class="' + SR.chgClass(m.target_upside_pct) + '">' + fmtPct(m.target_upside_pct, 1) + '</span> vs. price)' : ''));
+    html += '<div class="analyst-line">Wall Street view: ' + parts.join(' &middot; ') +
+      '. <span class="ml-note">Third-party estimates via Yahoo Finance, not ours.</span></div>';
   }
   return html;
 }
 
+/* Company profile: who the business is and what it does. */
+function safeUrl(u) {
+  try { const x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x : null; } catch (e) { return null; }
+}
+function companyBlockHtml(r, prof) {
+  prof = prof || {};
+  const chips = [];
+  if (r.sector) chips.push('<span class="chip teal">' + esc(r.sector) + '</span>');
+  if (r.industry) chips.push('<span class="chip">' + esc(r.industry) + '</span>');
+  const summary = prof.summary
+    ? '<p class="company-summary">' + esc(prof.summary) + '</p>'
+    : '<p class="company-summary" style="color:var(--text-faint)">No business description was available from the data source for this company.</p>';
+  const facts = [];
+  if (prof.hq) facts.push('HQ <b>' + esc(prof.hq) + '</b>');
+  if (prof.employees) facts.push('Employees <b>' + fmtNum(prof.employees, 0) + '</b>');
+  const cap = prof.market_cap != null ? prof.market_cap : r.market_cap;
+  if (cap) facts.push('Market cap <b>' + SR.fmtCap(cap) + '</b>');
+  const url = prof.website && safeUrl(prof.website);
+  if (url) facts.push('<a href="' + esc(url.href) + '" target="_blank" rel="noopener noreferrer">' + esc(url.hostname.replace(/^www\./, '')) + ' &#8599;</a>');
+  return '<div class="company-block">' + (chips.length ? '<div class="company-chips">' + chips.join('') + '</div>' : '') +
+    summary + (facts.length ? '<div class="company-facts">' + facts.join('') + '</div>' : '') + '</div>';
+}
+
+function earningsHtml(e) {
+  if (!e) return '';
+  if (e.days != null && (e.next || e.days >= 0)) {
+    const soon = e.days <= 14;
+    const when = e.days === 0 ? 'today' : e.days === 1 ? 'tomorrow' : 'in ' + e.days + ' days';
+    return '<div class="earn-callout' + (soon ? ' soon' : '') + '"><strong>Next earnings ' + when + '</strong>' +
+      (e.next ? ' &middot; ' + SR.fmtDayLong(e.next) + (e.estimate ? ' (estimated date)' : '') : '') + '</div>';
+  }
+  if (e.last) {
+    const ago = e.days_ago === 0 ? 'today' : e.days_ago + (e.days_ago === 1 ? ' day ago' : ' days ago');
+    return '<div class="earn-callout"><strong>Reported earnings ' + ago + '</strong> &middot; ' + SR.fmtDayLong(e.last) +
+      '. Recent price and volume moves may reflect the report.</div>';
+  }
+  return '';
+}
+
+/* This stock's record on the screen: streak, first flagged, return since. */
+function recordHtml(r) {
+  const rec = RECORDS && RECORDS[r.ticker];
+  const total = HISTORY && HISTORY.days ? HISTORY.days.length : null;
+  const lines = [];
+  const ur = r.universe_rank || {};
+  const n = LATEST && LATEST.total_scored;
+  if (ur.momentum && n) {
+    lines.push('Ranks <strong>#' + ur.momentum + '</strong> of ' + n + ' on momentum' +
+      (ur.quality ? ' and <strong>#' + ur.quality + '</strong> on trend quality &amp; value' : '') + ' this scan.');
+  }
+  if (rec) {
+    let s = 'On the lists in <strong>' + rec.sessions + '</strong>' + (total ? ' of ' + total : '') + ' tracked sessions';
+    if (rec.streak > 1) s += ', including the last <strong>' + rec.streak + '</strong> in a row';
+    s += '. First flagged <strong>' + SR.fmtDay(rec.first, true) + '</strong>';
+    if (rec.sinceFirst != null) {
+      s += ' — <span class="' + SR.chgClass(rec.sinceFirst) + '">' + fmtPct(rec.sinceFirst, 1) + '</span> since that close' +
+        (rec.spySinceFirst != null ? ' (S&amp;P 500: ' + fmtPct(rec.spySinceFirst, 1) + ')' : '');
+    }
+    lines.push(s + '.');
+  } else if (HISTORY) {
+    lines.push('Has not appeared on either list in the ' + total + ' sessions tracked since ' + SR.fmtDay(HISTORY.days[0].date, true) + '.');
+  }
+  if (!lines.length) return '';
+  return '<div class="modal-group-title">Screen Record</div><div class="record-line">' + lines.join('<br>') +
+    (rec ? ' <a href="history.html#t=' + encodeURIComponent(r.ticker) + '">Full screen history &rarr;</a>' : '') + '</div>';
+}
+
+function chartBlockHtml(r) {
+  if (!r.spark || !LATEST || !LATEST.spark_dates) return '';
+  return '<div class="modal-group-title">Six-Month Price</div>' +
+    '<div class="modal-group-sub">Daily closes with the 50-day average. Hover or use arrow keys for values.</div>' +
+    '<div class="chart-wrap"><div class="viz-legend">' +
+    '<span class="lg"><span class="lg-line" style="background:var(--series-1)"></span>Close</span>' +
+    '<span class="lg"><span class="lg-line" style="background:var(--series-2)"></span>50-day average</span></div>' +
+    '<div class="viz" id="price-chart"></div></div>';
+}
+function drawPriceChart(r) {
+  const el = document.getElementById('price-chart');
+  if (!el || !r.spark) return;
+  const dates = LATEST.spark_dates;
+  SR.lineChart(el, {
+    x: dates, height: 200,
+    series: [
+      { name: 'Close', values: r.spark.c, color: 'var(--series-1)', tipFmt: fmtMoney },
+      { name: '50-day avg', values: r.spark.sma50, color: 'var(--series-2)', tipFmt: fmtMoney },
+    ],
+    yFmt: v => '$' + fmtNum(v, v < 20 ? 1 : 0),
+    xFmt: d => SR.fmtDay(d),
+    tipTitle: i => SR.fmtDayLong(dates[i]),
+    ariaLabel: r.ticker + ' daily closing price and 50-day average over six months',
+  });
+}
+
+/* Normalizes a universe.json row into the shape the modal renders. */
+function liteRow(u) {
+  return {
+    lite: true, ticker: u.t, company: u.n, sector: u.sector, industry: u.industry,
+    price: u.p, pct_chg: u.c, rs: u.rs, trend_n: u.tn, trend: u.tn + '/8', qualifies: !!u.q,
+    score: u.ms, universe_rank: { momentum: u.mr, quality: u.qr }, market_cap: u.mc != null ? u.mc * 1e9 : null,
+    trend_criteria: SR.CRITERIA.map((l, i) => [i === 7 ? 'RS Rating >= 70 (currently ' + (u.rs ?? '—') + ')' : l, !!(u.tb & (1 << i))]),
+    metrics: { sma50: u.s50, sma150: u.s150, sma200: u.s200, wk52_high: u.h52, wk52_low: u.l52,
+               ret_3m_pct: u.r3, ret_12m_pct: u.r12, adr20_pct: u.adr, pct_off_52w_high: u.hi },
+    earnings: u.ed != null ? { days: u.ed } : null,
+  };
+}
+
 /* Modal navigation state: lets a user step through the ranked list without
-   closing and reopening, which is the actual workflow when comparing
-   candidates. Arrow keys work too. */
+   closing and reopening. Arrow keys work too. */
 let MODAL_CTX = { rows: [], index: 0, listName: '' };
+let LAST_FOCUS = null;
 
 function openDetailModal(r, rows, index, listName) {
   if (rows) MODAL_CTX = { rows: rows, index: index, listName: listName || '' };
+  else if (r.lite) MODAL_CTX = { rows: [], index: 0, listName: '' };
+  const overlay = document.getElementById('detail-modal');
+  if (overlay.hidden) LAST_FOCUS = document.activeElement;
 
   const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
   const checklist = (r.trend_criteria || []).map(([label, met]) =>
     '<li class="' + (met ? '' : 'unmet') + '"><span class="' + (met ? 'check-yes' : 'check-no') + '">' +
-    (met ? '[X]' : '[ ]') + '</span> ' + label + '</li>'
+    (met ? '[X]' : '[ ]') + '</span> ' + esc(label) + '</li>'
   ).join('');
 
   const m = r.metrics || {};
   const total = MODAL_CTX.rows.length;
   const pos = MODAL_CTX.index;
-  const rankLine = total
-    ? '<div class="modal-rank">#' + (pos + 1) + ' of ' + total + (MODAL_CTX.listName ? ' &middot; ' + MODAL_CTX.listName : '') + '</div>'
-    : '';
+  const rankLine = r.lite
+    ? '<div class="modal-rank">Lookup &middot; not on today\'s lists</div>'
+    : (total ? '<div class="modal-rank">#' + (pos + 1) + ' of ' + total + (MODAL_CTX.listName ? ' &middot; ' + esc(MODAL_CTX.listName) : '') + '</div>' : '');
 
-  const navBar = total > 1
+  const navBar = total > 1 && !r.lite
     ? '<div class="modal-nav">' +
         '<button class="mnav-btn" id="modal-prev"' + (pos === 0 ? ' disabled' : '') + ' aria-label="Previous stock">&larr; Prev</button>' +
         '<span class="mnav-hint">Use &larr; &rarr; keys</span>' +
@@ -486,33 +645,48 @@ function openDetailModal(r, rows, index, listName) {
       '</div>'
     : '';
 
+  const watching = SR.watchlist.has(r.ticker);
+  const actions = '<div class="modal-actions">' +
+    '<button class="act-btn" id="act-watch" aria-pressed="' + watching + '">' + (watching ? '&#9733; Watching' : '&#9734; Watch') + '</button>' +
+    '<button class="act-btn" id="act-share">&#128279; Copy link</button></div>';
+
+  const scoreRow = r.lite
+    ? '<div class="modal-score-row">RS<span' + tipAttr('rs') + '> ' + (r.rs ?? '—') + '</span> &middot; Trend<span' + tipAttr('trend') + '> ' + r.trend + '</span>' +
+      ' &middot; Qualifies<span' + tipAttr('qualifies') + '>: ' + (r.qualifies ? 'Yes' : 'No') + '</span></div>'
+    : '<div class="modal-score-row">Composite score<span' + tipAttr('score') + '> ' + r.score + '</span> &middot; RS<span' + tipAttr('rs') + '> ' + (r.rs ?? '—') + '</span> &middot; Trend<span' + tipAttr('trend') + '> ' + r.trend + '</span>' +
+      ' &middot; Qualifies<span' + tipAttr('qualifies') + '>: ' + (r.qualifies ? 'Yes' : 'No') + '</span></div>';
+
   const html =
     rankLine +
     '<h2 class="modal-ticker" id="modal-ticker">' + esc(r.ticker) + '</h2>' +
-    (r.company ? '<div class="modal-company">' + esc(r.company) +
-       (r.sector ? ' <span class="modal-sector">' + esc(r.sector) + '</span>' : '') + '</div>' : '') +
+    (r.company ? '<div class="modal-company">' + esc(r.company) + '</div>' : '') +
     '<div class="modal-price-row">' + fmtMoney(r.price) + ' &nbsp; <span class="' + chgClass + '"' + tipAttr('chg') + '>' + fmtPct(r.pct_chg) + '</span></div>' +
-    '<div class="modal-score-row">Composite score<span' + tipAttr('score') + '> ' + r.score + '</span> &middot; RS<span' + tipAttr('rs') + '> ' + (r.rs ?? '—') + '</span> &middot; Trend<span' + tipAttr('trend') + '> ' + r.trend + '</span>' +
-    ' &middot; Qualifies<span' + tipAttr('qualifies') + '>: ' + (r.qualifies ? 'Yes' : 'No') + '</span></div>' +
+    scoreRow + actions +
+    '<div id="co-block">' + (r.lite || !r.profile ? companyBlockHtml(r, null).replace('No business description was available from the data source for this company.', 'Loading company profile&hellip;') : companyBlockHtml(r, r.profile)) + '</div>' +
+    earningsHtml(r.earnings) +
     buildReadout(r) +
+    chartBlockHtml(r) +
+    recordHtml(r) +
     '<div class="modal-group-title">Moving Average Stack</div>' +
     '<div class="modal-group-sub">Where price sits relative to each average, and whether they are in the order the Trend Template looks for.</div>' +
     maStackHtml(r.price, m) +
-    metricsGridHtml(m, r.price) +
+    metricsGridHtml(m, r.price, r.lite) +
     '<div class="modal-group-title">Trend Template Checklist</div>' +
     '<div class="modal-group-sub">' + r.trend + ' of Minervini\'s 8 criteria currently met. <a href="trend-template.html">What each criterion means &rarr;</a></div>' +
     '<ul class="checklist">' + checklist + '</ul>' +
-    '<div class="modal-group-title">Triggered Signals</div>' +
-    '<div class="modal-group-sub">Framework-specific triggers from today\'s data. An empty section means no signal fired — which is normal, not a negative reading.</div>' +
-    signalSection('CANSLIM (' + r.canslim + ')', r.signals && r.signals.canslim) +
-    signalSection('Zanger (' + r.zanger + ')', r.signals && r.signals.zanger) +
-    signalSection('Qullamaggie (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
-    signalSection('Value (' + r.value + ')', r.signals && r.signals.value) +
+    (r.lite
+      ? '<div class="lite-note">The full breakdown &mdash; framework signals, fundamentals and the price chart &mdash; is published for the 20 stocks on today\'s lists. This lookup shows the trend data computed for every scanned stock.</div>'
+      : '<div class="modal-group-title">Triggered Signals</div>' +
+        '<div class="modal-group-sub">Framework-specific triggers from today\'s data. An empty section means no signal fired — which is normal, not a negative reading.</div>' +
+        signalSection('CANSLIM (' + r.canslim + ')', r.signals && r.signals.canslim) +
+        signalSection('Zanger (' + r.zanger + ')', r.signals && r.signals.zanger) +
+        signalSection('Qullamaggie (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
+        signalSection('Value (' + r.value + ')', r.signals && r.signals.value)) +
     navBar +
     '<div class="modal-links"><a href="https://finance.yahoo.com/quote/' + encodeURIComponent(r.ticker) +
-      '/chart" target="_blank" rel="noopener noreferrer">Open chart on Yahoo Finance &rarr;</a>' +
-      '<span class="ml-note">External site. We do not draw charts here &mdash; verify price action against a real-time source.</span></div>' +
-    '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news, earnings dates, or your own circumstances. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
+      '/chart" target="_blank" rel="noopener noreferrer">Open full chart on Yahoo Finance &rarr;</a>' +
+      '<span class="ml-note">External site. Verify price action against a real-time source; prices here are delayed.</span></div>' +
+    '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news or your own circumstances. Company descriptions and analyst figures come from Yahoo Finance. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
 
   const box = document.getElementById('modal-content');
   box.innerHTML = html;
@@ -521,13 +695,48 @@ function openDetailModal(r, rows, index, listName) {
   const nextBtn = document.getElementById('modal-next');
   if (prevBtn) prevBtn.addEventListener('click', () => stepModal(-1));
   if (nextBtn) nextBtn.addEventListener('click', () => stepModal(1));
+  wireModalActions(r);
 
-  const overlay = document.getElementById('detail-modal');
   overlay.hidden = false;
   overlay.scrollTop = 0;
-  const mb = overlay.querySelector ? overlay.querySelector('.modal-box') : null;
+  const mb = overlay.querySelector('.modal-box');
   if (mb) mb.scrollTop = 0;
+  drawPriceChart(r);
+  setHashTicker(r.ticker);
   document.getElementById('modal-close-btn').focus();
+
+  if (r.lite || !r.profile) {
+    SR.loadCompanies().then(c => {
+      const co = c[r.ticker];
+      const slot = document.getElementById('co-block');
+      if (!slot || document.getElementById('modal-ticker').textContent !== r.ticker) return;
+      slot.innerHTML = companyBlockHtml(r, co ? { summary: co.d, website: co.w, hq: co.hq, employees: co.e } : null);
+      if (!Object.keys(c).length) {   // profiles file not published yet (first deploy)
+        const p = slot.querySelector('.company-summary');
+        if (p) p.textContent = 'Company profiles switch on after the next scheduled scan.';
+      }
+    });
+  }
+}
+
+function wireModalActions(r) {
+  const w = document.getElementById('act-watch');
+  if (w) w.addEventListener('click', () => {
+    const on = SR.watchlist.toggle(r.ticker);
+    w.setAttribute('aria-pressed', on);
+    w.innerHTML = on ? '&#9733; Watching' : '&#9734; Watch';
+  });
+  const s = document.getElementById('act-share');
+  if (s) s.addEventListener('click', async () => {
+    const url = location.origin + location.pathname + '#t=' + encodeURIComponent(r.ticker);
+    try { await navigator.clipboard.writeText(url); s.textContent = 'Link copied'; }
+    catch (e) { s.textContent = url; }
+    setTimeout(() => { s.innerHTML = '&#128279; Copy link'; }, 2200);
+  });
+}
+
+function setHashTicker(t) {
+  try { history.replaceState(null, '', t ? '#t=' + encodeURIComponent(t) : location.pathname + location.search); } catch (e) {}
 }
 
 function stepModal(delta) {
@@ -538,7 +747,12 @@ function stepModal(delta) {
 }
 
 function closeDetailModal() {
-  document.getElementById('detail-modal').hidden = true;
+  const overlay = document.getElementById('detail-modal');
+  if (overlay.hidden) return;
+  overlay.hidden = true;
+  SR.hideTip();
+  setHashTicker(null);
+  if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus();
 }
 
 document.getElementById('modal-close-btn').addEventListener('click', closeDetailModal);
@@ -550,12 +764,48 @@ document.addEventListener('keydown', (e) => {
   const open = overlay && !overlay.hidden;
   if (e.key === 'Escape') { closeDetailModal(); return; }
   if (!open) return;
+  if (e.target && e.target.closest && e.target.closest('.viz-svg')) return; // chart keys move the crosshair
   if (e.key === 'ArrowLeft') { e.preventDefault(); stepModal(-1); }
   if (e.key === 'ArrowRight') { e.preventDefault(); stepModal(1); }
 });
 
+/* Opens any ticker: full breakdown if it is on today's lists, otherwise the
+   lookup view built from the full-universe file. */
+function openTicker(t) {
+  if (!t || !LATEST) return false;
+  t = t.toUpperCase();
+  const lists = [[LATEST.section1 || [], 'Momentum Leaders'], [LATEST.section2 || [], 'Trend Quality & Value']];
+  for (const [rows, name] of lists) {
+    const i = rows.findIndex(r => r.ticker === t);
+    if (i >= 0) { openDetailModal(rows[i], rows, i, name); return true; }
+  }
+  if (UNIVERSE && UNIVERSE.byTicker[t]) { openDetailModal(liteRow(UNIVERSE.byTicker[t])); return true; }
+  return false;
+}
+
 /* ---------- list rendering ---------- */
-function renderTable(mountId, rows, scoreLabel, listName) {
+function badgesHtml(r, section) {
+  const h = r.history;
+  let out = '';
+  if (h) {
+    if (h.streak <= 1 && h.sessions <= 1) out += '<span class="bdg bdg-new" title="First appearance on either list">New</span>';
+    else if (h.streak <= 1) out += '<span class="bdg bdg-back" title="Back on the lists after dropping off">Back</span>';
+    else out += '<span class="bdg" title="' + h.streak + ' consecutive sessions on the lists">D' + h.streak + '</span>';
+  }
+  const e = r.earnings;
+  if (e && e.next && e.days != null && e.days <= 7) {
+    out += '<span class="bdg bdg-earn" title="Earnings ' + (e.days === 0 ? 'today' : 'in ' + e.days + ' day' + (e.days === 1 ? '' : 's')) + '">ER ' + (e.days === 0 ? 'today' : e.days + 'd') + '</span>';
+  }
+  let move = '';
+  if (h && h.prev_rank != null && h.prev_section === section) {
+    const d = h.prev_rank - 0;
+    const now = r._rank;
+    if (d !== now) move = '<span class="rank-move ' + (d > now ? 'up' : 'down') + '" title="Rank last session: ' + d + '">' + (d > now ? '&#9650;' : '&#9660;') + Math.abs(d - now) + '</span>';
+  }
+  return (out ? '<span class="badges">' + out + '</span>' : '') + move;
+}
+
+function renderTable(mountId, rows, scoreLabel, listName, section) {
   const mount = document.getElementById(mountId);
   if (!rows || rows.length === 0) {
     mount.innerHTML = '<div class="state-msg"><strong>No Data</strong>The first scheduled scan will populate this automatically.</div>';
@@ -569,11 +819,12 @@ function renderTable(mountId, rows, scoreLabel, listName) {
     '</tr></thead><tbody>';
 
   rows.forEach((r, i) => {
+    r._rank = i + 1;
     const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
     const qualFlag = r.qualifies ? '<span class="qual-flag" title="Fully qualifies">&#9679;</span>' : '';
     html += '<tr class="data-row" data-idx="' + i + '" tabindex="0">' +
       '<td class="rank">' + (i + 1) + '</td>' +
-      '<td class="ticker">' + esc(r.ticker) +
+      '<td class="ticker">' + esc(r.ticker) + badgesHtml(r, section) +
         (r.company ? '<span class="co-name">' + esc(r.company) + '</span>' : '') + '</td>' +
       '<td class="num">' + fmtMoney(r.price) + '</td>' +
       '<td class="num ' + chgClass + '">' + fmtPct(r.pct_chg) + '</td>' +
@@ -595,8 +846,8 @@ function updateTicker(data) {
   const track = document.getElementById('ticker-track');
   const all = [...(data.section1 || []), ...(data.section2 || [])];
   if (all.length === 0) { track.textContent = 'No scan data yet.'; return; }
-  const parts = all.map(r => esc(r.ticker) + ' ' + fmtPct(r.pct_chg));
-  track.textContent = parts.join('     \u2022     ') + '     \u2022     ';
+  const parts = all.map(r => r.ticker + ' ' + fmtPct(r.pct_chg));
+  track.textContent = parts.join('     •     ') + '     •     ';
 }
 
 function updateStatus(status) {
@@ -613,18 +864,185 @@ function updateStatus(status) {
   pill.className = 'status-pill ' + cls;
 }
 
+/* ---------- market pulse ----------
+   How broad the market's strength is, not just how the index looks. The
+   count of stocks passing the Trend Template is itself a breadth gauge. */
+function renderPulse(data) {
+  const host = document.getElementById('market-pulse');
+  if (!host) return;
+  const b = data.breadth || null;
+  const days = (HISTORY && HISTORY.days) || [];
+  const prior = days.filter(d => d.date < (data.session_date || '9999')).slice(-1)[0];
+  const series = days.filter(d => d.date !== data.session_date).slice(-39).map(d => d.qualified);
+  series.push(data.qualifying_count);
+
+  let delta = '';
+  if (prior && prior.qualified != null) {
+    const d = data.qualifying_count - prior.qualified;
+    delta = '<span class="' + (d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : '') + '">' + (d > 0 ? '&#9650;' : d < 0 ? '&#9660;' : '') +
+      (d === 0 ? 'unchanged' : Math.abs(d)) + '</span> vs ' + SR.fmtDay(prior.date);
+  }
+  const pctQ = data.total_scored ? (data.qualifying_count / data.total_scored * 100) : null;
+  const tiles = [];
+  tiles.push('<div class="tile"><div class="tile-label">Passing Trend Template</div>' +
+    '<div class="tile-value">' + fmtNum(data.qualifying_count, 0) + '<small>/ ' + fmtNum(data.total_scored, 0) + '</small></div>' +
+    '<div class="tile-sub">' + (delta || (pctQ != null ? pctQ.toFixed(0) + '% of scanned stocks' : '')) + '</div>' +
+    (series.length > 2 ? SR.sparkline(series, { width: 140, height: 26 }) : '') + '</div>');
+  const meterTile = (label, v, sub) => '<div class="tile"><div class="tile-label">' + label + '</div>' +
+    '<div class="tile-value">' + (v == null ? '—' : v.toFixed(0) + '<small>%</small>') + '</div>' +
+    '<div class="tile-sub">' + sub + '</div>' +
+    (v == null ? '' : '<div class="meter" aria-hidden="true"><span style="width:' + Math.max(0, Math.min(100, v)) + '%"></span></div>') + '</div>';
+  tiles.push(meterTile('Above 50-day average', b ? b.pct_above_50 : null, b ? 'short-term participation' : 'from the next scan'));
+  tiles.push(meterTile('Above 200-day average', b ? b.pct_above_200 : null, b ? 'long-term participation' : 'from the next scan'));
+  tiles.push('<div class="tile"><div class="tile-label">New 52-wk highs / lows</div>' +
+    '<div class="tile-value">' + (b ? b.new_highs + '<small>/ ' + b.new_lows + '</small>' : '—') + '</div>' +
+    '<div class="tile-sub">' + (b ? 'Advancers ' + b.advancers + ' &middot; decliners ' + b.decliners : 'from the next scan') + '</div></div>');
+
+  host.innerHTML = '<div class="pulse-head"><h2>Market Pulse</h2>' +
+    '<a href="history.html#breadth">Breadth over time &rarr;</a></div>' +
+    '<div class="tiles">' + tiles.join('') + '</div>';
+  host.hidden = false;
+}
+
+/* ---------- sector & industry leadership ---------- */
+function renderSectors(data) {
+  const host = document.getElementById('sector-mount');
+  const head = document.getElementById('sectors');
+  if (!host) return;
+  const secs = data.sectors || [];
+  if (!secs.length) { host.innerHTML = ''; head.hidden = true; return; }
+  head.hidden = false;
+  const max = Math.max(...secs.map(s => s.pct_qualified), 1);
+  let bars = '<div class="hbar-list"><div class="hbar-cap">Share of each sector\'s stocks passing the Trend Template (&ge; ' + data.min_trend_needed + '/8)</div>';
+  secs.forEach((s, i) => {
+    bars += '<div class="hbar-row" tabindex="0" data-i="' + i + '"><span class="hbar-name">' + esc(s.name) + '</span>' +
+      '<span class="hbar-track"><span class="hbar-fill" style="width:' + (s.pct_qualified / max * 100).toFixed(1) + '%"></span></span>' +
+      '<span class="hbar-val">' + s.pct_qualified.toFixed(0) + '%</span></div>';
+  });
+  bars += '</div>';
+  const inds = (data.industries || []).slice(0, 6);
+  let list = '<div class="ind-list">' + (inds.length ? '' : '<div class="empty-note">No industry groups with enough members.</div>');
+  inds.forEach(g => {
+    list += '<div class="ind-row"><div><div class="ind-name">' + esc(g.name) + '</div>' +
+      '<div class="ind-meta">' + esc(g.sector) + ' &middot; ' + g.n + ' stocks &middot; ' + g.pct_qualified.toFixed(0) + '% pass &middot; leaders ' +
+      g.leaders.map(t => '<button class="tk-link" data-t="' + esc(t) + '">' + esc(t) + '</button>').join(', ') + '</div></div>' +
+      '<div class="ind-rs">' + (g.avg_rs != null ? g.avg_rs.toFixed(0) : '—') + '<small>avg RS</small></div></div>';
+  });
+  list += '</div>';
+  host.innerHTML = '<div class="sector-grid"><div>' + bars + '</div><div><div class="hbar-cap" style="margin:0 0 6px">Strongest industry groups by average RS (4+ members)</div>' + list + '</div></div>';
+
+  host.querySelectorAll('.hbar-row').forEach(el => {
+    const s = secs[+el.dataset.i];
+    const rows = [
+      { label: 'pass the Trend Template', value: s.qualified + ' of ' + s.n },
+      { label: 'average RS', value: s.avg_rs != null ? s.avg_rs.toFixed(0) : '—' },
+      { label: 'median 3-month return', value: fmtPct(s.median_ret_3m, 1) },
+      { label: 'on today\'s lists', value: String(s.in_top) },
+      { label: 'strongest names', value: s.leaders.join(', ') },
+    ];
+    el.addEventListener('pointermove', e => SR.showTip(s.name, rows, e.clientX, e.clientY));
+    el.addEventListener('pointerleave', SR.hideTip);
+    el.addEventListener('focus', () => { const r = el.getBoundingClientRect(); SR.showTip(s.name, rows, r.left + r.width / 2, r.top); });
+    el.addEventListener('blur', SR.hideTip);
+  });
+  host.querySelectorAll('.tk-link').forEach(b => b.addEventListener('click', () => openTicker(b.dataset.t)));
+}
+
+/* ---------- lookup any scanned stock ---------- */
+function setupLookup() {
+  const input = document.getElementById('lookup-input');
+  const box = document.getElementById('lookup-results');
+  if (!input) return;
+  let results = [], sel = -1;
+
+  const render = () => {
+    const q = input.value.trim();
+    if (!q) { box.hidden = true; input.setAttribute('aria-expanded', 'false'); return; }
+    if (!UNIVERSE) {
+      box.innerHTML = '<div class="lk-empty">' + (UNIVERSE_FAILED
+        ? 'Stock lookup is not available yet &mdash; it switches on after the next scheduled scan.'
+        : 'Loading the full scan&hellip;') + '</div>';
+      box.hidden = false;
+      return;
+    }
+    const Q = q.toUpperCase(), ql = q.toLowerCase();
+    const scored = [];
+    UNIVERSE.list.forEach(u => {
+      let s = -1;
+      if (u.t === Q) s = 0;
+      else if (u.t.startsWith(Q)) s = 1;
+      else if ((u.n || '').toLowerCase().startsWith(ql)) s = 2;
+      else if (q.length >= 2 && (u.n || '').toLowerCase().includes(ql)) s = 3;
+      if (s >= 0) scored.push([s, u.mr, u]);
+    });
+    scored.sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    results = scored.slice(0, 8).map(x => x[2]);
+    sel = results.length ? 0 : -1;
+    if (!results.length) {
+      box.innerHTML = '<div class="lk-empty">No scanned stock matches &ldquo;' + esc(q) + '&rdquo;. The scan covers S&amp;P 500 and S&amp;P 400 constituents.</div>';
+    } else {
+      box.innerHTML = results.map((u, i) =>
+        '<div class="lk-row" role="option" id="lk-' + i + '" aria-selected="' + (i === sel) + '" data-t="' + esc(u.t) + '">' +
+        '<span class="lk-t">' + esc(u.t) + '</span><span class="lk-n">' + esc(u.n) + '</span>' +
+        trendBarHtml(u.tn) + '<span class="lk-rank">#' + u.mr + ' &middot; <span class="' + SR.chgClass(u.c) + '">' + fmtPct(u.c) + '</span></span></div>').join('');
+    }
+    box.hidden = false;
+    input.setAttribute('aria-expanded', 'true');
+  };
+  const choose = (t) => {
+    if (openTicker(t)) { input.value = ''; box.hidden = true; input.setAttribute('aria-expanded', 'false'); }
+  };
+  const highlight = () => {
+    box.querySelectorAll('.lk-row').forEach((el, i) => el.setAttribute('aria-selected', i === sel));
+    if (sel >= 0) input.setAttribute('aria-activedescendant', 'lk-' + sel);
+  };
+  input.addEventListener('input', render);
+  input.addEventListener('focus', () => {
+    if (!UNIVERSE) SR.loadUniverse().then(u => { UNIVERSE = UNIVERSE || u; if (input.value) render(); })
+      .catch(() => { UNIVERSE_FAILED = true; if (input.value) render(); });
+  });
+  input.addEventListener('keydown', e => {
+    if (e.key === 'ArrowDown' && results.length) { e.preventDefault(); sel = (sel + 1) % results.length; highlight(); }
+    else if (e.key === 'ArrowUp' && results.length) { e.preventDefault(); sel = (sel - 1 + results.length) % results.length; highlight(); }
+    else if (e.key === 'Enter' && sel >= 0) { e.preventDefault(); choose(results[sel].t); }
+    else if (e.key === 'Escape') { box.hidden = true; }
+  });
+  box.addEventListener('click', e => { const row = e.target.closest('.lk-row'); if (row) choose(row.dataset.t); });
+  document.addEventListener('click', e => { if (!e.target.closest('.lookup')) box.hidden = true; });
+}
+
+/* ---------- watchlist ---------- */
+function renderWatchlist() {
+  const host = document.getElementById('watchlist-mount');
+  if (!host) return;
+  const list = SR.watchlist.get();
+  if (!list.length) {
+    host.innerHTML = '<p class="wl-empty">Open any stock and press <strong>&#9734; Watch</strong> to track its score here. Saved in this browser only &mdash; no account needed.</p>';
+    return;
+  }
+  const onList = {};
+  if (LATEST) [...(LATEST.section1 || []), ...(LATEST.section2 || [])].forEach(r => { onList[r.ticker] = r; });
+  host.innerHTML = list.map(t => {
+    const u = UNIVERSE && UNIVERSE.byTicker[t];
+    const r = onList[t];
+    const chg = r ? r.pct_chg : u ? u.c : null;
+    const meta = r ? 'On today\'s list &middot; ' + r.trend : u ? 'Trend ' + u.tn + '/8 &middot; #' + u.mr : (UNIVERSE ? 'Not in this scan' : '');
+    return '<div class="wl-row" data-t="' + esc(t) + '" tabindex="0"><span class="wl-t">' + esc(t) + '</span>' +
+      '<span class="wl-meta">' + meta + '</span><span class="wl-chg ' + SR.chgClass(chg) + '">' + fmtPct(chg) + '</span></div>';
+  }).join('');
+  host.querySelectorAll('.wl-row').forEach(el => {
+    el.addEventListener('click', () => openTicker(el.dataset.t));
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') openTicker(el.dataset.t); });
+  });
+}
+document.addEventListener('watchlist-change', renderWatchlist);
+
 /* ---------- data freshness ----------
    Market-aware. Scans run hourly while the US market is open plus once
-   after the close, and not at all overnight or on weekends. So "how old is
-   the data" only matters while the market is open; when it is closed the
-   right question is "does the data include the last session's close?".
-   The previous version flagged anything over 6 hours old as stale, which
-   put a red warning on the site every night and all weekend even when
-   nothing was wrong. Honest staleness still beats confident wrongness:
-   a scan that really is missing is still called out. */
+   after the close, and not at all overnight or on weekends. */
 const ET_TZ = 'America/New_York';
-const OPEN_MIN = 9 * 60 + 30;   // 9:30 ET
-const CLOSE_MIN = 16 * 60;      // 16:00 ET
+const OPEN_MIN = 9 * 60 + 30;
+const CLOSE_MIN = 16 * 60;
 
 function etParts(date) {
   const f = new Intl.DateTimeFormat('en-US', {
@@ -653,7 +1071,6 @@ function fmtAge(mins) {
   return Math.floor(hrs / 24) + ' days ago';
 }
 
-/* The most recent weekday (ET) whose 4:00pm close has already happened. */
 function lastCloseYmd(now) {
   const n = etParts(now);
   if (n.weekday && n.mins >= CLOSE_MIN) return n.ymd;
@@ -675,17 +1092,14 @@ function assessFreshness(generatedAt, now) {
   const g = etParts(then);
   const marketOpen = n.weekday && n.mins >= OPEN_MIN && n.mins < CLOSE_MIN;
 
-  // Recent enough under any conditions: say nothing.
   if (ageMins < 100) return { level: 'fresh', ageMins, then };
 
   if (marketOpen) {
-    // First scan of the day starts ~9:47 ET and takes a few minutes to publish.
     const fromBeforeToday = g.ymd < n.ymd;
     if (fromBeforeToday && n.mins < 10 * 60 + 20) return { level: 'opening', ageMins, then };
     return { level: ageMins < 180 ? 'aging' : 'stale', ageMins, then };
   }
 
-  // Market closed (overnight, pre-open, weekend): is the last close covered?
   const closeYmd = lastCloseYmd(now);
   const coversClose = g.ymd > closeYmd || (g.ymd === closeYmd && g.mins >= CLOSE_MIN);
   if (coversClose) return { level: 'closed', ageMins, then };
@@ -721,6 +1135,7 @@ async function loadData() {
     const res = await fetch(DATA_URL, { cache: 'no-store' });
     if (!res.ok) throw new Error('no data file yet');
     const data = await res.json();
+    LATEST = data;
 
     const updated = new Date(data.generated_at);
     const el = document.getElementById('updated-at');
@@ -731,9 +1146,7 @@ async function loadData() {
     renderFreshness(data.generated_at);
 
     /* When nothing clears the gate, that is the most important fact on the
-       page and it should read as a headline, not a statistic buried in a
-       summary line. A list of ten non-qualifying names is not ten
-       opportunities, and the page should not let anyone assume it is. */
+       page and it should read as a headline, not a statistic. */
     const q = data.qualifying_count;
     const summaryEl = document.getElementById('scan-summary');
     if (q === 0) {
@@ -754,8 +1167,11 @@ async function loadData() {
     }
 
     updateTicker(data);
-    renderTable('section1-mount', data.section1, 'Score', 'Momentum Leaders');
-    renderTable('section2-mount', data.section2, 'Score', 'Trend Quality & Value');
+    renderTable('section1-mount', data.section1, 'Score', 'Momentum Leaders', 1);
+    renderTable('section2-mount', data.section2, 'Score', 'Trend Quality & Value', 2);
+    renderPulse(data);
+    renderSectors(data);
+    renderWatchlist();
   } catch (e) {
     updateStatus(null);
     const fh = document.getElementById('freshness-banner');
@@ -766,18 +1182,32 @@ async function loadData() {
       document.getElementById(id).innerHTML =
         '<div class="state-msg"><strong>No Data</strong>This screen reads data written by the scheduled scan. If this persists, the most recent scan may not have completed.</div>';
     });
+    return;
   }
+
+  // Secondary data: history (record + pulse sparkline) and the full universe
+  // (lookup + watchlist). Optional - the page works without either.
+  const [hist, uni] = await Promise.allSettled([SR.fetchJSON('data/history.json'), SR.fetchJSON('data/universe.json')]);
+  if (hist.status === 'fulfilled') { HISTORY = hist.value; RECORDS = SR.tickerRecords(HISTORY); renderPulse(LATEST); }
+  if (uni.status === 'fulfilled') {
+    try { UNIVERSE = SR.parseUniverse(uni.value); } catch (e) { UNIVERSE = null; UNIVERSE_FAILED = true; }
+    renderWatchlist();
+  } else UNIVERSE_FAILED = true;
+  if (PENDING_HASH) { openTicker(PENDING_HASH); PENDING_HASH = null; }
 }
 
+setupLookup();
+renderWatchlist();
 loadData();
-setInterval(loadData, REFRESH_MS);
-
+setInterval(() => { if (document.getElementById('detail-modal').hidden) loadData(); }, REFRESH_MS);
+window.addEventListener('hashchange', () => { const t = parseHashTicker(); if (t) openTicker(t); });
 </script>
 
 <footer>
   <div class="wrap">
     <nav class="footer-links" aria-label="Footer navigation">
       <a href="index.html">Screen</a>
+      <a href="history.html">History</a>
       <a href="learn.html">Learn</a>
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>

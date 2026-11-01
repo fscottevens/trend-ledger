@@ -1,0 +1,644 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Screen History &amp; Track Record | Stonks Run</title>
+<meta name="description" content="Every session's final Stonks Run screen since August 2026, and how those stocks performed 1, 5, 10 and 20 sessions later compared with the S&amp;P 500. Breadth, sector rotation, and the most persistent leaders.">
+<link rel="canonical" href="https://stonks.run/history.html">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#05070A">
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Stonks Run">
+<meta property="og:title" content="Screen History &amp; Track Record | Stonks Run">
+<meta property="og:description" content="Every session's final screen, and how those stocks performed afterwards versus the S&amp;P 500.">
+<meta property="og:url" content="https://stonks.run/history.html">
+<meta property="og:image" content="https://stonks.run/social-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Screen History &amp; Track Record | Stonks Run">
+<meta name="twitter:description" content="Every session's final screen, and how those stocks performed afterwards versus the S&amp;P 500.">
+<meta name="twitter:image" content="https://stonks.run/social-card.png">
+
+<link rel="icon" href="favicon.png" type="image/png">
+<link rel="apple-touch-icon" href="favicon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
+     crossorigin="anonymous"></script>
+</head>
+<body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Dataset",
+  "name": "Stonks Run screen history",
+  "description": "Daily final results of an automated momentum and trend stock screen over the S&P 500 and S&P 400, with subsequent price performance versus the S&P 500.",
+  "url": "https://stonks.run/history.html",
+  "creator": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/"},
+  "temporalCoverage": "2026-08-26/..",
+  "isAccessibleForFree": true
+}
+</script>
+<header class="masthead">
+  <div class="wrap masthead-inner">
+    <div>
+      <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <nav class="quicknav" aria-label="Main navigation">
+        <a href="index.html">Screen</a>
+        <a href="history.html" class="active" aria-current="page">History</a>
+        <a href="learn.html">Learn</a>
+        <a href="methodology.html">Methodology</a>
+        <a href="about.html">About</a>
+        <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      </nav>
+    </div>
+    <div class="masthead-meta">
+      <div>Through: <span id="as-of">&mdash;</span></div>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+<main id="main-content">
+  <section class="hist-head">
+    <h1>Screen History &amp; Track Record</h1>
+    <p>The screen re-ranks the market every hour, so on its own it only tells you about <em>now</em>. This page keeps the
+    record: the final list from every trading session, and what those stocks did over the following 1, 5, 10 and 20
+    sessions compared with the S&amp;P 500. Nothing is removed after the fact &mdash; the misses stay in alongside the hits.</p>
+    <p>It is a record of a mechanical screen, not a trading strategy: there are no entries, exits, position sizes or costs
+    here. <a href="#method">How the numbers are calculated</a>.</p>
+  </section>
+
+  <div class="filter-row" role="group" aria-label="Filters for everything on this page">
+    <div><span class="seg-label">List</span><span class="seg-ctl" id="f-list">
+      <button data-v="0" aria-pressed="true">Both</button><button data-v="1" aria-pressed="false">Momentum</button><button data-v="2" aria-pressed="false">Quality &amp; Value</button></span></div>
+    <div><span class="seg-label">Period</span><span class="seg-ctl" id="f-window">
+      <button data-v="20" aria-pressed="false">20 sessions</button><button data-v="60" aria-pressed="false">60 sessions</button><button data-v="0" aria-pressed="true">All</button></span></div>
+    <label class="chk"><input type="checkbox" id="f-qual"> Fully qualified only</label>
+    <label class="chk"><input type="checkbox" id="f-new"> New entries only</label>
+  </div>
+
+  <div id="hist-error"></div>
+
+  <section class="hist-section" id="track">
+    <div class="section-head" style="margin-top:0">
+      <p class="section-eyebrow">01</p>
+      <h2 class="section-title">What Happened Next</h2>
+      <p class="section-sub">Average price change of the listed stocks after the session they appeared, measured close to close,
+      next to the S&amp;P 500 (SPY) over exactly the same windows.</p>
+    </div>
+    <div class="kpi-tiles" id="kpis"></div>
+    <div class="viz-card">
+      <div class="viz-legend">
+        <span class="lg"><span class="lg-box" style="background:var(--series-1)"></span>Screen picks (average)</span>
+        <span class="lg"><span class="lg-box" style="background:var(--series-2)"></span>S&amp;P 500 over the same windows</span>
+      </div>
+      <div class="viz" id="track-chart"></div>
+      <p class="viz-note" id="track-note"></p>
+    </div>
+    <div class="table-scroll"><table class="data-table" id="track-table"></table></div>
+  </section>
+
+  <section class="hist-section" id="breadth">
+    <div class="section-head">
+      <p class="section-eyebrow">02</p>
+      <h2 class="section-title">Breadth Over Time</h2>
+      <p class="section-sub">How many of the ~890 scanned stocks passed the Trend Template at each session's close. Rising
+      counts mean strength is broadening; falling counts mean fewer stocks are carrying the market.</p>
+    </div>
+    <div class="viz-card">
+      <div class="viz-legend">
+        <span class="lg"><span class="lg-line" style="background:var(--series-1)"></span>Stocks passing the Trend Template</span>
+        <span class="lg"><span class="lg-box" style="background:var(--gain)"></span>Market: confirmed uptrend</span>
+        <span class="lg"><span class="lg-box" style="background:var(--amber)"></span>Mixed</span>
+        <span class="lg"><span class="lg-box" style="background:var(--loss)"></span>Under pressure</span>
+      </div>
+      <div class="viz" id="breadth-chart"></div>
+      <p class="viz-note">Market status strip: SPY versus its 50- and 200-day averages at each close. Values for every session are in the archive below.</p>
+    </div>
+    <div class="viz-card" id="ma-card" hidden>
+      <div class="viz-legend">
+        <span class="lg"><span class="lg-line" style="background:var(--series-1)"></span>% of stocks above their 50-day average</span>
+        <span class="lg"><span class="lg-line" style="background:var(--series-2)"></span>% above their 200-day average</span>
+      </div>
+      <div class="viz" id="ma-chart"></div>
+    </div>
+  </section>
+
+  <section class="hist-section" id="rotation">
+    <div class="section-head">
+      <p class="section-eyebrow">03</p>
+      <h2 class="section-title">Sector Rotation</h2>
+      <p class="section-sub">How many of each session's listed stocks came from each sector. Brighter means more. Hover for
+      the names; click a cell to open that session in the archive.</p>
+    </div>
+    <div class="viz-card"><div class="viz" id="heatmap"></div>
+      <p class="viz-note">Scale: dim = 1 stock, brightest = the most from any sector in one session.</p></div>
+  </section>
+
+  <section class="hist-section" id="leaders">
+    <div class="section-head">
+      <p class="section-eyebrow">04</p>
+      <h2 class="section-title">Most Persistent Names</h2>
+      <p class="section-sub">Stocks that kept qualifying session after session. &ldquo;Since first flagged&rdquo; runs from the
+      close of the first session a stock appeared to the latest close. Click any row for its full record.</p>
+    </div>
+    <div class="table-scroll"><table class="data-table" id="leaders-table"></table></div>
+    <div class="show-more"><button class="mnav-btn" id="leaders-more" hidden>Show all</button></div>
+  </section>
+
+  <section class="hist-section" id="archive">
+    <div class="section-head">
+      <p class="section-eyebrow">05</p>
+      <h2 class="section-title">Session Archive</h2>
+      <p class="section-sub">The final list from each session, exactly as published, with what each stock did afterwards.</p>
+    </div>
+    <div class="session-strip" id="session-strip" role="group" aria-label="Choose a session"></div>
+    <div id="session-view"></div>
+  </section>
+
+  <div class="method-box" id="method">
+    <strong>How these numbers are calculated.</strong>
+    <ul>
+      <li><strong>Which list counts:</strong> the last scan of each trading day &mdash; normally the 4:17pm ET post-close run.
+      If that run failed, the latest scan from that day is used and marked &ldquo;intraday&rdquo;. A later weekend or holiday
+      rerun never replaces a finished session.</li>
+      <li><strong>Returns:</strong> price change from the close of the session a stock was listed to the close 1, 5, 10 and 20
+      trading sessions later, and to the latest close (&ldquo;to date&rdquo;). The S&amp;P 500 figure is SPY over exactly the
+      same windows. Price returns only &mdash; dividends excluded for both.</li>
+      <li><strong>Averaging:</strong> every appearance counts, so a stock listed ten sessions running is counted ten times, each
+      from its own starting close. Tick <em>New entries only</em> to count a stock only on sessions where it was not on either
+      list the session before.</li>
+      <li><strong>What it leaves out:</strong> no trading costs, slippage, taxes, stops or position sizing. The windows overlap,
+      the sample is short, and a few months of one market regime say little about another. Sessions before September 29, 2026
+      have no daily % change because of a since-fixed data issue; their prices and rankings are unaffected.</li>
+      <li><strong>Not a recommendation:</strong> past results of a screen do not predict future results. See
+      <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</li>
+    </ul>
+  </div>
+</main>
+</div>
+
+<div class="modal-overlay" id="detail-modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="modal-ticker">
+    <button class="modal-close" id="modal-close-btn" aria-label="Close details">&times;</button>
+    <div id="modal-content"></div>
+  </div>
+</div>
+
+<script src="common.js?v=2"></script>
+<script>
+const esc = SR.esc, fmtPct = SR.fmtPct, fmtNum = SR.fmtNum, fmtMoney = SR.fmtMoney;
+const H_KEYS = ['1', '5', '10', '20'];
+const H_LABEL = { '1': '+1 session', '5': '+5 sessions', '10': '+10 sessions', '20': '+20 sessions' };
+const STATUS_COLOR = { 'CONFIRMED UPTREND': 'var(--gain)', 'MIXED': 'var(--amber)', 'UNDER PRESSURE': 'var(--loss)' };
+const STATUS_LABEL = { 'CONFIRMED UPTREND': 'Confirmed uptrend', 'MIXED': 'Mixed', 'UNDER PRESSURE': 'Under pressure' };
+
+let HIST = null;
+const F = { list: 0, window: 0, qual: false, newOnly: false };
+let SELECTED_DATE = null;
+let LEADERS_ALL = false;
+let LEADER_SORT = { key: 'sessions', dir: -1 };
+
+function nameOf(t) { const n = HIST.names && HIST.names[t]; return n ? n[0] : ''; }
+function sectorOf(t) { const n = HIST.names && HIST.names[t]; return n ? n[1] : ''; }
+
+/* ---------- filtering ---------- */
+function windowDays() {
+  const d = HIST.days;
+  return F.window ? d.slice(-F.window) : d;
+}
+/* Picks passing the filters, each annotated with its day. */
+function selectedPicks(days) {
+  const all = HIST.days;
+  const out = [];
+  days.forEach(d => {
+    const di = all.indexOf(d);
+    const prev = di > 0 ? new Set(all[di - 1].picks.map(p => p.t)) : null;
+    d.picks.forEach(p => {
+      if (F.list && p.sec !== F.list) return;
+      if (F.qual && !p.q) return;
+      if (F.newOnly && (!prev || prev.has(p.t))) return;
+      out.push({ p, d });
+    });
+  });
+  return out;
+}
+
+const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null;
+const median = a => { if (!a.length) return null; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+
+function horizonStats(sel) {
+  return H_KEYS.map(h => {
+    const rows = sel.filter(x => x.p.f && x.p.f[h] != null);
+    const rets = rows.map(x => x.p.f[h]);
+    const paired = rows.filter(x => x.d.spy && x.d.spy[h] != null);
+    const spy = paired.map(x => x.d.spy[h]);
+    const exc = paired.map(x => x.p.f[h] - x.d.spy[h]);
+    return {
+      h, n: rets.length, avg: mean(rets), med: median(rets),
+      pos: rets.length ? rets.filter(v => v > 0).length / rets.length * 100 : null,
+      beat: exc.length ? exc.filter(v => v > 0).length / exc.length * 100 : null,
+      spy: mean(spy), excess: mean(exc),
+    };
+  });
+}
+
+/* ---------- 01 track record ---------- */
+function renderTrack() {
+  const days = windowDays();
+  const sel = selectedPicks(days);
+  const st = horizonStats(sel);
+  const hasPerf = st.some(s => s.n > 0);
+  const uniq = new Set(sel.map(x => x.p.t)).size;
+  const by = Object.fromEntries(st.map(s => [s.h, s]));
+
+  const tile = (label, value, sub) => '<div class="tile"><div class="tile-label">' + label + '</div><div class="tile-value">' + value + '</div><div class="tile-sub">' + sub + '</div></div>';
+  const retTile = (h) => {
+    const s = by[h];
+    if (!s || !s.n) return tile('Avg after ' + h + ' sessions', '—', hasPerf ? 'not enough elapsed sessions yet' : 'computed by the next scan');
+    return tile('Avg after ' + h + ' sessions', '<span class="' + SR.chgClass(s.avg) + '">' + fmtPct(s.avg, 1) + '</span>',
+      'S&amp;P 500 ' + fmtPct(s.spy, 1) + ' &middot; n=' + s.n);
+  };
+  const beatH = ['20', '10', '5', '1'].find(h => by[h] && by[h].n >= 10);
+  document.getElementById('kpis').innerHTML =
+    tile('Sessions in view', fmtNum(days.length, 0), SR.fmtDay(days[0].date) + ' &ndash; ' + SR.fmtDay(days[days.length - 1].date)) +
+    tile('Stocks flagged', fmtNum(uniq, 0), fmtNum(sel.length, 0) + ' list appearances') +
+    retTile('5') + retTile('20') +
+    (beatH ? tile('Beat the S&amp;P 500', by[beatH].beat.toFixed(0) + '<small>%</small>', 'of picks, over ' + beatH + ' sessions')
+           : tile('Beat the S&amp;P 500', '—', hasPerf ? 'too few elapsed sessions' : 'computed by the next scan'));
+
+  const chartEl = document.getElementById('track-chart');
+  const note = document.getElementById('track-note');
+  if (!hasPerf) {
+    chartEl.innerHTML = '<div class="empty-note">Forward returns are calculated by the scanner from daily price history. They appear here after the next scheduled scan.</div>';
+    note.textContent = '';
+  } else {
+    SR.columnChart(chartEl, {
+      cats: H_KEYS.map(h => H_LABEL[h]), shortCats: H_KEYS.map(h => '+' + h + 'd'), height: 240,
+      series: [
+        { name: 'Screen picks', values: st.map(s => s.avg), color: 'var(--series-1)' },
+        { name: 'S&P 500', values: st.map(s => s.spy), color: 'var(--series-2)' },
+      ],
+      yFmt: v => v + '%', valueFmt: v => fmtPct(v, 1),
+      tipRows: ci => {
+        const s = st[ci];
+        return [
+          { label: 'screen picks, average', value: fmtPct(s.avg, 2), key: 'var(--series-1)' },
+          { label: 'S&P 500, same windows', value: fmtPct(s.spy, 2), key: 'var(--series-2)' },
+          { label: 'median pick', value: fmtPct(s.med, 2) },
+          { label: 'picks measured', value: String(s.n) },
+        ];
+      },
+      ariaLabel: 'Average return of screen picks versus the S&P 500 after 1, 5, 10 and 20 sessions',
+    });
+    const thin = st.filter(s => s.n > 0 && s.n < 30).map(s => H_LABEL[s.h]);
+    note.textContent = thin.length ? 'Small sample at ' + thin.join(', ') + ' — fewer than 30 measured picks, so read those bars loosely.' : '';
+  }
+
+  let t = '<thead><tr><th>Horizon</th><th class="num">Picks measured</th><th class="num">Average</th><th class="num">Median</th>' +
+    '<th class="num">% positive</th><th class="num">% beat S&amp;P</th><th class="num">S&amp;P 500</th><th class="num">Avg vs S&amp;P</th></tr></thead><tbody>';
+  st.forEach(s => {
+    const c = v => '<span class="' + SR.chgClass(v) + '">' + fmtPct(v, 2) + '</span>';
+    t += '<tr><td>' + H_LABEL[s.h] + '</td><td class="num">' + s.n + '</td><td class="num">' + (s.n ? c(s.avg) : '—') + '</td><td class="num">' + (s.n ? c(s.med) : '—') +
+      '</td><td class="num">' + (s.pos != null ? s.pos.toFixed(0) + '%' : '—') + '</td><td class="num">' + (s.beat != null ? s.beat.toFixed(0) + '%' : '—') +
+      '</td><td class="num">' + (s.spy != null ? c(s.spy) : '—') + '</td><td class="num">' + (s.excess != null ? c(s.excess) : '—') + '</td></tr>';
+  });
+  document.getElementById('track-table').innerHTML = t + '</tbody>';
+}
+
+/* ---------- 02 breadth ---------- */
+function renderBreadth() {
+  const days = windowDays();
+  SR.lineChart(document.getElementById('breadth-chart'), {
+    x: days.map(d => d.date), height: 230, yMin: 0,
+    series: [{ name: 'passing', values: days.map(d => d.qualified), color: 'var(--series-1)', area: true, tipFmt: v => fmtNum(v, 0) }],
+    strip: days.map(d => ({ color: STATUS_COLOR[d.market] || null })),
+    xFmt: d => SR.fmtDay(d), yFmt: v => fmtNum(v, 0),
+    tipTitle: i => SR.fmtDayLong(days[i].date),
+    tipExtra: i => {
+      const d = days[i];
+      const rows = [];
+      if (d.scored) rows.push({ label: 'of stocks scanned', value: (d.qualified / d.scored * 100).toFixed(0) + '%' });
+      if (d.market) rows.push({ label: 'market status', value: STATUS_LABEL[d.market] || d.market });
+      if (d.breadth) rows.push({ label: 'above 50-day avg', value: d.breadth.pct_above_50 + '%' });
+      return rows;
+    },
+    ariaLabel: 'Number of stocks passing the Trend Template at each session close',
+  });
+  const withMA = days.filter(d => d.breadth && d.breadth.pct_above_50 != null);
+  const card = document.getElementById('ma-card');
+  if (withMA.length >= 5) {
+    card.hidden = false;
+    SR.lineChart(document.getElementById('ma-chart'), {
+      x: withMA.map(d => d.date), height: 200, yMin: 0,
+      series: [
+        { name: 'above 50-day', values: withMA.map(d => d.breadth.pct_above_50), color: 'var(--series-1)', tipFmt: v => v.toFixed(0) + '%' },
+        { name: 'above 200-day', values: withMA.map(d => d.breadth.pct_above_200), color: 'var(--series-2)', tipFmt: v => v.toFixed(0) + '%' },
+      ],
+      xFmt: d => SR.fmtDay(d), yFmt: v => v + '%', tipTitle: i => SR.fmtDayLong(withMA[i].date),
+      ariaLabel: 'Share of scanned stocks above their 50-day and 200-day averages',
+    });
+  } else card.hidden = true;
+}
+
+/* ---------- 03 sector rotation ---------- */
+function renderHeatmap() {
+  const days = windowDays();
+  const sel = selectedPicks(days);
+  const byDay = new Map(days.map(d => [d.date, {}]));
+  const totals = {};
+  sel.forEach(({ p, d }) => {
+    const s = sectorOf(p.t) || 'Unclassified';
+    const cell = byDay.get(d.date);
+    (cell[s] = cell[s] || []).push(p.t);
+    totals[s] = (totals[s] || 0) + 1;
+  });
+  const rows = Object.keys(totals).sort((a, b) => totals[b] - totals[a]);
+  const el = document.getElementById('heatmap');
+  if (!rows.length) { el.innerHTML = '<div class="empty-note">No stocks match these filters.</div>'; return; }
+  let max = 1;
+  byDay.forEach(c => Object.values(c).forEach(a => { max = Math.max(max, a.length); }));
+  SR.heatmap(el, {
+    rows, cols: days.map(d => d.date), max,
+    value: (ri, ci) => ((byDay.get(days[ci].date)[rows[ri]]) || []).length,
+    colFmt: d => SR.fmtDay(d),
+    tip: (ri, ci) => {
+      const names = (byDay.get(days[ci].date)[rows[ri]]) || [];
+      return { title: SR.fmtDayLong(days[ci].date), rows: [
+        { label: rows[ri], value: String(names.length) },
+        ...(names.length ? [{ label: '', value: names.join(', ') }] : []),
+      ] };
+    },
+    onClick: (ri, ci) => { selectSession(days[ci].date); document.getElementById('archive').scrollIntoView({ behavior: 'smooth' }); },
+    ariaLabel: 'Count of listed stocks by sector for each session',
+  });
+}
+
+/* ---------- 04 persistent names ---------- */
+function leaderRows() {
+  const days = windowDays();
+  const sel = selectedPicks(days);
+  const lastDate = HIST.days[HIST.days.length - 1].date;
+  const lastSet = new Set(HIST.days[HIST.days.length - 1].picks.map(p => p.t));
+  const recs = SR.tickerRecords(HIST);
+  const m = {};
+  sel.forEach(({ p, d }) => {
+    let r = m[p.t];
+    if (!r) r = m[p.t] = { t: p.t, sessions: 0, first: d.date, firstPick: p, firstDay: d, last: d.date, best: 99 };
+    r.sessions++; r.last = d.date; r.best = Math.min(r.best, p.r);
+  });
+  return Object.values(m).map(r => {
+    const since = r.firstPick.f && r.firstPick.f.td != null ? r.firstPick.f.td : (r.first === lastDate ? 0 : null);
+    const spy = r.firstDay.spy && r.firstDay.spy.td != null ? r.firstDay.spy.td : (r.first === lastDate ? 0 : null);
+    return Object.assign(r, {
+      name: nameOf(r.t), sector: sectorOf(r.t), onList: lastSet.has(r.t),
+      streak: recs[r.t] ? recs[r.t].streak : 0,
+      since, spy, excess: since != null && spy != null ? since - spy : null,
+    });
+  });
+}
+const LEADER_COLS = [
+  { key: 't', label: 'Ticker', cls: '' },
+  { key: 'sector', label: 'Sector', cls: '' },
+  { key: 'sessions', label: 'Sessions', cls: 'num' },
+  { key: 'first', label: 'First flagged', cls: '' },
+  { key: 'onList', label: 'Status', cls: '' },
+  { key: 'best', label: 'Best rank', cls: 'num' },
+  { key: 'since', label: 'Since first flagged', cls: 'num' },
+  { key: 'excess', label: 'vs S&P 500', cls: 'num' },
+];
+function renderLeaders() {
+  const rows = leaderRows();
+  const { key, dir } = LEADER_SORT;
+  rows.sort((a, b) => {
+    let x = a[key], y = b[key];
+    if (x == null && y == null) return 0;
+    if (x == null) return 1;
+    if (y == null) return -1;
+    if (typeof x === 'boolean') { x = +x; y = +y; }
+    return (x < y ? -1 : x > y ? 1 : 0) * dir || b.sessions - a.sessions;
+  });
+  const shown = LEADERS_ALL ? rows : rows.slice(0, 15);
+  let t = '<thead><tr>' + LEADER_COLS.map(c => '<th class="sortable ' + c.cls + '" data-k="' + c.key + '" tabindex="0"' +
+    (c.key === key ? ' aria-sort="' + (dir < 0 ? 'descending' : 'ascending') + '"' : '') + '>' + c.label + '</th>').join('') + '</tr></thead><tbody>';
+  if (!shown.length) t += '<tr><td colspan="8" class="dim">No stocks match these filters.</td></tr>';
+  shown.forEach(r => {
+    const c = v => v == null ? '<span class="dim">—</span>' : '<span class="' + SR.chgClass(v) + '">' + fmtPct(v, 1) + '</span>';
+    t += '<tr class="clickable" data-t="' + esc(r.t) + '" tabindex="0"><td><strong>' + esc(r.t) + '</strong> <span class="co">' + esc(r.name) + '</span></td>' +
+      '<td class="dim">' + esc(r.sector || '—') + '</td><td class="num">' + r.sessions + '</td><td>' + SR.fmtDay(r.first) + '</td>' +
+      '<td>' + (r.onList ? '<span class="chg-pos">On list' + (r.streak > 1 ? ' &middot; ' + r.streak + ' in a row' : '') + '</span>' : '<span class="dim">Last ' + SR.fmtDay(r.last) + '</span>') + '</td>' +
+      '<td class="num">' + r.best + '</td><td class="num">' + c(r.since) + '</td><td class="num">' + c(r.excess) + '</td></tr>';
+  });
+  const table = document.getElementById('leaders-table');
+  table.innerHTML = t + '</tbody>';
+  table.querySelectorAll('th.sortable').forEach(th => {
+    const go = () => {
+      const k = th.dataset.k;
+      LEADER_SORT = { key: k, dir: LEADER_SORT.key === k ? -LEADER_SORT.dir : (['t', 'sector', 'first'].includes(k) ? 1 : -1) };
+      renderLeaders();
+    };
+    th.addEventListener('click', go);
+    th.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  });
+  table.querySelectorAll('tr.clickable').forEach(tr => {
+    tr.addEventListener('click', () => openTickerModal(tr.dataset.t));
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter') openTickerModal(tr.dataset.t); });
+  });
+  const more = document.getElementById('leaders-more');
+  more.hidden = rows.length <= 15;
+  more.textContent = LEADERS_ALL ? 'Show top 15' : 'Show all ' + rows.length;
+}
+
+/* ---------- 05 archive ---------- */
+function renderStrip() {
+  const days = windowDays().slice().reverse();
+  if (!days.find(d => d.date === SELECTED_DATE)) SELECTED_DATE = days[0].date;
+  const host = document.getElementById('session-strip');
+  host.innerHTML = days.map(d => {
+    const [y, m, dd] = d.date.split('-');
+    return '<button class="session-chip" data-d="' + d.date + '" aria-pressed="' + (d.date === SELECTED_DATE) + '">' +
+      '<small>' + SR.fmtDayLong(d.date).slice(0, 3) + '</small>' + SR.fmtDay(d.date) + '</button>';
+  }).join('');
+  host.querySelectorAll('.session-chip').forEach(b => b.addEventListener('click', () => selectSession(b.dataset.d)));
+}
+function selectSession(date) {
+  SELECTED_DATE = date;
+  document.querySelectorAll('.session-chip').forEach(b => b.setAttribute('aria-pressed', b.dataset.d === date));
+  renderSession();
+  try { history.replaceState(null, '', '#d=' + date); } catch (e) {}
+}
+function retCells(f, keys) {
+  return (keys || H_KEYS.concat(['td'])).map(h => {
+    const v = f ? f[h] : null;
+    return '<td class="num">' + (v == null ? '<span class="dim">—</span>' : '<span class="' + SR.chgClass(v) + '">' + fmtPct(v, 1) + '</span>') + '</td>';
+  }).join('');
+}
+function renderSession() {
+  const d = HIST.days.find(x => x.date === SELECTED_DATE);
+  const host = document.getElementById('session-view');
+  if (!d) { host.innerHTML = ''; return; }
+  const meta = [d.final ? 'Final scan ' + SR.fmtTimeET(d.generated_at) : 'Intraday scan ' + SR.fmtTimeET(d.generated_at) + ' (no post-close run that day)'];
+  if (d.market) meta.push('Market: ' + (STATUS_LABEL[d.market] || d.market));
+  if (d.qualified != null) meta.push(d.qualified + ' of ' + d.scored + ' passing');
+  let html = '<div class="session-head"><h3>' + SR.fmtDayLong(d.date) + '</h3><span class="session-meta">' + meta.join(' &middot; ') + '</span></div>';
+  if (d.spy) html += '<div class="session-meta">S&amp;P 500 afterwards: ' + H_KEYS.concat(['td']).filter(h => d.spy[h] != null)
+    .map(h => (h === 'td' ? 'to date ' : '+' + h + 'd ') + '<span class="' + SR.chgClass(d.spy[h]) + '">' + fmtPct(d.spy[h], 1) + '</span>').join(' &middot; ') + '</div>';
+  [[1, 'Momentum Leaders'], [2, 'Trend Quality & Value']].forEach(([sec, label]) => {
+    if (F.list && F.list !== sec) return;
+    const picks = d.picks.filter(p => p.sec === sec && (!F.qual || p.q));
+    html += '<p class="list-label">' + label + '</p><div class="table-scroll"><table class="data-table"><thead><tr><th>#</th><th>Ticker</th>' +
+      '<th class="num">Price</th><th class="num">Day</th><th class="num">RS</th><th>Trend</th><th class="num">Score</th>' +
+      '<th class="num">+1d</th><th class="num">+5d</th><th class="num">+10d</th><th class="num">+20d</th><th class="num">To date</th></tr></thead><tbody>';
+    if (!picks.length) html += '<tr><td colspan="12" class="dim">No stocks match these filters.</td></tr>';
+    picks.forEach(p => {
+      html += '<tr class="clickable" data-t="' + esc(p.t) + '" tabindex="0"><td class="dim">' + p.r + '</td><td><strong>' + esc(p.t) + '</strong>' +
+        (p.q ? ' <span class="qual-flag" title="Fully qualifies">&#9679;</span>' : '') + ' <span class="co">' + esc(nameOf(p.t)) + '</span></td>' +
+        '<td class="num">' + fmtMoney(p.p) + '</td><td class="num">' + (p.c == null ? '<span class="dim">—</span>' : '<span class="' + SR.chgClass(p.c) + '">' + fmtPct(p.c, 1) + '</span>') + '</td>' +
+        '<td class="num">' + (p.rs ?? '—') + '</td><td>' + (p.tn != null ? p.tn + '/8' : '—') + '</td><td class="num">' + (p.sc ?? '—') + '</td>' + retCells(p.f) + '</tr>';
+    });
+    html += '</tbody></table></div>';
+  });
+  host.innerHTML = html;
+  host.querySelectorAll('tr.clickable').forEach(tr => {
+    tr.addEventListener('click', () => openTickerModal(tr.dataset.t));
+    tr.addEventListener('keydown', e => { if (e.key === 'Enter') openTickerModal(tr.dataset.t); });
+  });
+}
+
+/* ---------- ticker drill-in ---------- */
+let LAST_FOCUS = null;
+function openTickerModal(t) {
+  const rec = SR.tickerRecords(HIST)[t];
+  if (!rec) return;
+  const overlay = document.getElementById('detail-modal');
+  if (overlay.hidden) LAST_FOCUS = document.activeElement;
+  const days = HIST.days;
+  const bySession = new Map(rec.appearances.map(a => [a.di, a]));
+  const strip = days.map((d, i) => { const a = bySession.get(i); return '<span class="' + (a ? 's' + a.sec : '') + '" title="' + SR.fmtDay(d.date) + (a ? ' · #' + a.r : '') + '"></span>'; }).join('');
+  const s1 = rec.appearances.filter(a => a.sec === 1).length, s2 = rec.sessions - s1;
+  const since = rec.sinceFirst, spy = rec.spySinceFirst;
+
+  let rows = rec.appearances.slice().reverse().map(a =>
+    '<tr><td>' + SR.fmtDay(a.date) + '</td><td>' + (a.sec === 1 ? 'Momentum' : 'Quality') + ' #' + a.r + '</td><td class="num">' + fmtMoney(a.p) + '</td>' +
+    '<td>' + (a.tn != null ? a.tn + '/8' : '—') + '</td>' + retCells(a.f, ['10', '20', 'td']) + '</tr>').join('');
+
+  const html =
+    '<div class="modal-rank">Screen record</div>' +
+    '<h2 class="modal-ticker" id="modal-ticker">' + esc(t) + '</h2>' +
+    (nameOf(t) ? '<div class="modal-company">' + esc(nameOf(t)) + '</div>' : '') +
+    '<div id="co-slot"><div class="company-block"><p class="company-summary" style="color:var(--text-faint)">Loading company profile&hellip;</p></div></div>' +
+    '<div class="modal-group-title">On the Lists</div>' +
+    '<div class="record-line">Listed in <strong>' + rec.sessions + '</strong> of ' + days.length + ' sessions (' + s1 + ' momentum, ' + s2 + ' quality &amp; value). ' +
+      'First flagged <strong>' + SR.fmtDay(rec.first, true) + '</strong>, last seen <strong>' + SR.fmtDay(rec.last, true) + '</strong>' +
+      (rec.onList ? ' &mdash; on today\'s list' + (rec.streak > 1 ? ', ' + rec.streak + ' sessions running' : '') : '') + '. Best rank <strong>#' + rec.bestRank + '</strong>.' +
+      (since != null ? '<br>Since its first close on the list: <span class="' + SR.chgClass(since) + '">' + fmtPct(since, 1) + '</span>' +
+        (spy != null ? ' versus the S&amp;P 500\'s ' + fmtPct(spy, 1) + ' over the same period.' : '.') : '') + '</div>' +
+    '<div class="appear-strip" aria-hidden="true">' + strip + '</div>' +
+    '<div class="viz-legend"><span class="lg"><span class="lg-box" style="background:var(--series-1)"></span>Momentum list</span>' +
+      '<span class="lg"><span class="lg-box" style="background:var(--series-2)"></span>Quality &amp; value list</span>' +
+      '<span class="lg"><span class="lg-box" style="background:rgba(255,255,255,.08)"></span>Not listed</span>' +
+      '<span class="lg" style="color:var(--text-faint)">' + SR.fmtDay(days[0].date) + ' &rarr; ' + SR.fmtDay(days[days.length - 1].date) + '</span></div>' +
+    '<div class="modal-group-title">Every Appearance</div>' +
+    '<div class="table-scroll"><table class="data-table"><thead><tr><th>Session</th><th>List &amp; rank</th><th class="num">Close</th><th>Trend</th>' +
+      '<th class="num">+10d</th><th class="num">+20d</th><th class="num">To date</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
+    '<div class="modal-links"><a href="index.html#t=' + encodeURIComponent(t) + '">Open ' + esc(t) + ' on today\'s screen &rarr;</a>' +
+      '<span class="ml-note">Shows today\'s full breakdown, or the lookup view if it is not on today\'s lists.</span></div>' +
+    '<div class="modal-footnote">Returns are close-to-close price changes from each listed session. Not a recommendation; see <a href="#method">how these are calculated</a>.</div>';
+  document.getElementById('modal-content').innerHTML = html;
+  overlay.hidden = false;
+  overlay.querySelector('.modal-box').scrollTop = 0;
+  document.getElementById('modal-close-btn').focus();
+  try { history.replaceState(null, '', '#t=' + encodeURIComponent(t)); } catch (e) {}
+
+  SR.loadCompanies().then(c => {
+    const co = c[t];
+    const slot = document.getElementById('co-slot');
+    if (!slot || document.getElementById('modal-ticker').textContent !== t) return;
+    const chips = [co && co.s || sectorOf(t), co && co.i].filter(Boolean).map((x, i) => '<span class="chip' + (i === 0 ? ' teal' : '') + '">' + esc(x) + '</span>').join('');
+    slot.innerHTML = '<div class="company-block">' + (chips ? '<div class="company-chips">' + chips + '</div>' : '') +
+      '<p class="company-summary"' + (co && co.d ? '>' + esc(co.d) : ' style="color:var(--text-faint)">No business description is available for this company yet.') + '</p></div>';
+  });
+}
+function closeModal() {
+  const o = document.getElementById('detail-modal');
+  if (o.hidden) return;
+  o.hidden = true;
+  SR.hideTip();
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  if (LAST_FOCUS && LAST_FOCUS.focus) LAST_FOCUS.focus();
+}
+document.getElementById('modal-close-btn').addEventListener('click', closeModal);
+document.getElementById('detail-modal').addEventListener('click', e => { if (e.target.id === 'detail-modal') closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+/* ---------- filters ---------- */
+function renderAll() {
+  renderTrack(); renderBreadth(); renderHeatmap(); renderLeaders(); renderStrip(); renderSession();
+}
+function wireSeg(id, key) {
+  document.querySelectorAll('#' + id + ' button').forEach(b => b.addEventListener('click', () => {
+    F[key] = +b.dataset.v;
+    document.querySelectorAll('#' + id + ' button').forEach(x => x.setAttribute('aria-pressed', x === b));
+    renderAll();
+  }));
+}
+wireSeg('f-list', 'list');
+wireSeg('f-window', 'window');
+document.getElementById('f-qual').addEventListener('change', e => { F.qual = e.target.checked; renderAll(); });
+document.getElementById('f-new').addEventListener('change', e => { F.newOnly = e.target.checked; renderAll(); });
+document.getElementById('leaders-more').addEventListener('click', () => { LEADERS_ALL = !LEADERS_ALL; renderLeaders(); });
+
+/* ---------- boot ---------- */
+SR.loadHistory().then(h => {
+  if (!h.days || !h.days.length) throw new Error('empty');
+  HIST = h;
+  HIST.days.forEach(d => { d.picks = d.picks || []; });
+  const last = HIST.days[HIST.days.length - 1];
+  document.getElementById('as-of').textContent = SR.fmtDay(last.date, true);
+  const hm = /[#&]d=(\d{4}-\d{2}-\d{2})/.exec(location.hash);
+  if (hm) SELECTED_DATE = hm[1];
+  renderAll();
+  const tm = /[#&]t=([A-Za-z0-9.\-]{1,10})/.exec(location.hash);
+  if (tm) openTickerModal(tm[1].toUpperCase());
+  else if (hm) document.getElementById('archive').scrollIntoView();
+  window.addEventListener('hashchange', () => {
+    const t = /[#&]t=([A-Za-z0-9.\-]{1,10})/.exec(location.hash);
+    const d = /[#&]d=(\d{4}-\d{2}-\d{2})/.exec(location.hash);
+    if (t) openTickerModal(t[1].toUpperCase());
+    else if (d && HIST.days.some(x => x.date === d[1])) { selectSession(d[1]); document.getElementById('archive').scrollIntoView(); }
+  });
+}).catch(() => {
+  document.getElementById('hist-error').innerHTML = '<div class="freshness aging">The history file could not be loaded. It is written by the scheduled scan; if this persists, the most recent scan may not have completed.</div>';
+});
+</script>
+
+<footer>
+  <div class="wrap">
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="index.html">Screen</a>
+      <a href="history.html">History</a>
+      <a href="learn.html">Learn</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="about.html">About</a>
+      <a href="privacy.html">Privacy Policy</a>
+      <a href="terms.html">Terms &amp; Disclaimer</a>
+      <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
+      <a href="mailto:stonksrun@gmail.com">Contact</a>
+    </nav>
+    <div>
+      <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
+      investment advice, a recommendation, or an offer to buy or sell any security. Past results of the screen do not predict future
+      results. Market data may be delayed and may contain errors. Read our <a href="terms.html">Terms &amp; Disclaimer</a> and
+      <a href="methodology.html">documented limitations</a> before relying on anything here.
+    </div>
+    <div style="margin-top:10px">&copy; 2026 Stonks Run. Contact: <a href="mailto:stonksrun@gmail.com">stonksrun@gmail.com</a></div>
+  </div>
+</footer>
+</body>
+</html>

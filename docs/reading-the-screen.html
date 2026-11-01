@@ -52,6 +52,7 @@
       <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html">Screen</a>
+        <a href="history.html">History</a>
         <a href="learn.html" class="active" aria-current="page">Learn</a>
         <a href="methodology.html">Methodology</a>
         <a href="about.html">About</a>
@@ -147,12 +148,23 @@
     not a negative reading. Most stocks trigger few or no signals on any given day.</p>
 
     <h3>Company, sector, and charts</h3>
-    <p>Each entry shows the company name alongside its ticker, and the detail view adds its sector. Sector matters more
-    than it might appear: CANSLIM's leadership factor is explicitly about being strong <em>within a strong group</em>, so
-    several names from the same sector appearing together is itself a signal about where money is currently rotating.</p>
-    <p>There is no chart drawn here, deliberately &mdash; on delayed data, a chart we render ourselves would look
-    authoritative while being slightly wrong. Each detail view links out to a live chart instead, which is the right
-    place to verify price action before forming any view.</p>
+    <p>Each entry shows the company name alongside its ticker, and the detail view opens with a short description of what
+    the business does, its sector and industry, headquarters, size, and its next scheduled earnings date. Sector matters
+    more than it might appear: CANSLIM's leadership factor is explicitly about being strong <em>within a strong group</em>,
+    so several names from the same sector appearing together is itself a signal about where money is currently rotating.
+    The &ldquo;Where Leadership Is&rdquo; panel below the lists shows that directly.</p>
+    <p>The earnings date deserves particular attention. A stock reporting in the next few days can gap far beyond its normal
+    range in either direction regardless of how its chart looks, which is why the lists flag reports due within a week.</p>
+    <p>The detail view draws six months of daily closes with the 50-day average for trend context. It is not a trading chart
+    &mdash; there is no intraday data and the latest point is delayed &mdash; so each detail view also links out to a live
+    chart, which is the right place to verify price action before forming any view.</p>
+
+    <h3>Badges and history</h3>
+    <p>Small tags next to a ticker show its recent record on the lists: <strong>New</strong> means it has never appeared
+    before, <strong>Back</strong> means it returned after dropping off, and <strong>D5</strong> means five sessions running.
+    An arrow shows how far it moved in the ranking since the previous session, and <strong>ER 3d</strong> flags earnings due
+    in three days. The <a href="history.html">History</a> page keeps every session's final list and what those stocks did
+    afterwards.</p>
 
     <h3>Moving between stocks</h3>
     <p>The detail view has Prev and Next controls at the bottom, and the left and right arrow keys do the same thing. This
@@ -221,6 +233,7 @@
   <div class="wrap">
     <nav class="footer-links" aria-label="Footer navigation">
       <a href="index.html">Screen</a>
+      <a href="history.html">History</a>
       <a href="learn.html">Learn</a>
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>

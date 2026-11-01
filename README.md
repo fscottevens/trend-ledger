@@ -47,16 +47,23 @@ Nothing here needs a paid server:
 | `.github/workflows/scan.yml` | Scan + commit. Triggered by the Worker; GitHub cron as backup. |
 | `scheduler/scan-trigger.js` | Cloudflare Worker that triggers the scan on schedule. |
 | `scheduler/wrangler.toml` | Optional: deploy the Worker from the command line. |
-| `docs/index.html` | The screen itself. |
+| `docs/index.html` | The screen itself (lists, market pulse, sector leadership, lookup, watchlist, drill-down). |
+| `docs/history.html` | Screen history: every session's final list and what happened next. |
+| `docs/common.js` | Shared formatting, data loading and hand-built SVG charts for both pages. |
 | `docs/styles.css` | Shared stylesheet for every page. |
 | `docs/*.html` | Guides, methodology, about, legal pages. |
 | `docs/data/latest.json` | Scan output. Written by the workflow, not by hand. |
+| `docs/data/history.json` | Final list of every session + forward returns. Updated by every scan. |
+| `docs/data/universe.json` | Every scored stock in compact form, for lookup and the watchlist. |
+| `docs/data/companies.json` | Company profiles; rewritten only when something changes. |
+| `tools/backfill_history.py` | One-off: rebuilds `history.json` from the git history of `latest.json`. |
 | `docs/ads.txt` | AdSense seller authorization. |
 | `docs/robots.txt`, `docs/sitemap.xml` | Search engine directives. |
 | `docs/favicon.png`, `docs/social-card.png` | Icons and social preview image. |
 
 The site is deliberately dependency-free in the browser: no framework, no build
-step, no bundler. `index.html` contains its own JavaScript inline.
+step, no bundler, no chart library. Page-specific JavaScript is inline; the
+shared helpers live in `docs/common.js`.
 
 ---
 
@@ -121,11 +128,24 @@ empty are retried twice with a pause first.
 between runs with `actions/cache` and refreshed once a day (`--fundamentals-ttl-hours 20`),
 instead of re-downloading ~900 company profiles every run.
 
+### History and the other site files
+
+Every published scan also writes three files next to `latest.json`. Each run
+rewrites the *current session's* entry in `history.json`, so the last scan of the
+day (normally 16:17 ET) becomes that session's permanent record; a later weekend
+or holiday rerun never replaces a finished session. The same run refreshes the
++1/+5/+10/+20-session returns of every past entry from the daily price history it
+already downloaded. All of this is best-effort: if any of it fails, the scan
+logs a warning and `latest.json` still publishes. `--no-extras` turns it off.
+
+If `history.json` is ever lost, `python tools/backfill_history.py` rebuilds the
+lists from git history, and the next scan fills the returns back in.
+
 ### The commit step
 
 The scan output is *generated* data, so the workflow treats it accordingly: it
 fetches the latest `main`, resets onto it, drops the newly generated file in
-place, and pushes — retrying up to five times if another commit lands in between.
+place (all four data files), and pushes — retrying up to five times if another commit lands in between.
 There is nothing to merge, because the freshly scanned file is always the correct
 version. This is why pushes no longer fail when you edit the site while a scan is
 running.

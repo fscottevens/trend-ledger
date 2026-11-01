@@ -40,7 +40,7 @@
   "author": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/about.html"},
   "publisher": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/"},
   "datePublished": "2026-09-05",
-  "dateModified": "2026-09-05",
+  "dateModified": "2026-10-31",
   "mainEntityOfPage": {"@type": "WebPage", "@id": "https://stonks.run/methodology.html"},
   "isAccessibleForFree": true
 }
@@ -52,6 +52,7 @@
       <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html">Screen</a>
+        <a href="history.html">History</a>
         <a href="learn.html">Learn</a>
         <a href="methodology.html" class="active" aria-current="page">Methodology</a>
         <a href="about.html">About</a>
@@ -67,7 +68,7 @@
     <article class="article col-main">
     <p class="article-eyebrow">Transparency</p>
     <h1>Methodology &amp; Limitations</h1>
-    <div class="article-meta">How the scan works, what it approximates, and what it cannot do. &middot; Last updated September 5, 2026</div>
+    <div class="article-meta">How the scan works, what it approximates, and what it cannot do. &middot; Last updated October 31, 2026</div>
 
     <p>This page documents exactly how the screen works &mdash; where data comes from, how each score is computed, what is
     approximated, and what the tool cannot do. It is deliberately detailed. A ranking you cannot interrogate is not worth
@@ -89,6 +90,9 @@
       <tr><td>Price and volume</td><td>Yahoo Finance, via the open-source <code>yfinance</code> library</td></tr>
       <tr><td>Fundamentals</td><td>Yahoo Finance company data, where published</td></tr>
       <tr><td>Company name &amp; sector</td><td>Yahoo Finance company profile, where published</td></tr>
+      <tr><td>Business description, HQ, employees, market cap</td><td>Yahoo Finance company profile, where published; the description is shortened to its opening sentences</td></tr>
+      <tr><td>Earnings dates &amp; analyst consensus</td><td>Yahoo Finance; dates may be estimates until the company confirms them, and analyst figures are third-party opinions shown for context</td></tr>
+      <tr><td>Screen history</td><td>The last scan of each trading session, kept permanently; see <a href="#history">screen history</a> below</td></tr>
       <tr><td>Index membership</td><td>A fixed list updated manually; see "known limitations" below</td></tr>
       <tr><td>Scan frequency</td><td>Hourly during U.S. market hours on weekdays, plus one scan shortly after the close</td></tr>
       <tr><td>Data latency</td><td>Typically 15&ndash;20 minutes behind live prices</td></tr>
@@ -164,28 +168,53 @@
     actually qualified. On a weak day, that number may be zero &mdash; and that is meaningful information rather than a
     malfunction.</p>
 
+    <h2 id="history">Screen history and forward results</h2>
+    <p>The <a href="history.html">History</a> page keeps the final list from every trading session since August 26, 2026,
+    and measures what each listed stock did afterwards. The rules are fixed in code so the record cannot be curated:</p>
+    <ul>
+      <li><strong>One list per session.</strong> Each scan overwrites the current session's entry, so the last scan of the day
+      &mdash; normally the 4:17pm ET post-close run &mdash; becomes the permanent record. A later weekend, holiday or
+      next-morning rerun never replaces a finished session. If the post-close scan failed, the latest intraday scan stands and
+      is labeled as such.</li>
+      <li><strong>Close to close.</strong> Returns run from the closing price of the session a stock was listed to the close
+      1, 5, 10 and 20 trading sessions later, and to the latest close. The S&amp;P 500 comparison is SPY over exactly the same
+      windows. Both are price returns; dividends are excluded from both.</li>
+      <li><strong>Every appearance counts.</strong> A stock listed for ten sessions running contributes ten observations, each
+      from its own starting close. The page offers a &ldquo;new entries only&rdquo; view that counts a stock only when it was
+      not listed the session before.</li>
+      <li><strong>Sessions before September 29, 2026</strong> were reconstructed from the site's own published data files.
+      Their prices and rankings are as published; their daily % change is omitted because of a data issue fixed that day.</li>
+    </ul>
+    <p>This is a forward record of a live screen, not a backtest of a strategy. It ignores trading costs, slippage, timing,
+    stops and position sizing; its windows overlap; and a few months of one market regime are a small sample. It is published
+    because a screen that shows only today's winners invites more confidence than it has earned &mdash; the misses belong in
+    the record too.</p>
+
     <h2>Known limitations</h2>
     <ul>
       <li><strong>Delayed data.</strong> Roughly 15&ndash;20 minutes behind live prices. Not suitable for execution.</li>
       <li><strong>Approximated RS Rating.</strong> Ranked within the scanned universe only, not the full market.</li>
       <li><strong>Inconsistent fundamentals.</strong> Free-tier coverage varies; missing fields are skipped, so scores are
       based on partial data for some stocks.</li>
-      <li><strong>No earnings calendar.</strong> The screen detects the price-and-volume signature of a large gap but cannot
-      confirm what caused it. A gap on a positive earnings surprise and one on a disastrous announcement can look
+      <li><strong>Earnings dates are informational only.</strong> Each detail view shows the next scheduled earnings date
+      from Yahoo Finance, and the lists flag reports due within a week, but the scoring ignores them. The screen still
+      cannot tell what caused a large gap: one on a positive earnings surprise and one on a disastrous announcement can look
       identical to the scanner.</li>
       <li><strong>No news or event awareness.</strong> Litigation, regulatory action, management changes, accounting
       concerns &mdash; none of this is visible in price data.</li>
       <li><strong>Manually maintained index membership.</strong> The constituent list is fixed in code and updated
       periodically. Between updates, recently added index members may be missing and removed ones may linger.</li>
-      <li><strong>No survivorship-bias correction and no backtesting.</strong> This screen reports current conditions. It
-      makes no historical performance claims, because none have been rigorously tested here.</li>
+      <li><strong>No backtesting.</strong> The <a href="history.html">History</a> page records how listed stocks performed
+      <em>after</em> the live screen published them, starting August 26, 2026. That is a short forward record, not a tested
+      strategy, and it measures today's index members only.</li>
       <li><strong>Large-cap and mid-cap only.</strong> Small-caps, micro-caps, ADRs, and recent IPOs are outside the scanned
       universe.</li>
       <li><strong>Company names and sectors come from the same third-party feed</strong> as the fundamentals, and are
       occasionally missing or out of date. They are shown for identification convenience, not as authoritative
       classification.</li>
-      <li><strong>No charts are drawn here.</strong> On delayed data a rendered chart would look more authoritative than
-      it deserves to, so each detail view links out to a live chart instead.</li>
+      <li><strong>Daily-close charts only.</strong> Detail views draw six months of daily closing prices with the 50-day
+      average, for trend context. They are not trading charts: there is no intraday data, and the final point is a delayed
+      price during market hours. Each detail view links out to a live chart for that.</li>
       <li><strong>No position sizing, stops, or risk management.</strong> The screen identifies candidates only. The
       practitioners whose frameworks it borrows from all emphasize that risk management &mdash; not stock selection &mdash;
       determines outcomes.</li>
@@ -233,6 +262,7 @@
   <div class="wrap">
     <nav class="footer-links" aria-label="Footer navigation">
       <a href="index.html">Screen</a>
+      <a href="history.html">History</a>
       <a href="learn.html">Learn</a>
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>

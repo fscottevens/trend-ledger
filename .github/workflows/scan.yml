@@ -110,15 +110,19 @@ jobs:
           git config user.name "trend-ledger-bot"
           git config user.email "actions@users.noreply.github.com"
 
-          if git diff --quiet -- docs/data/latest.json; then
-            echo "No data change this run; nothing to commit."
-            exit 0
-          fi
+          # latest.json is the screen itself. The other three are site extras
+          # written next to it: history.json (every session's final list +
+          # forward returns), universe.json (all scored stocks, for lookup)
+          # and companies.json (profiles; only rewritten when it changes).
+          FILES="latest.json history.json universe.json companies.json"
 
           # Keep our freshly generated scan output aside. If anything else
           # was pushed while this scan was running, we rebuild on top of it
           # rather than trying to merge two versions of a generated file.
-          cp docs/data/latest.json /tmp/latest.json
+          mkdir -p /tmp/scan-out
+          for f in $FILES; do
+            if [ -f "docs/data/$f" ]; then cp "docs/data/$f" "/tmp/scan-out/$f"; fi
+          done
 
           # Retry loop: a push can be rejected if another commit lands in the
           # seconds between our fetch and our push. Rather than failing the
@@ -129,18 +133,21 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
-            # Our scan output always wins for this file: it is regenerated
-            # data, not hand-edited content, so there is nothing to preserve
-            # from the remote copy.
+            # Our scan output always wins for these files: they are
+            # regenerated data, not hand-edited content.
             mkdir -p docs/data
-            cp /tmp/latest.json docs/data/latest.json
+            for f in $FILES; do
+              if [ -f "/tmp/scan-out/$f" ]; then
+                cp "/tmp/scan-out/$f" "docs/data/$f"
+                git add "docs/data/$f"
+              fi
+            done
 
-            if git diff --quiet -- docs/data/latest.json; then
+            if git diff --cached --quiet; then
               echo "Remote already matches this scan; nothing to push."
               exit 0
             fi
 
-            git add docs/data/latest.json
             git commit -m "Scheduled scan update $(date -u +'%Y-%m-%d %H:%M UTC')"
 
             if git push origin HEAD:main; then
