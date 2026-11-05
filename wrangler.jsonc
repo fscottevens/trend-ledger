@@ -1,0 +1,29 @@
+// Cloudflare Worker that serves the Stonks Run website (static files only).
+// The scheduled workflow (.github/workflows/scan.yml) builds dist/ with
+// tools/build_site.py after each scan and runs `wrangler deploy`.
+//
+// There is no Worker script: every request is answered straight from the
+// uploaded files, which Cloudflare serves free and without counting against
+// the Workers request limit. Headers and redirects live in dist/_headers and
+// dist/_redirects (written by the build).
+//
+// The custom domains (stonks.run, www.stonks.run) are NOT listed here on
+// purpose: the workflow adds them with `--domain` only once the repository
+// variable SITE_HOST is set to "cloudflare" (the cutover switch). Until then
+// deploys go to the preview address https://stonks-run.fscottevens.workers.dev
+{
+  "name": "stonks-run",
+  // Not a secret (it appears in every dashboard URL). Lets the workflow
+  // deploy with just the CLOUDFLARE_API_TOKEN secret.
+  "account_id": "757bfdee7471bc9056047613ec5feb9f",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // /history serves history.html; /history.html redirects to /history.
+    "html_handling": "auto-trailing-slash",
+    // Unknown paths get dist/404.html with a real 404 status.
+    "not_found_handling": "404-page"
+  },
+  "workers_dev": true,
+  "preview_urls": false
+}

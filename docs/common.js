@@ -88,6 +88,15 @@
   };
   SR.loadUniverse = () => SR.loadOnce('data/universe.json').then(SR.parseUniverse);
 
+  /* Address of a stock's static page (/stock/nvda). Those pages exist only on
+     the Cloudflare build: tools/build_site.py sets window.SR_STATIC there. On
+     the plain docs/ copy (GitHub Pages) this returns null and no link shows.
+     The slug rule must match slug() in tools/build_site.py. */
+  SR.stockUrl = function (t) {
+    if (!t || !(global.SR_STATIC && global.SR_STATIC.stockPages)) return null;
+    return '/stock/' + String(t).toLowerCase().replace(/[^a-z0-9-]/g, '-');
+  };
+
   /* Minervini criteria in the scanner's fixed order (bit i = criterion i). */
   SR.CRITERIA = [
     'Price above rising 150-day & 200-day average',

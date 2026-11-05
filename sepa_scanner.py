@@ -41,6 +41,9 @@ OUTPUTS (docs/data/, read by the website)
   history.json    every session's final list + forward returns vs SPY
   universe.json   every scored stock (compact), for lookup + watchlist
   companies.json  company profiles (rewritten only when they change)
+  stocks.json     full detail + 6-month closes for every scored stock; read
+                  by tools/build_site.py to generate the per-stock pages
+                  (build input only - not loaded by visitors' browsers)
 
 UNIVERSE: S&P 500 + S&P 400 MidCap (hardcoded, ~903 tickers)
 ----------------------------------------------------------------
@@ -1619,6 +1622,46 @@ def build_companies_payload(fundamentals: Dict[str, dict], existing: Optional[di
     return {"c": dict(sorted(comp.items()))}
 
 
+def build_stock_details(pool: pd.DataFrame, closes: Dict[str, pd.Series], spark_dates: List[str],
+                        generated_at: datetime, session_date) -> dict:
+    """Full per-stock detail for EVERY scored stock: the metrics, framework
+    signals, earnings date, profile and six-month closing prices that
+    latest.json only carries for the 20 listed names. tools/build_site.py
+    turns this into one static page per stock (/stock/<ticker>).
+
+    Build input only: visitors' browsers never download it (universe.json is
+    still the compact lookup file), so its size (~3 MB) costs nothing on the
+    site. Values are already rounded and NaN-free (see _Metrics / _num)."""
+    def _dict(v):
+        return v if isinstance(v, dict) else None
+
+    def _notes(v):
+        return [str(x) for x in v] if isinstance(v, (list, tuple)) else []
+
+    stocks = {}
+    for _, r in pool.iterrows():
+        t = r["Ticker"]
+        metrics = _dict(r.get("_Metrics")) or {}
+        entry = {
+            "rv": _num(r.get("RelVol")),
+            "fw": {"canslim": r.get("CANSLIM"), "zanger": r.get("Zanger"),
+                   "qullamaggie": r.get("Qullamaggie"), "value": r.get("Value")},
+            "sig": {"canslim": _notes(r.get("_CanNotes")), "zanger": _notes(r.get("_ZanNotes")),
+                    "qullamaggie": _notes(r.get("_QmNotes")), "value": _notes(r.get("_ValNotes"))},
+            "m": {k: v for k, v in metrics.items() if v is not None},
+            "e": _dict(r.get("_Earnings")),
+            "pf": _dict(r.get("_Profile")),
+            "sp": spark_series(closes.get(t), spark_dates) if spark_dates else None,
+        }
+        stocks[t] = {k: v for k, v in entry.items() if v is not None and v != {}}
+    return {
+        "generated_at": generated_at.isoformat(),
+        "session_date": session_date,
+        "spark_dates": spark_dates,
+        "stocks": stocks,
+    }
+
+
 HISTORY_HORIZONS = (1, 5, 10, 20)   # trading days after the session a stock appeared
 
 
@@ -1958,6 +2001,26 @@ def run_selftest() -> None:
     check("A thin Yahoo response never erases a stored company description",
           merged["c"]["Z"].get("d") == "Zed makes things.")
 
+    # --- per-stock detail file (static stock pages) ---------------------------
+    spark_days = [pd.Timestamp(ts).date().isoformat() for ts in strong.index[-126:]]
+    pool = pd.DataFrame([
+        {"Ticker": "STRONG", "RelVol": 2.2, "CANSLIM": "5.0/6", "Zanger": "2/3", "Qullamaggie": "3/3",
+         "Value": "2.0/2.5", "_CanNotes": ["C: qtr EPS growth 35%"], "_ZanNotes": [], "_QmNotes": ["ADR 4.1%"],
+         "_ValNotes": [], "_Metrics": {"sma50": 61.2, "beta": None}, "_Earnings": {"next": "2026-11-20", "days": 9},
+         "_Profile": None},
+        {"Ticker": "NODATA", "RelVol": float("nan"), "CANSLIM": "0.0/6", "Zanger": "0/3", "Qullamaggie": "0/3",
+         "Value": "0.0/2.5", "_CanNotes": [], "_ZanNotes": [], "_QmNotes": [], "_ValNotes": [],
+         "_Metrics": {}, "_Earnings": None, "_Profile": None},
+    ])
+    det = build_stock_details(pool, {"STRONG": strong["Close"]}, spark_days,
+                              datetime(2026, 11, 3, 16, 20, tzinfo=ET), "2026-11-03")
+    s1, s2 = det["stocks"].get("STRONG", {}), det["stocks"].get("NODATA", {})
+    check("stocks.json carries metrics, signals and a 6-month series for every scored stock",
+          s1.get("m") == {"sma50": 61.2} and s1.get("sig", {}).get("qullamaggie") == ["ADR 4.1%"]
+          and len(s1.get("sp", {}).get("c", [])) == len(spark_days) and s1.get("e", {}).get("days") == 9
+          and "rv" not in s2 and "sp" not in s2 and "m" not in s2)
+    json.dumps(det, default=_json_default)   # must serialize without NaN
+
     print()
     if failures:
         print(f"SELF-TEST FAILED: {len(failures)} check(s) failed -> {failures}")
@@ -2084,6 +2147,13 @@ def publish(section1: pd.DataFrame, section2: pd.DataFrame, market_status: str, 
                               build_universe_payload(extras["pool"], generated_at, stats.get("session_date")))
         except Exception as e:
             LOG.warning(f"Could not write universe.json: {e}")
+        try:
+            write_json_atomic(os.path.join(data_dir, "stocks.json"),
+                              build_stock_details(extras["pool"], extras.get("closes", {}),
+                                                  stats.get("spark_dates") or [], generated_at,
+                                                  stats.get("session_date")))
+        except Exception as e:
+            LOG.warning(f"Could not write stocks.json: {e}")
     if extras.get("fundamentals"):
         try:
             cpath = os.path.join(data_dir, "companies.json")

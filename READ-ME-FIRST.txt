@@ -1,167 +1,167 @@
-STONKS RUN - REDEPLOY INSTRUCTIONS  (update of Sept 28, 2026)
-==============================================================
+STONKS RUN - MOVE TO CLOUDFLARE HOSTING  (update of Nov 4, 2026)
+================================================================
 
-WHY THE SITE WENT STALE
------------------------
-1. GitHub was skipping most scheduled scans. The workflow asked for 9 runs
-   every weekday. GitHub actually ran 2-3, the first one usually around
-   1-2pm ET, and on Mon Sept 28 none at all by 3:45pm. Every run that
-   did happen worked fine. The trigger was the problem, not the code.
-   FIX: a free Cloudflare Worker now starts each scan on time. GitHub's
-   own schedule stays on as a backup.
-2. "% Chg" was always about 0.00%. The scanner compared today's price
-   with today's own daily bar instead of yesterday's close. Fresh data
-   looked frozen because of this.
-   FIX: sepa_scanner.py now uses the prior session's close. Relative
-   volume on pre-open runs is fixed too (it used to read ~390x).
-3. A red "stale" warning showed every night and all weekend. The page
-   treated any data older than 6 hours as stale, even with the market
-   closed.
-   FIX: index.html is now market-aware. When the market is closed it
-   shows a neutral "Market closed" note. The red banner only appears
-   when scans have actually stopped.
+WHAT CHANGED
+------------
+The site moves from GitHub Pages to Cloudflare (the same account that already
+runs the scan scheduler and holds the stonks.run domain). Each scan now:
 
-Also hardened:
-- If Yahoo throttles a run, the scanner retries. If most stocks still
-  fail, it refuses to publish and leaves the last good data on the site.
-  It no longer overwrites good data with a broken scan.
-- Company fundamentals are cached between runs instead of being
-  re-downloaded about 900 times an hour.
-- The methodology page said scans ran "every 15 minutes". It now says
-  hourly.
+  1. restores the scan state from a new "data" branch
+  2. runs the scanner (unchanged rankings)
+  3. saves the state back to the "data" branch (one commit, replaced each run,
+     so the repo stops growing by ~380 KB every hour)
+  4. builds the site with tools/build_site.py:
+       - clean addresses (stonks.run/history instead of history.html; the
+         old addresses redirect permanently, so no links break)
+       - the two lists are baked into the home page, so Google and slow
+         phones see real rankings instead of an empty "Loading" table
+       - one page per stock (stonks.run/stock/nvda), ~890 of them, plus a
+         directory at stonks.run/stock/ - new search traffic + ad space
+       - sitemap, robots.txt and security/caching headers
+  5. deploys to Cloudflare
 
-Files changed: .github/workflows/scan.yml, sepa_scanner.py,
-requirements.txt, docs/index.html, docs/styles.css,
-docs/methodology.html, README.md, and this file. The new workflow is
-in scan.yml.COPY-INTO-.github-workflows until you copy it into place
-(Part 1).
-New folder: scheduler\  (the Cloudflare Worker).
+Nothing changes for visitors until you flip the switch in PART 4. Until then
+stonks.run keeps running on GitHub Pages exactly as today, and the Cloudflare
+copy runs side by side at a preview address for you to check.
 
-IMPORTANT: do NOT copy anything from the older folders
-(Downloads\stonks-run-*, Documents\partially updated,
-Documents\trend-ledger_all the new files) into this repo. They are
-older versions and would undo these fixes.
+Steps 2-6 work from a phone browser. Only PART 1 may need the computer,
+depending on how the code reached GitHub.
 
 
-PART 1 - PUSH THE CODE  (about 5 minutes)
------------------------------------------
-Open Command Prompt and run these one at a time:
+PART 1 - MAKE SURE THE NEW WORKFLOW IS IN PLACE
+-----------------------------------------------
+Open https://github.com/fscottevens/trend-ledger/blob/main/.github/workflows/scan.yml
+It should contain a step called "Save scan state to the data branch".
+
+If it does NOT (GitHub sometimes refuses workflow files from tools), the new
+version is in scan.yml.COPY-INTO-.github-workflows. On the computer:
 
   cd C:\Users\fscot\Documents\trend-ledger
   git pull
-
-    Your copy is behind GitHub because the bot commits new scan data
-    every run. The pull only brings in docs\data\latest.json, and that
-    doesn't clash with the edited files.
-    If git says latest.json "would be overwritten", run
-        git checkout -- docs/data/latest.json
-    and then run  git pull  again.
-
   copy /Y scan.yml.COPY-INTO-.github-workflows .github\workflows\scan.yml
-  findstr /C:"Freshness guard" .github\workflows\scan.yml
-
-    Claude couldn't write the workflow file directly (files in .github
-    are protected), so the new version was saved in the helper file and
-    this command copies it into place. The findstr MUST print a line.
-    If it prints nothing, the copy didn't work. Don't continue until it
-    does.
-
+  findstr /C:"data branch" .github\workflows\scan.yml
   git add -A
-  git commit -m "Reliable scan trigger, fix %Chg, market-aware freshness banner"
+  git commit -m "Workflow: build and deploy the site to Cloudflare"
   git push
 
-To check that it worked, open
-https://github.com/fscottevens/trend-ledger/blob/main/.github/workflows/scan.yml
-It should say "PRIMARY TRIGGER" near the top. Also open
-https://github.com/fscottevens/trend-ledger/tree/main/scheduler
-You should see scan-trigger.js and wrangler.toml.
+(The findstr must print a line. If it prints nothing, the copy failed.)
 
 
-PART 2 - RUN ONE SCAN BY HAND  (about 5 minutes, mostly waiting)
----------------------------------------------------------------
-1. Go to https://github.com/fscottevens/trend-ledger/actions
-2. Click "Scheduled scan" in the left sidebar.
-3. Click "Run workflow", keep branch = main, then click the green
-   "Run workflow" button.
-4. Wait for the green check (about 3 minutes). A "pages build and
-   deployment" run then starts on its own (about 1 minute).
-5. Open https://stonks.run and press Ctrl+F5.
-   - "Last refresh" should show the current time in ET.
-   - The % Chg column should show real moves, not a column of 0.0x%.
-   GitHub's cache can take up to 10 minutes, so if it still looks old,
-   wait a few minutes and press Ctrl+F5 again.
+PART 2 - CLOUDFLARE API TOKEN  (about 3 minutes)
+------------------------------------------------
+1. Go to https://dash.cloudflare.com/profile/api-tokens
+   (profile icon, top right > My Profile > API Tokens).
+2. Create Token > find the "Edit Cloudflare Workers" template > Use template.
+3. Account Resources:  Include > your account.
+   Zone Resources:     Include > Specific zone > stonks.run
+4. Continue to summary > Create Token. COPY the token (shown only once).
 
-If that run fails with "exit code 2", Yahoo throttled that particular
-GitHub machine. Run it again. The site keeps the last good data either
-way.
+Then add it to GitHub:
+5. https://github.com/fscottevens/trend-ledger/settings/secrets/actions
+   > New repository secret
+       Name:   CLOUDFLARE_API_TOKEN
+       Secret: (paste the token)
+   > Add secret
 
 
-PART 3 - CREATE A GITHUB TOKEN FOR THE SCHEDULER  (about 3 minutes)
-------------------------------------------------------------------
-1. Go to https://github.com/settings/personal-access-tokens/new
-   (or: profile picture > Settings > Developer settings >
-   Personal access tokens > Fine-grained tokens > Generate new token)
-2. Token name:          stonks-run-scheduler
-   Expiration:          1 year (set a calendar reminder to renew it)
-   Repository access:   Only select repositories > trend-ledger
-   Permissions:         Repository permissions > Actions > Read and write
-                        (GitHub adds "Metadata: Read-only" automatically.
-                         Nothing else is needed.)
-3. Click Generate token and COPY it. It starts with github_pat_.
-   GitHub shows it only once. Don't put it in any file in the repo.
+PART 3 - FIRST RUN + CHECK THE PREVIEW  (about 10 minutes, mostly waiting)
+-------------------------------------------------------------------------
+1. https://github.com/fscottevens/trend-ledger/actions > "Scheduled scan"
+   > Run workflow > Run workflow.
+2. Wait for the green check (~5-6 minutes). In the run, the "Deploy to
+   Cloudflare" step ends with a line like
+       https://stonks-run.fscottevens.workers.dev
+3. Open that address and check:
+     - the home page shows both lists
+     - "Stocks" in the menu opens the directory; a stock page opens from it
+     - clicking a ticker on the home page opens its stock page; clicking the
+       rest of the row still opens the pop-up breakdown
+   (The preview hides itself from Google, so it can't compete with stonks.run.)
+
+If the run fails at "Restore scan state" or "Save scan state", nothing was
+lost: the site keeps its last data. Send me the error text from that step.
 
 
-PART 4 - CREATE THE CLOUDFLARE WORKER  (about 10 minutes, free plan)
--------------------------------------------------------------------
-1. Log in at https://dash.cloudflare.com (same account as stonks.run).
-2. Open "Workers & Pages" in the left sidebar (under Compute), click
-   "Create", then choose Create Worker / "Start with Hello World".
-3. Name it  stonks-run-scheduler  and click Deploy.
-4. Click "Edit code". Delete everything in the editor. Open
-   C:\Users\fscot\Documents\trend-ledger\scheduler\scan-trigger.js
-   in Notepad, press Ctrl+A then Ctrl+C, paste it into the editor, and
-   click Deploy.
-5. Go back to the Worker, then Settings > Variables and Secrets > Add:
-       Type:  Secret
-       Name:  GITHUB_TOKEN
-       Value: (paste the token from Part 3)
-   Click Deploy (or Save).
-6. Still in Settings, open "Trigger Events" (older dashboards say
-   "Triggers"). Click Add > Cron Triggers, enter
-       17,47 * * * *
-   and click Add. Leave it exactly like that: the Worker itself decides
-   which of those times are scan times, in Eastern time, so daylight
-   saving is handled automatically.
-7. Open the Worker's URL (shown at the top of its page, like
-   https://stonks-run-scheduler.<something>.workers.dev). It should say
-       GitHub token: OK (can see the workflow)
-   If it says MISSING or ERROR, redo step 5 or check the token's repo
-   access from Part 3.
+PART 4 - FLIP THE SWITCH  (2 minutes + a few minutes for DNS)
+------------------------------------------------------------
+1. https://github.com/fscottevens/trend-ledger/settings/variables/actions
+   > New repository variable
+       Name:  SITE_HOST
+       Value: cloudflare
+2. Actions > "Scheduled scan" > Run workflow again.
+   This deploy attaches stonks.run and www.stonks.run to the Cloudflare
+   Worker. Cloudflare replaces the old GitHub Pages DNS records by itself.
+3. After the run is green, open https://stonks.run/stock/ . If it loads,
+   stonks.run is now served by Cloudflare (GitHub Pages has no such page).
+   Give it 5 minutes and refresh if it 404s at first.
 
-(Command-line alternative, if you prefer Wrangler:
-    cd C:\Users\fscot\Documents\trend-ledger\scheduler
-    npx wrangler deploy
-    npx wrangler secret put GITHUB_TOKEN
- wrangler.toml already has the cron trigger in it.)
+From now on the scans stop committing data to main. Your git pulls get much
+smaller.
+
+IF SOMETHING LOOKS WRONG AFTER THE SWITCH (rollback)
+  a. Delete the SITE_HOST variable (or set it to github).
+  b. Cloudflare > Workers & Pages > stonks-run > Settings > Domains & Routes:
+     remove stonks.run and www.stonks.run.
+  c. Cloudflare > stonks.run > DNS: add back the GitHub Pages records
+       A     stonks.run  185.199.108.153   (and .109.153, .110.153, .111.153)
+       CNAME www         fscottevens.github.io
+  GitHub Pages keeps the last data it had until the next scan commits again.
 
 
-PART 5 - CONFIRM THE NEXT TRADING DAY
-------------------------------------
-Scans now start at these times on weekdays:
-    Eastern: 9:47, 10:47, 11:47, 12:47, 1:47, 2:47, 3:47, 4:17 pm
-    Chicago: 8:47, 9:47, 10:47, 11:47, 12:47, 1:47, 2:47, 3:17 pm
+PART 5 - AFTER THE SWITCH  (any time, ~15 minutes total)
+-------------------------------------------------------
+A. Turn off GitHub Pages:
+   https://github.com/fscottevens/trend-ledger/settings/pages
+   > Source: change "Deploy from a branch" to None (or Unpublish).
 
-On the next weekday after 9:47 ET, the Actions page should show a
-"Scheduled scan" run whose trigger is "workflow_dispatch" (the Worker),
-and the site should update a few minutes later. Now and then you'll also
-see short (~20 second) green runs triggered by "schedule". Those are the
-GitHub backup noticing the data is already fresh and skipping. That's
-expected.
+B. Redirect www to the main address (so Google sees one site, not two):
+   Cloudflare > stonks.run > Rules > Redirect Rules > Create rule
+   > use the template "Redirect from WWW to root" > Deploy.
+   While you're in the stonks.run zone: SSL/TLS > Edge Certificates >
+   "Always Use HTTPS" > On.
 
-IF THE SITE EVER SHOWS A RED BANNER DURING MARKET HOURS
-1. Open the Worker URL and look at the "GitHub token:" line. Tokens
-   expire, so make a new one (Part 3) and update the secret (Part 4,
-   step 5).
-2. Check the Actions page for red runs and open the "Run scan" step.
-   "NOT publishing this scan" means Yahoo throttled that run, and the
-   next hourly run usually fixes it.
+C. Visitor analytics (free, no cookies, no consent banner needed):
+   Cloudflare > Analytics & Logs > Web Analytics > Add a site > stonks.run.
+   - If it offers automatic setup, choose it. Done.
+   - If it shows a code snippet instead, copy the token value from it
+     (the part after "token": ) into a GitHub repository VARIABLE named
+     CF_WEB_ANALYTICS_TOKEN. The next scan adds it to every page.
+   Use one or the other, not both.
+
+D. Google Search Console (tells Google about all the new pages):
+   https://search.google.com/search-console > Add property > Domain
+   > stonks.run > verify through Cloudflare (it offers a one-click option),
+   or copy the TXT record it shows into Cloudflare > stonks.run > DNS.
+   Then Sitemaps > enter  sitemap.xml  > Submit.
+
+E. AdSense consent message (required to show ads to EU/UK/Swiss visitors):
+   AdSense > Privacy & messaging > European regulations > Create message
+   > Publish. It uses the AdSense code already on every page.
+
+F. Then request the AdSense review (Sites > stonks.run).
+
+
+OPTIONAL SWITCHES (GitHub repository variables)
+-----------------------------------------------
+  SITE_HOST                 github (default) | cloudflare   - see PART 4
+  CF_WEB_ANALYTICS_TOKEN    see PART 5C
+  GOOGLE_SITE_VERIFICATION  only if Search Console asks for an HTML tag
+                            instead of DNS: paste the content="..." value
+  EXTRA_TICKERS             extra tickers to scan, comma-separated, e.g. the
+                            Nasdaq-100 names the S&P lists miss (see the
+                            screener review in the Stonks Run project)
+
+Do NOT delete the "data" branch on GitHub. After the switch it holds the only
+live copy of the screen history.
+
+
+THE SCAN SCHEDULER (unchanged, for reference)
+--------------------------------------------
+The Cloudflare Worker "stonks-run-scheduler" starts each scan on time. Its
+GitHub token expires about a year after Sept 2026. When the Worker's page
+(https://stonks-run-scheduler.fscottevens.workers.dev) shows the token as
+MISSING or ERROR:
+  1. https://github.com/settings/personal-access-tokens/new
+     Repository access: only trend-ledger. Permissions: Actions > Read and write.
+  2. Cloudflare > Workers & Pages > stonks-run-scheduler > Settings >
+     Variables and Secrets > edit GITHUB_TOKEN > paste > Deploy.

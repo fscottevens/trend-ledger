@@ -2,7 +2,7 @@
 
 An automated, educational stock screen. It scans every S&P 500 and S&P 400 MidCap
 constituent (~900 tickers) hourly during US market hours and ranks them against
-several published trading frameworks, then publishes the results as a static site.
+several published trading frameworks, then publishes the results as a static site on Cloudflare.
 
 **Live site:** https://stonks.run
 
@@ -19,22 +19,32 @@ scheduler/scan-trigger.js  (Cloudflare Worker, cron: on time, every market hour)
             v
 .github/workflows/scan.yml   (also has a GitHub cron as a backup)
             |
+            |  1. restore state from the `data` branch
+            |  2. sepa_scanner.py  -> docs/data/*.json
+            |  3. save state back to the `data` branch (one commit, replaced each run)
+            |  4. tools/build_site.py: docs/ + data -> dist/
+            |       (clean URLs, pre-rendered lists, one page per stock, sitemap)
             v
-     sepa_scanner.py  ---writes--->  docs/data/latest.json
-                                              |
-                                              v
-                                     docs/index.html
-                                     (fetches + renders it)
-                                              |
-                                     served by GitHub Pages
+     wrangler deploy dist/  ->  Cloudflare Worker "stonks-run" (static assets)
+                                      |
+                                served at https://stonks.run
 ```
 
 Nothing here needs a paid server:
 
 - **A Cloudflare Worker** (free plan) starts the scan on time via GitHub's API.
-- **GitHub Actions** runs the Python scanner and commits the fresh JSON back to
-  the repo.
-- **GitHub Pages** serves `docs/` as the site root at the custom domain.
+- **GitHub Actions** runs the Python scanner, builds the site and deploys it.
+- **The `data` branch** holds the scan state (`history.json` and friends) as a
+  single commit that is replaced every run, so `main` no longer grows by
+  ~380 KB per scan.
+- **Cloudflare Workers static assets** serve `dist/` at the custom domain:
+  clean URLs, real response headers and redirects (`dist/_headers`,
+  `dist/_redirects`), and no Worker script, so serving pages is free and
+  unmetered.
+
+`docs/` is still the hand-edited source and still works as a plain static site
+(it is what GitHub Pages served before the move). The repository variable
+`SITE_HOST` switches hosting; see `READ-ME-FIRST.txt` for the cutover steps.
 
 ---
 
@@ -44,7 +54,7 @@ Nothing here needs a paid server:
 |---|---|
 | `sepa_scanner.py` | The scanner. Single file, no local imports. |
 | `requirements.txt` | Python dependencies. |
-| `.github/workflows/scan.yml` | Scan + commit. Triggered by the Worker; GitHub cron as backup. |
+| `.github/workflows/scan.yml` | Scan, save state, build and deploy. Triggered by the Worker; GitHub cron as backup; page edits on `main` redeploy without scanning. |
 | `scheduler/scan-trigger.js` | Cloudflare Worker that triggers the scan on schedule. |
 | `scheduler/wrangler.toml` | Optional: deploy the Worker from the command line. |
 | `docs/index.html` | The screen itself (lists, market pulse, sector leadership, lookup, watchlist, drill-down). |
@@ -57,13 +67,17 @@ Nothing here needs a paid server:
 | `docs/data/universe.json` | Every scored stock in compact form, for lookup and the watchlist. |
 | `docs/data/companies.json` | Company profiles; rewritten only when something changes. |
 | `tools/backfill_history.py` | One-off: rebuilds `history.json` from the git history of `latest.json`. |
+| `tools/build_site.py` | Builds the deployable site into `dist/`: clean URLs, pre-rendered lists, a page per stock, sitemap, Cloudflare headers/redirects. |
+| `wrangler.jsonc` | Cloudflare Worker config for the site (static assets only). |
+| `docs/data/stocks.json` | Full detail for every scored stock; build input for the stock pages (kept on the `data` branch, never deployed). |
 | `docs/ads.txt` | AdSense seller authorization. |
 | `docs/robots.txt`, `docs/sitemap.xml` | Search engine directives. |
 | `docs/favicon.png`, `docs/social-card.png` | Icons and social preview image. |
 
-The site is deliberately dependency-free in the browser: no framework, no build
-step, no bundler, no chart library. Page-specific JavaScript is inline; the
-shared helpers live in `docs/common.js`.
+The site is deliberately dependency-free in the browser: no framework, no
+bundler, no chart library. Page-specific JavaScript is inline; the shared
+helpers live in `docs/common.js`. The only build step is `tools/build_site.py`
+(Python standard library), which turns `docs/` into the deployable `dist/`.
 
 ---
 
@@ -74,7 +88,8 @@ pip install -r requirements.txt
 
 python sepa_scanner.py --selftest        # logic tests, no network required
 python sepa_scanner.py                   # full scan, writes docs/data/latest.json
-python -m http.server 8000 --directory docs   # preview at localhost:8000
+python tools/build_site.py --strict      # build dist/ (fails on broken links)
+npx wrangler dev                          # preview dist/ exactly as Cloudflare serves it
 ```
 
 Useful flags:
@@ -141,14 +156,25 @@ logs a warning and `latest.json` still publishes. `--no-extras` turns it off.
 If `history.json` is ever lost, `python tools/backfill_history.py` rebuilds the
 lists from git history, and the next scan fills the returns back in.
 
-### The commit step
+### State, build and deploy
 
-The scan output is *generated* data, so the workflow treats it accordingly: it
-fetches the latest `main`, resets onto it, drops the newly generated file in
-place (all four data files), and pushes — retrying up to five times if another commit lands in between.
-There is nothing to merge, because the freshly scanned file is always the correct
-version. This is why pushes no longer fail when you edit the site while a scan is
-running.
+- **Restore:** each run first copies the scan state (`latest`, `history`,
+  `universe`, `companies` and `stocks.json`) from the `data` branch into
+  `docs/data/`. If the branch cannot be reached the run stops, rather than
+  starting from an old copy and overwriting history.
+- **Save:** after a good scan the state is pushed back to `data` as a single
+  commit (force-pushed, so the branch never grows). The step refuses to save a
+  `history.json` with fewer sessions than it started with.
+- **Build + deploy:** `tools/build_site.py` writes `dist/`, then
+  `wrangler deploy` uploads only the files that changed. The deploy is skipped
+  (with a notice) until the `CLOUDFLARE_API_TOKEN` secret exists.
+- **Transition:** while `SITE_HOST` is not `cloudflare`, the old commit step
+  also copies the four data files to `main` so GitHub Pages keeps working. It
+  fetches the latest `main`, resets onto it, drops the generated files in and
+  pushes, retrying up to five times, so it never conflicts with your edits.
+
+Do not delete the `data` branch: it is the only copy of the live history once
+the site is on Cloudflare.
 
 ### Troubleshooting
 
@@ -179,8 +205,13 @@ Run `git pull` first. The bot commits to the same branch you do.
 ## Editing the site
 
 Pages are plain HTML in `docs/`. Shared chrome (header, nav, footer) is repeated
-in each file, so if you change navigation, change it everywhere — or regenerate
-with the build scripts if you keep them.
+in each file, so if you change navigation, change it everywhere. The generated
+stock pages copy their header and footer from `docs/learn.html` at build time.
+Keep internal links as `page.html` in `docs/`; the build rewrites them to clean
+URLs (`/page`) and adds permanent redirects from the old addresses.
+
+Pushing a change under `docs/` to `main` redeploys the site within a minute or
+two (no scan needed).
 
 Styling is centralized in `docs/styles.css`; the design tokens are CSS variables
 at the top of that file.

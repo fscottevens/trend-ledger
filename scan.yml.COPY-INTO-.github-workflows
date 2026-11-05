@@ -25,14 +25,42 @@ on:
   schedule:
     - cron: "37 13-21 * * 1-5"
 
+  # ---------------------------------------------------------------------
+  # SITE-ONLY REDEPLOY: when page code changes on main, rebuild and deploy
+  # the site from the last scan's data (no scan), so edits go live in about
+  # a minute instead of at the next scheduled scan. Commits made by this
+  # workflow's own bot never trigger it (a GitHub rule).
+  # ---------------------------------------------------------------------
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "!docs/data/**"
+      - "tools/build_site.py"
+      - "wrangler.jsonc"
+
 permissions:
   contents: write
 
-# Prevents two runs committing at the same time. A queued run waits rather
+# Prevents two runs writing at the same time. A queued run waits rather
 # than racing the one in progress.
 concurrency:
   group: scheduled-scan
   cancel-in-progress: false
+
+env:
+  # ---------------------------------------------------------------------
+  # HOSTING SWITCH - repository variable SITE_HOST (Settings > Secrets and
+  # variables > Actions > Variables). See READ-ME-FIRST.txt.
+  #   unset / "github"  stonks.run is still served by GitHub Pages: scan data
+  #                     is committed to main as before, and the Cloudflare
+  #                     copy deploys to its preview address (once the
+  #                     CLOUDFLARE_API_TOKEN secret exists).
+  #   "cloudflare"      the deploy attaches stonks.run + www.stonks.run to
+  #                     the Cloudflare Worker (replacing the GitHub Pages DNS
+  #                     records), and data is no longer committed to main.
+  # ---------------------------------------------------------------------
+  SITE_HOST: ${{ vars.SITE_HOST || 'github' }}
 
 jobs:
   scan:
@@ -42,6 +70,30 @@ jobs:
       PYTHONUNBUFFERED: "1"
     steps:
       - uses: actions/checkout@v5
+
+      # The scan's state (history.json and friends) lives on the "data"
+      # branch: one commit, replaced every run, instead of ~380 KB of new
+      # commits on main every hour. First run after the move: the branch
+      # does not exist yet, so the copies committed in docs/data are used.
+      - name: Restore scan state
+        run: |
+          set -uo pipefail
+          mkdir -p docs/data /tmp/state-prev
+          git ls-remote --exit-code --heads origin data > /dev/null 2>&1
+          rc=$?
+          if [ $rc -eq 0 ]; then
+            git fetch -q --no-tags --depth=1 origin data || { echo "::error::Could not fetch the data branch."; exit 1; }
+            for f in latest.json history.json universe.json companies.json stocks.json; do
+              if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then git show "FETCH_HEAD:$f" > "docs/data/$f"; fi
+            done
+            echo "Restored scan state from the data branch ($(git log -1 --format=%s FETCH_HEAD))."
+          elif [ $rc -eq 2 ]; then
+            echo "No data branch yet: starting from the files committed in docs/data (first run after the move)."
+          else
+            echo "::error::Could not reach the data branch (git exit code $rc). Stopping rather than risk overwriting history."
+            exit 1
+          fi
+          if [ -f docs/data/history.json ]; then cp docs/data/history.json /tmp/state-prev/; fi
 
       # Only the backup cron can skip. Manual / Worker runs always scan.
       - name: Freshness guard (backup schedule only)
@@ -71,7 +123,7 @@ jobs:
           cache: pip
 
       - name: Install dependencies
-        if: steps.guard.outputs.skip != 'true'
+        if: github.event_name != 'push' && steps.guard.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
       # Fundamentals (company name, sector, P/E, growth...) change at most
@@ -79,7 +131,7 @@ jobs:
       # EVERY run re-downloaded all ~900 of them - the heaviest and most
       # rate-limit-prone part of the scan. Carry the cache between runs.
       - name: Restore fundamentals cache
-        if: steps.guard.outputs.skip != 'true'
+        if: github.event_name != 'push' && steps.guard.outputs.skip != 'true'
         uses: actions/cache/restore@v5
         with:
           path: fundamentals_cache.json
@@ -89,22 +141,91 @@ jobs:
 
       - name: Run scan
         id: scan
-        if: steps.guard.outputs.skip != 'true'
+        if: github.event_name != 'push' && steps.guard.outputs.skip != 'true'
         # Exit code 2 = the scanner refused to publish a degraded scan (e.g.
         # Yahoo throttled this runner). The run fails loudly - GitHub emails
-        # you - and the commit step is skipped, so the site keeps the last
+        # you - and every later step is skipped, so the site keeps the last
         # good data instead of an empty screen.
-        run: python sepa_scanner.py --json-out docs/data/latest.json --fundamentals-ttl-hours 20
+        env:
+          # Optional repository variable: extra tickers on top of the S&P 500 +
+          # S&P 400, comma-separated (e.g. the Nasdaq-100 names those indexes
+          # miss - see READ-ME-FIRST.txt). Empty = no extras.
+          EXTRA_TICKERS: ${{ vars.EXTRA_TICKERS }}
+        run: python sepa_scanner.py --json-out docs/data/latest.json --fundamentals-ttl-hours 20 --extra-tickers "$EXTRA_TICKERS"
 
       - name: Save fundamentals cache
-        if: always() && steps.guard.outputs.skip != 'true' && hashFiles('fundamentals_cache.json') != ''
+        if: always() && github.event_name != 'push' && steps.guard.outputs.skip != 'true' && hashFiles('fundamentals_cache.json') != ''
         uses: actions/cache/save@v5
         with:
           path: fundamentals_cache.json
           key: fundamentals-${{ github.run_id }}-${{ github.run_attempt }}
 
-      - name: Commit updated data
-        if: steps.guard.outputs.skip != 'true'
+      - name: Save scan state to the data branch
+        if: steps.scan.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          # Never replace the saved record with a shorter one.
+          python3 - <<'EOF'
+          import json, sys
+          def sessions(path):
+              try:
+                  with open(path) as f:
+                      return len(json.load(f).get("days", []))
+              except FileNotFoundError:
+                  return None
+          before, after = sessions("/tmp/state-prev/history.json"), sessions("docs/data/history.json")
+          print(f"History sessions: {before} before this scan, {after} after.")
+          if before is not None and (after is None or after < before):
+              print("::error::history.json would lose sessions; not saving state.")
+              sys.exit(1)
+          EOF
+          STATE="$(mktemp -d)"
+          for f in latest.json history.json universe.json companies.json stocks.json; do
+            if [ -f "docs/data/$f" ]; then cp "docs/data/$f" "$STATE/"; fi
+          done
+          cd "$STATE"
+          git init -q -b data
+          git config user.name "trend-ledger-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Scan state $(date -u +'%Y-%m-%d %H:%M UTC')"
+          # Force-push a single commit: the branch stays a few MB instead of
+          # growing every hour. history.json itself carries the full record.
+          git push -q --force "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" data:data
+          echo "Saved scan state to the data branch."
+
+      - name: Build site
+        id: build
+        if: steps.scan.outcome == 'success' || github.event_name == 'push'
+        env:
+          CF_WEB_ANALYTICS_TOKEN: ${{ vars.CF_WEB_ANALYTICS_TOKEN }}
+          GOOGLE_SITE_VERIFICATION: ${{ vars.GOOGLE_SITE_VERIFICATION }}
+        run: python tools/build_site.py
+
+      - name: Deploy to Cloudflare
+        if: steps.build.outcome == 'success'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          WRANGLER_SEND_METRICS: "false"
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::notice::No CLOUDFLARE_API_TOKEN secret yet, so the Cloudflare deploy was skipped (see READ-ME-FIRST.txt)."
+            exit 0
+          fi
+          DOMAINS=""
+          if [ "$SITE_HOST" = "cloudflare" ]; then
+            # Attaching a custom domain from CI replaces whatever DNS record
+            # the hostname had (the GitHub Pages ones) with the Worker's.
+            DOMAINS="--domain stonks.run --domain www.stonks.run"
+          fi
+          npx --yes wrangler@4 deploy $DOMAINS
+
+      # Transition only: GitHub Pages still serves stonks.run until the switch
+      # is flipped, and it reads docs/data from main. Skipped afterwards.
+      - name: Commit updated data (GitHub Pages copy)
+        if: steps.scan.outcome == 'success' && env.SITE_HOST != 'cloudflare'
         run: |
           set -e
           git config user.name "trend-ledger-bot"
@@ -114,6 +235,7 @@ jobs:
           # written next to it: history.json (every session's final list +
           # forward returns), universe.json (all scored stocks, for lookup)
           # and companies.json (profiles; only rewritten when it changes).
+          # stocks.json is a build input and lives only on the data branch.
           FILES="latest.json history.json universe.json companies.json"
 
           # Keep our freshly generated scan output aside. If anything else

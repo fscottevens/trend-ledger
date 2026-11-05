@@ -547,7 +547,9 @@ function openTickerModal(t) {
     '<div class="modal-group-title">Every Appearance</div>' +
     '<div class="table-scroll"><table class="data-table"><thead><tr><th>Session</th><th>List &amp; rank</th><th class="num">Close</th><th>Trend</th>' +
       '<th class="num">+10d</th><th class="num">+20d</th><th class="num">To date</th></tr></thead><tbody>' + rows + '</tbody></table></div>' +
-    '<div class="modal-links"><a href="index.html#t=' + encodeURIComponent(t) + '">Open ' + esc(t) + ' on today\'s screen &rarr;</a>' +
+    '<div class="modal-links">' +
+      (SR.stockUrl(t) ? '<a href="' + SR.stockUrl(t) + '">Full ' + esc(t) + ' page &rarr;</a>' : '') +
+      '<a href="index.html#t=' + encodeURIComponent(t) + '">Open ' + esc(t) + ' on today\'s screen &rarr;</a>' +
       '<span class="ml-note">Shows today\'s full breakdown, or the lookup view if it is not on today\'s lists.</span></div>' +
     '<div class="modal-footnote">Returns are close-to-close price changes from each listed session. Not a recommendation; see <a href="#method">how these are calculated</a>.</div>';
   document.getElementById('modal-content').innerHTML = html;

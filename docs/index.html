@@ -683,7 +683,9 @@ function openDetailModal(r, rows, index, listName) {
         signalSection('Qullamaggie (' + r.qullamaggie + ')', r.signals && r.signals.qullamaggie) +
         signalSection('Value (' + r.value + ')', r.signals && r.signals.value)) +
     navBar +
-    '<div class="modal-links"><a href="https://finance.yahoo.com/quote/' + encodeURIComponent(r.ticker) +
+    '<div class="modal-links">' +
+      (SR.stockUrl(r.ticker) ? '<a href="' + SR.stockUrl(r.ticker) + '">Full ' + esc(r.ticker) + ' page: checklist, history &amp; peers &rarr;</a>' : '') +
+      '<a href="https://finance.yahoo.com/quote/' + encodeURIComponent(r.ticker) +
       '/chart" target="_blank" rel="noopener noreferrer">Open full chart on Yahoo Finance &rarr;</a>' +
       '<span class="ml-note">External site. Verify price action against a real-time source; prices here are delayed.</span></div>' +
     '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news or your own circumstances. Company descriptions and analyst figures come from Yahoo Finance. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
@@ -822,9 +824,11 @@ function renderTable(mountId, rows, scoreLabel, listName, section) {
     r._rank = i + 1;
     const chgClass = (r.pct_chg ?? 0) >= 0 ? 'chg-pos' : 'chg-neg';
     const qualFlag = r.qualifies ? '<span class="qual-flag" title="Fully qualifies">&#9679;</span>' : '';
+    const page = SR.stockUrl(r.ticker);   // the ticker links to its own page; the rest of the row opens the drill-in
     html += '<tr class="data-row" data-idx="' + i + '" tabindex="0">' +
       '<td class="rank">' + (i + 1) + '</td>' +
-      '<td class="ticker">' + esc(r.ticker) + badgesHtml(r, section) +
+      '<td class="ticker">' + (page ? '<a class="tk-link" href="' + page + '">' + esc(r.ticker) + '</a>' : esc(r.ticker)) +
+        badgesHtml(r, section) +
         (r.company ? '<span class="co-name">' + esc(r.company) + '</span>' : '') + '</td>' +
       '<td class="num">' + fmtMoney(r.price) + '</td>' +
       '<td class="num ' + chgClass + '">' + fmtPct(r.pct_chg) + '</td>' +
@@ -837,8 +841,12 @@ function renderTable(mountId, rows, scoreLabel, listName, section) {
 
   mount.querySelectorAll('tr.data-row').forEach((rowEl, i) => {
     const openThis = () => openDetailModal(rows[i], rows, i, listName);
-    rowEl.addEventListener('click', openThis);
-    rowEl.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openThis(); } });
+    const onLink = (e) => e.target && e.target.closest && e.target.closest('a');
+    rowEl.addEventListener('click', (e) => { if (!onLink(e)) openThis(); });
+    rowEl.addEventListener('keydown', (e) => {
+      if (onLink(e)) return;   // Enter on the ticker link follows the link
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openThis(); }
+    });
   });
 }
 
