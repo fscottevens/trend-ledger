@@ -79,8 +79,10 @@ jobs:
         run: |
           set -uo pipefail
           mkdir -p docs/data /tmp/state-prev
-          git ls-remote --exit-code --heads origin data > /dev/null 2>&1
-          rc=$?
+          # GitHub runs steps with "bash -e", so capture the exit code instead of
+          # letting it end the step: 2 just means "no data branch yet".
+          rc=0
+          git ls-remote --exit-code --heads origin data > /dev/null 2>&1 || rc=$?
           if [ $rc -eq 0 ]; then
             git fetch -q --no-tags --depth=1 origin data || { echo "::error::Could not fetch the data branch."; exit 1; }
             for f in latest.json history.json universe.json companies.json stocks.json; do
