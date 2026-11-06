@@ -2,7 +2,8 @@
 """
 sepa_scanner.py
 ================
-ONE-FILE, MANUAL-RUN scanner over the S&P 500 + S&P 400. Every run scores
+ONE-FILE, MANUAL-RUN scanner over the S&P 500, S&P 400, Nasdaq-100 and the
+three Dow Jones Averages. Every run scores
 the whole universe and always returns 20 ideas total, split into two
 fixed-size top-10 sections - even on a quiet day where nothing fully
 qualifies (each row is flagged Qualifies: Yes/No so you know which):
@@ -45,17 +46,18 @@ OUTPUTS (docs/data/, read by the website)
                   by tools/build_site.py to generate the per-stock pages
                   (build input only - not loaded by visitors' browsers)
 
-UNIVERSE: S&P 500 + S&P 400 MidCap (hardcoded, ~903 tickers)
-----------------------------------------------------------------
-  Hardcoded snapshot (SP500_TICKERS / SP400_TICKERS below), not scraped
-  live, so it can't silently degrade to an empty result if Wikipedia's
-  page structure changes. To refresh later: ask an LLM with web access
-  to re-pull the Symbol columns from
-  https://en.wikipedia.org/wiki/List_of_S%26P_500_companies and
-  .../List_of_S%26P_400_companies (converting '.' to '-', e.g.
-  BRK.B -> BRK-B) and replace the two lists.
-  Use --sp500-only for just the S&P 500. Add one-off names anytime with
-  --extra-tickers TICKER1,TICKER2,...
+UNIVERSE: S&P 500, S&P MidCap 400, Nasdaq-100, Dow Jones Industrial,
+Transportation and Utility Averages (~920 unique tickers)
+-------------------------------------------------------------------------
+  Membership lives in universe/index_members.json (one list per index;
+  a stock in several indexes is scanned once and tagged with each).
+  tools/refresh_index_members.py refreshes it weekly from Wikipedia's
+  constituent tables and Nasdaq's own Nasdaq-100 list, with sanity checks
+  (member counts, ticker format, maximum weekly turnover) so a bad source
+  page can never shrink or scramble the universe. If the file is missing or
+  invalid the embedded S&P 500 + S&P 400 lists below are used instead.
+  Use --indexes SP500,NDX to scan a subset, --sp500-only for just the
+  S&P 500, and --extra-tickers TICKER1,TICKER2 for one-off additions.
 
 LIMITATIONS
 -----------
@@ -65,9 +67,8 @@ LIMITATIONS
   - CANSLIM's C/A/S/I sub-scores depend on yfinance's `.info` dict, which
     is inconsistently populated; missing fields are skipped, not counted
     against a stock.
-  - No earnings-calendar awareness - "episodic pivot" flags any big gap
-    + volume spike, not specifically post-earnings gaps.
-  - No market-holiday calendar for the informational market-hours note.
+  - "Episodic pivot" flags any big gap + volume spike, not specifically
+    post-earnings gaps (earnings dates are shown alongside for context).
   - This tool only identifies candidates - it does not size positions,
     set stops, or manage risk. That discipline lives entirely with you.
 """
@@ -171,7 +172,12 @@ class Config:
     benchmark: str = "SPY"
     lookback_period: str = "15mo"
     extra_tickers: List[str] = field(default_factory=list)
-    include_sp400: bool = True
+    # Which indexes make up the universe (codes from INDEX_ORDER), and where
+    # the membership file lives: the copy saved with the scan state first
+    # (refreshed weekly), then the one committed in the repo.
+    indexes: Tuple[str, ...] = ("SP500", "SP400", "NDX", "DJIA", "DJTA", "DJUA")
+    index_members_paths: List[str] = field(default_factory=lambda: [
+        "docs/data/index_members.json", INDEX_MEMBERS_REPO])
 
     min_price: float = 5.0
     min_avg_dollar_volume: float = 5_000_000
@@ -226,121 +232,200 @@ class Config:
 # Universe: S&P 500 constituents (+ optional extras)
 # --------------------------------------------------------------------------
 
-# S&P 500 constituents as of 2026-08-17 (503 tickers, verified against the
-# official "contains 503 stocks" count - no duplicates, no overlap with
-# SP400_TICKERS below). Source: en.wikipedia.org/wiki/List_of_S%26P_500_companies
+# FALLBACK ONLY. The universe normally comes from universe/index_members.json
+# (S&P 500, S&P MidCap 400, Nasdaq-100 and the three Dow Jones Averages),
+# which tools/refresh_index_members.py keeps current. These two lists are
+# used only if that file is missing or fails validation, so a broken file can
+# never empty the screen. Snapshot of 2026-11-04 (Wikipedia constituents
+# tables, cross-checked by checksum); 503 + 400 tickers, no overlap.
 SP500_TICKERS = [
-    "MMM", "AOS", "ABT", "ABBV", "ACN", "ADBE", "AMD", "AES", "AFL", "A",
-    "APD", "ABNB", "AKAM", "ALB", "ARE", "ALGN", "ALLE", "LNT", "ALL", "GOOGL",
-    "GOOG", "MO", "AMZN", "AMCR", "AEE", "AEP", "AXP", "AIG", "AMT", "AWK",
-    "AMP", "AME", "AMGN", "APH", "ADI", "AON", "APA", "APO", "AAPL", "AMAT",
-    "APP", "APTV", "ACGL", "ADM", "ARES", "ANET", "AJG", "AIZ", "T", "ATO",
-    "ADSK", "ADP", "AZO", "AVB", "AVY", "AXON", "BKR", "BALL", "BAC", "BAX",
-    "BDX", "BRK-B", "BBY", "TECH", "BIIB", "BLK", "BX", "XYZ", "BNY", "BA",
-    "BKNG", "BSX", "BMY", "AVGO", "BR", "BRO", "BF-B", "BLDR", "BG", "BXP",
-    "CHRW", "CDNS", "CPT", "CPB", "COF", "CAH", "CCL", "CARR", "CVNA", "CASY",
-    "CAT", "CBOE", "CBRE", "CDW", "COR", "CNC", "CNP", "CF", "CRL", "SCHW",
-    "CHTR", "CVX", "CMG", "CB", "CHD", "CIEN", "CI", "CINF", "CTAS", "CSCO",
-    "C", "CFG", "CLX", "CME", "CMS", "KO", "CTSH", "COHR", "COIN", "CL",
-    "CMCSA", "FIX", "CAG", "COP", "ED", "STZ", "CEG", "COO", "CPRT", "GLW",
-    "CPAY", "CTVA", "CSGP", "COST", "CRH", "CRWD", "CCI", "CSX", "CMI", "CVS",
-    "DHR", "DRI", "DDOG", "DVA", "DECK", "DE", "DELL", "DAL", "DVN", "DXCM",
-    "FANG", "DLR", "DG", "DLTR", "D", "DPZ", "DASH", "DOV", "DOW", "DHI",
-    "DTE", "DUK", "DD", "ETN", "EBAY", "SATS", "ECL", "EIX", "EW", "EA",
-    "ELV", "EME", "EMR", "ETR", "EOG", "EPAM", "EQT", "EFX", "EQIX", "EQR",
-    "ERIE", "ESS", "EL", "EG", "EVRG", "ES", "EXC", "EXE", "EXPE", "EXPD",
-    "EXR", "XOM", "FFIV", "FDS", "FICO", "FAST", "FRT", "FDX", "FIS", "FITB",
-    "FSLR", "FE", "FISV", "F", "FTNT", "FTV", "FOXA", "FOX", "BEN", "FCX",
-    "GRMN", "IT", "GE", "GEHC", "GEV", "GEN", "GNRC", "GD", "GIS", "GM",
-    "GPC", "GILD", "GPN", "GL", "GDDY", "GS", "HAL", "HIG", "HAS", "HCA",
-    "DOC", "HSIC", "HSY", "HPE", "HLT", "HD", "HON", "HRL", "HST", "HWM",
-    "HPQ", "HUBB", "HUM", "HBAN", "HII", "IBM", "IEX", "IDXX", "ITW", "INCY",
-    "IR", "PODD", "INTC", "IBKR", "ICE", "IFF", "IP", "INTU", "ISRG", "IVZ",
-    "INVH", "IQV", "IRM", "JBHT", "JBL", "JKHY", "J", "JNJ", "JCI", "JPM",
-    "KVUE", "KDP", "KEY", "KEYS", "KMB", "KIM", "KMI", "KKR", "KLAC", "KHC",
-    "KR", "LHX", "LH", "LRCX", "LVS", "LDOS", "LEN", "LII", "LLY", "LIN",
-    "LYV", "LMT", "L", "LOW", "LULU", "LITE", "LYB", "MTB", "MPC", "MAR",
-    "MRSH", "MLM", "MAS", "MA", "MKC", "MCD", "MCK", "MDT", "MRK", "META",
-    "MET", "MTD", "MGM", "MCHP", "MU", "MSFT", "MAA", "MRNA", "TAP", "MDLZ",
-    "MPWR", "MNST", "MCO", "MS", "MOS", "MSI", "MSCI", "NDAQ", "NTAP", "NFLX",
-    "NEM", "NWSA", "NWS", "NEE", "NKE", "NI", "NDSN", "NSC", "NTRS", "NOC",
-    "NCLH", "NRG", "NUE", "NVDA", "NVR", "NXPI", "ORLY", "OXY", "ODFL", "OMC",
-    "ON", "OKE", "ORCL", "OTIS", "PCAR", "PKG", "PLTR", "PANW", "PSKY", "PH",
-    "PAYX", "PYPL", "PNR", "PEP", "PFE", "PCG", "PM", "PSX", "PNW", "PNC",
-    "POOL", "PPG", "PPL", "PFG", "PG", "PGR", "PLD", "PRU", "PEG", "PTC",
-    "PSA", "PHM", "PWR", "QCOM", "DGX", "Q", "RL", "RJF", "RTX", "O",
-    "REG", "REGN", "RF", "RSG", "RMD", "RVTY", "HOOD", "ROK", "ROL", "ROP",
-    "ROST", "RCL", "SPGI", "CRM", "SNDK", "SBAC", "SLB", "STX", "SRE", "NOW",
-    "SHW", "SPG", "SWKS", "SJM", "SW", "SNA", "SOLV", "SO", "LUV", "SWK",
-    "SBUX", "STT", "STLD", "STE", "SYK", "SMCI", "SYF", "SNPS", "SYY", "TMUS",
-    "TROW", "TTWO", "TPR", "TRGP", "TGT", "TEL", "TDY", "TER", "TSLA", "TXN",
-    "TPL", "TXT", "TMO", "TJX", "TKO", "TTD", "TSCO", "TT", "TDG", "TRV",
-    "TRMB", "TFC", "TYL", "TSN", "USB", "UBER", "UDR", "ULTA", "UNP", "UAL",
-    "UPS", "URI", "UNH", "UHS", "VLO", "VEEV", "VTR", "VLTO", "VRSN", "VRSK",
-    "VZ", "VRTX", "VRT", "VTRS", "VICI", "V", "VST", "VMC", "WRB", "GWW",
-    "WAB", "WMT", "DIS", "WBD", "WM", "WAT", "WEC", "WFC", "WELL", "WST",
-    "WDC", "WY", "WSM", "WMB", "WTW", "WDAY", "WYNN", "XEL", "XYL", "YUM",
-    "ZBRA", "ZBH", "ZTS",
+    "A", "AAPL", "ABBV", "ABNB", "ABT", "ACGL", "ACN", "ADBE", "ADI", "ADM", "ADP", "ADSK", "AEE",
+    "AEP", "AES", "AFL", "AIG", "AIZ", "AJG", "AKAM", "ALB", "ALGN", "ALL", "ALLE", "AMAT", "AMCR",
+    "AMD", "AME", "AMGN", "AMP", "AMT", "AMZN", "ANET", "AON", "AOS", "APA", "APD", "APH", "APO",
+    "APP", "APTV", "ARE", "ARES", "ATO", "AVGO", "AVY", "AWK", "AXON", "AXP", "AZO", "BA", "BAC",
+    "BALL", "BAX", "BBY", "BDX", "BE", "BEN", "BF-B", "BG", "BIIB", "BKNG", "BKR", "BLK", "BMY",
+    "BNY", "BR", "BRK-B", "BRO", "BSX", "BX", "BXP", "C", "CAH", "CARR", "CASY", "CAT", "CB",
+    "CBOE", "CBRE", "CCI", "CCL", "CDNS", "CDW", "CEG", "CF", "CFG", "CHD", "CHRW", "CHTR", "CI",
+    "CIEN", "CINF", "CL", "CLX", "CMCSA", "CME", "CMG", "CMI", "CMS", "CNC", "CNP", "COF", "COHR",
+    "COIN", "COO", "COP", "COR", "COST", "CPAY", "CPRT", "CPT", "CRH", "CRL", "CRM", "CRWD",
+    "CSCO", "CSGP", "CSX", "CTAS", "CTSH", "CVNA", "CVS", "CVX", "D", "DAL", "DASH", "DD", "DDOG",
+    "DE", "DECK", "DELL", "DG", "DGX", "DHI", "DHR", "DIS", "DLR", "DLTR", "DOC", "DOV", "DOW",
+    "DPZ", "DRI", "DTE", "DUK", "DVA", "DVN", "DXCM", "EBAY", "ECHO", "ECL", "ED", "EFX", "EG",
+    "EIX", "EL", "ELV", "EME", "EMR", "EOG", "EQIX", "EQT", "ERIE", "ES", "ESS", "ETN", "ETR",
+    "EVRG", "EW", "EXC", "EXE", "EXPD", "EXPE", "EXR", "F", "FANG", "FAST", "FCX", "FDS", "FDX",
+    "FDXF", "FE", "FERG", "FFIV", "FICO", "FIS", "FISV", "FITB", "FIX", "FLEX", "FOX", "FOXA",
+    "FRT", "FSLR", "FTNT", "FTV", "GD", "GDDY", "GE", "GEHC", "GEN", "GEV", "GILD", "GIS", "GL",
+    "GLW", "GM", "GNRC", "GOOG", "GOOGL", "GPC", "GPN", "GRMN", "GS", "GWW", "HAL", "HAS", "HBAN",
+    "HCA", "HD", "HIG", "HII", "HLT", "HON", "HONA", "HOOD", "HPE", "HPQ", "HRL", "HSIC", "HST",
+    "HSY", "HUBB", "HUM", "HWM", "IBKR", "IBM", "ICE", "IDXX", "IEX", "IFF", "ILMN", "INCY",
+    "INTC", "INTU", "INVH", "IP", "IQV", "IR", "IRM", "ISRG", "IT", "ITW", "IVZ", "J", "JBHT",
+    "JBL", "JCI", "JKHY", "JNJ", "JPM", "KDP", "KEY", "KEYS", "KHC", "KIM", "KKR", "KLAC", "KMB",
+    "KMI", "KO", "KR", "L", "LDOS", "LEN", "LH", "LHX", "LII", "LIN", "LITE", "LLY", "LMT", "LNT",
+    "LOW", "LRCX", "LULU", "LUV", "LVS", "LYB", "LYV", "MA", "MAA", "MAR", "MAS", "MCD", "MCHP",
+    "MCK", "MCO", "MDLZ", "MDT", "MET", "META", "MGM", "MKC", "MLM", "MMM", "MNST", "MO", "MOS",
+    "MPC", "MPWR", "MRK", "MRNA", "MRSH", "MRVL", "MS", "MSCI", "MSFT", "MSI", "MTB", "MTD", "MU",
+    "NCLH", "NDAQ", "NDSN", "NEE", "NEM", "NFLX", "NI", "NKE", "NOC", "NOW", "NRG", "NSC", "NTAP",
+    "NTRS", "NUE", "NVDA", "NVR", "NWS", "NWSA", "NXPI", "O", "ODFL", "OKE", "OKTA", "OMC", "ON",
+    "ORCL", "ORLY", "OTIS", "OXY", "P", "PANW", "PAYX", "PCAR", "PCG", "PEG", "PEP", "PFE", "PFG",
+    "PG", "PGR", "PH", "PHM", "PKG", "PLD", "PLTR", "PM", "PNC", "PNR", "PNW", "PODD", "PPG",
+    "PPL", "PRU", "PSA", "PSX", "PTC", "PWR", "PYPL", "Q", "QCOM", "RCL", "RDDT", "REG", "REGN",
+    "RF", "RJF", "RL", "RMD", "ROK", "ROL", "ROP", "ROST", "RSG", "RTX", "RVTY", "SBAC", "SBUX",
+    "SCHW", "SHW", "SJM", "SKYD", "SLB", "SMCI", "SNA", "SNDK", "SNPS", "SO", "SOLV", "SPG",
+    "SPGI", "SRE", "STE", "STLD", "STT", "STX", "STZ", "SW", "SWK", "SWKS", "SYF", "SYK", "SYY",
+    "T", "TDG", "TDY", "TECH", "TEL", "TER", "TFC", "TGT", "TJX", "TKO", "TMO", "TMUS", "TPL",
+    "TPR", "TRGP", "TRMB", "TROW", "TRV", "TSCO", "TSLA", "TSN", "TT", "TTWO", "TWLO", "TXN",
+    "TXT", "TYL", "UAL", "UBER", "UDR", "UHS", "ULTA", "UNH", "UNP", "UPS", "URI", "USB", "V",
+    "VEEV", "VICI", "VLO", "VLTO", "VMC", "VMRK", "VRSK", "VRSN", "VRT", "VRTX", "VST", "VTR",
+    "VTRS", "VYLR", "VZ", "WAB", "WAT", "WDAY", "WDC", "WEC", "WELL", "WFC", "WM", "WMB", "WMT",
+    "WRB", "WSM", "WST", "WTW", "WY", "WYNN", "XEL", "XOM", "XYL", "XYZ", "YUM", "ZBH", "ZBRA",
+    "ZTS",
 ]
 
-# S&P 400 MidCap constituents as of 2026-08-17 (400 tickers, verified no
-# duplicates and zero overlap with SP500_TICKERS above). Source:
-# en.wikipedia.org/wiki/List_of_S%26P_400_companies
 SP400_TICKERS = [
-    "AA", "AAL", "AAON", "ACI", "ACM", "ADC", "AEIS", "AFG", "AGCO", "AHR",
-    "AIT", "ALGM", "ALK", "ALLY", "ALV", "AM", "AMG", "AMH", "AMKR", "AN",
-    "ANF", "APG", "APPF", "AR", "ARMK", "ARW", "ARWR", "ASB", "ASH", "ATI",
-    "ATR", "AVAV", "AVNT", "AVT", "AVTR", "AXTA", "AYI", "BAH", "BBWI", "BC",
-    "BCO", "BDC", "BHF", "BILL", "BIO", "BJ", "BKH", "BLD", "BLKB", "BMRN",
-    "BRBR", "BRKR", "BROS", "BRX", "BSY", "BURL", "BWA", "BWXT", "BYD", "CACI",
-    "CAR", "CART", "CAVA", "CBSH", "CBT", "CCK", "CDP", "CELH", "CFR", "CG",
-    "CGNX", "CHDN", "CHE", "CHH", "CHRD", "CHWY", "CLF", "CLH", "CMC", "CNH",
-    "CNM", "CNO", "CNX", "CNXC", "COKE", "COLB", "COLM", "COTY", "CPRI", "CR",
-    "CRBG", "CROX", "CRS", "CRUS", "CSL", "CTRE", "CUBE", "CUZ", "CVLT", "CW",
-    "CXT", "CYTK", "DAR", "DBX", "DCI", "DINO", "DKS", "DLB", "DOCN", "DOCS",
-    "DOCU", "DT", "DTM", "DUOL", "DY", "EEFT", "EGP", "EHC", "ELAN", "ELF",
-    "ELS", "ENS", "ENSG", "ENTG", "EPR", "EQH", "ESAB", "ESNT", "EVR", "EWBC",
-    "EXEL", "EXLS", "EXP", "EXPO", "FAF", "FBIN", "FCFS", "FCN", "FFIN", "FHI",
-    "FHN", "FIVE", "FLEX", "FLG", "FLO", "FLR", "FLS", "FN", "FNB", "FND",
-    "FNF", "FOUR", "FR", "FTI", "G", "GAP", "GATX", "GBCI", "GEF", "GGG",
-    "GHC", "GLPI", "GME", "GMED", "GNTX", "GPK", "GT", "GTLS", "GWRE", "GXO",
-    "H", "HAE", "HALO", "HGV", "HIMS", "HL", "HLI", "HLNE", "HOG", "HOMB",
-    "HQY", "HR", "HRB", "HWC", "HXL", "IBOC", "IDA", "IDCC", "ILMN", "INGR",
-    "IPGP", "IRT", "ITT", "JAZZ", "JEF", "JHG", "JLL", "KBH", "KBR", "KD",
-    "KEX", "KNF", "KNSL", "KNX", "KRC", "KRG", "KTOS", "LAD", "LAMR", "LEA",
-    "LECO", "LFUS", "LIVN", "LNTH", "LOPE", "LPX", "LSCC", "LSTR", "M", "MANH",
-    "MAT", "MEDP", "MIDD", "MKSI", "MLI", "MMS", "MOG-A", "MORN", "MP",
-    "MSA", "MSM", "MTDR", "MTG", "MTN", "MTSI", "MTZ", "MUR", "MUSA", "MZTI",
-    "NBIX", "NEU", "NFG", "NJR", "NLY", "NNN", "NOV", "NOVT", "NSA", "NTNX",
-    "NVST", "NVT", "NWE", "NXST", "NXT", "NYT", "OC", "OGE", "OGS", "OHI",
-    "OKTA", "OLED", "OLLI", "OLN", "ONB", "ONTO", "OPCH", "ORA", "ORI", "OSK",
-    "OVV", "OZK", "PAG", "PATH", "PB", "PBF", "PCTY", "PEGA", "PEN", "PFGC",
-    "PII", "PINS", "PK", "PLNT", "PNFP", "POR", "POST", "PPC", "PR", "PRI",
-    "PSN", "PVH", "QLYS", "R", "RBA", "RBC", "REXR", "RGA", "RGEN",
-    "RGLD", "RH", "RLI", "RMBS", "RNR", "ROIV", "RPM", "RRC", "RRX", "RS",
-    "RYAN", "RYN", "SAIA", "SAIC", "SAM", "SARO", "SBRA", "SCI", "SEIC", "SF",
-    "SFM", "SGI", "SHC", "SIGI", "SIRI", "SITM", "SLAB", "SLGN", "SLM", "SMG", "SNX",
-    "SOLS", "SON", "SPXC", "SR", "SSB", "SSD", "ST", "STAG", "STRL", "STWD",
-    "SWX", "SYNA", "TCBI", "TEX", "THC", "THG", "THO", "TKR", "TLN", "TMHC",
-    "TNL", "TOL", "TREX", "TRU", "TTC", "TTEK", "TTMI", "TWLO", "TXNM", "TXRH",
-    "UBSI", "UFPI", "UGI", "ULS", "UMBF", "UNM", "USFD", "UTHR", "VAL", "VC",
-    "VFC", "VICR", "VLY", "VMI", "VNO", "VNOM", "VNT", "VOYA", "VVV", "WAL",
-    "WBS", "WCC", "WEX", "WFRD", "WH", "WHR", "WING", "WLK", "WMG", "WMS",
-    "WPC", "WSO", "WTFC", "WTRG", "WTS", "WWD", "XPO", "XRAY", "YETI", "ZION",
+    "AA", "AAL", "AAON", "ACI", "ACM", "ADC", "AEIS", "AFG", "AGCO", "AGNC", "AHR", "AIT", "ALGM",
+    "ALK", "ALLY", "ALSN", "ALV", "AM", "AMG", "AMH", "AMKR", "AN", "ANF", "APG", "APPF", "AR",
+    "ARMK", "ARW", "ARWR", "ASB", "ASH", "ATI", "ATR", "AVAV", "AVNT", "AVT", "AVTR", "AXTA",
+    "AYI", "BAH", "BBWI", "BC", "BCO", "BDC", "BHF", "BILL", "BIO", "BJ", "BKH", "BMRN", "BRKR",
+    "BROS", "BRX", "BSY", "BTSG", "BURL", "BWA", "BWXT", "BYD", "CACI", "CAR", "CART", "CAVA",
+    "CBSH", "CBT", "CCK", "CDE", "CDP", "CELH", "CFR", "CG", "CGNX", "CHDN", "CHE", "CHH", "CHRD",
+    "CHWY", "CLF", "CLH", "CMC", "CNH", "CNM", "CNO", "CNX", "COKE", "COLB", "COLM", "CORT", "CR",
+    "CRBG", "CROX", "CRS", "CRUS", "CSL", "CTRE", "CTVA", "CUBE", "CUZ", "CVLT", "CW", "CXT",
+    "CYTK", "DAR", "DBX", "DCI", "DINO", "DKS", "DLB", "DOCN", "DOCS", "DOCU", "DT", "DTM", "DUOL",
+    "DY", "EAT", "EEFT", "EGP", "EHC", "ELAN", "ELF", "ELS", "ENS", "ENSG", "ENTG", "EPR", "EQH",
+    "ESAB", "ESNT", "EVR", "EWBC", "EXEL", "EXLS", "EXP", "EXPO", "FAF", "FBIN", "FCFS", "FCN",
+    "FFIN", "FHI", "FHN", "FIVE", "FLG", "FLR", "FLS", "FN", "FNB", "FND", "FNF", "FORM", "FOUR",
+    "FR", "FTI", "G", "GAP", "GATX", "GBCI", "GEF", "GGG", "GHC", "GKOS", "GLPI", "GME", "GMED",
+    "GNTX", "GPK", "GWRE", "GXO", "H", "HAE", "HALO", "HGV", "HIMS", "HL", "HLI", "HLNE", "HOG",
+    "HOMB", "HQY", "HR", "HRB", "HUBS", "HWC", "HXL", "IBOC", "IDA", "IDCC", "IESC", "INGR",
+    "IPGP", "IRT", "ITT", "JAZZ", "JEF", "JLL", "KBH", "KBR", "KD", "KEX", "KNF", "KNSL", "KNX",
+    "KRC", "KRG", "KRYS", "KTOS", "LAD", "LAMR", "LEA", "LECO", "LFUS", "LIVN", "LNTH", "LOPE",
+    "LPX", "LSCC", "LSTR", "M", "MANH", "MAT", "MEDP", "MIDD", "MKSI", "MLI", "MMS", "MOG-A",
+    "MOH", "MORN", "MP", "MSA", "MSM", "MTDR", "MTG", "MTN", "MTSI", "MTZ", "MUR", "MUSA", "MZTI",
+    "NBIX", "NEU", "NFG", "NJR", "NLY", "NNN", "NOV", "NOVT", "NTNX", "NVST", "NVT", "NWE", "NXST",
+    "NXT", "NYT", "OC", "OGE", "OGS", "OHI", "OLED", "OLLI", "ONB", "ONTO", "OPCH", "ORA", "ORI",
+    "OSK", "OVV", "OZK", "PAG", "PATH", "PB", "PBF", "PCTY", "PEGA", "PEN", "PFGC", "PII", "PINS",
+    "PK", "PLNT", "PNFP", "POR", "POST", "PPC", "PR", "PRI", "PSN", "PVH", "QLYS", "R", "RBA",
+    "RBC", "REXR", "RGA", "RGEN", "RGLD", "RH", "RLI", "RMBS", "RNR", "ROIV", "ROKU", "RPM", "RRC",
+    "RRX", "RS", "RYAN", "RYN", "SAIA", "SAIC", "SANM", "SARO", "SBRA", "SCI", "SEIC", "SF", "SFM",
+    "SGI", "SHC", "SIGI", "SIRI", "SITM", "SLAB", "SLGN", "SLM", "SMG", "SMTC", "SN", "SNX",
+    "SOLS", "SON", "SPXC", "SR", "SSB", "SSD", "ST", "STAG", "STRL", "STWD", "SUI", "SWX", "SYNA",
+    "TCBI", "TEX", "THC", "THG", "THO", "TKR", "TLN", "TNL", "TOL", "TOST", "TREX", "TRU", "TTC",
+    "TTEK", "TTMI", "TXNM", "TXRH", "UBSI", "UFPI", "UGI", "ULS", "UMBF", "UNM", "USFD", "UTHR",
+    "VAL", "VC", "VFC", "VIAV", "VICR", "VLY", "VMI", "VNO", "VNOM", "VNT", "VOYA", "VVV", "WAL",
+    "WCC", "WEX", "WFRD", "WH", "WHR", "WING", "WLK", "WMG", "WMS", "WPC", "WSO", "WTFC", "WTRG",
+    "WTS", "WWD", "XPO", "XRAY", "YETI", "ZION",
 ]
 
 
-def get_universe(cfg: Config) -> List[str]:
-    """Builds the scan universe from the hardcoded SP500_TICKERS /
-    SP400_TICKERS lists above (no network call, no parsing to fail)."""
-    base = list(SP500_TICKERS)
-    if cfg.include_sp400:
-        base = base + list(SP400_TICKERS)
+# --------------------------------------------------------------------------
+# Index membership
+# --------------------------------------------------------------------------
+
+INDEX_ORDER = ("SP500", "SP400", "NDX", "DJIA", "DJTA", "DJUA")
+INDEX_FALLBACK_META = {
+    "SP500": {"name": "S&P 500", "short": "S&P 500", "slug": "sp-500"},
+    "SP400": {"name": "S&P MidCap 400", "short": "S&P 400", "slug": "sp-400"},
+    "NDX": {"name": "Nasdaq-100", "short": "Nasdaq-100", "slug": "nasdaq-100"},
+    "DJIA": {"name": "Dow Jones Industrial Average", "short": "Dow 30", "slug": "dow-30"},
+    "DJTA": {"name": "Dow Jones Transportation Average", "short": "Dow Transports", "slug": "dow-transports"},
+    "DJUA": {"name": "Dow Jones Utility Average", "short": "Dow Utilities", "slug": "dow-utilities"},
+}
+# Plausible member counts. A file outside these ranges was mis-parsed or
+# vandalised upstream and is rejected (the previous good copy stays in use).
+INDEX_COUNT_RANGE = {"SP500": (495, 512), "SP400": (390, 410), "NDX": (98, 104),
+                     "DJIA": (30, 30), "DJTA": (20, 20), "DJUA": (15, 15)}
+TICKER_RE = re.compile(r"^[A-Z]{1,5}(-[A-Z]{1,2})?$")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+INDEX_MEMBERS_REPO = os.path.join(_HERE, "universe", "index_members.json")
+
+
+def validate_index_members(doc) -> Optional[str]:
+    """Reason the membership file can't be trusted, or None if it's fine."""
+    if not isinstance(doc, dict) or not isinstance(doc.get("indexes"), dict):
+        return "no 'indexes' object"
+    for code in INDEX_ORDER:
+        ix = doc["indexes"].get(code)
+        if not isinstance(ix, dict) or not isinstance(ix.get("tickers"), list):
+            return f"{code} is missing"
+        tickers = ix["tickers"]
+        lo, hi = INDEX_COUNT_RANGE[code]
+        if not lo <= len(tickers) <= hi:
+            return f"{code} has {len(tickers)} members (expected {lo}-{hi})"
+        bad = [t for t in tickers if not isinstance(t, str) or not TICKER_RE.match(t)]
+        if bad:
+            return f"{code} has malformed tickers {bad[:5]}"
+        if len(set(tickers)) != len(tickers):
+            return f"{code} lists a ticker twice"
+    return None
+
+
+def _fallback_members() -> dict:
+    return {"version": 1, "checked_at": "2026-11-04", "fallback": True, "order": list(INDEX_ORDER),
+            "indexes": {"SP500": {**INDEX_FALLBACK_META["SP500"], "tickers": list(SP500_TICKERS)},
+                        "SP400": {**INDEX_FALLBACK_META["SP400"], "tickers": list(SP400_TICKERS)}}}
+
+
+def load_index_members(paths: List[str]) -> dict:
+    """The freshest valid membership file among `paths` (the copy saved with
+    the scan state, then the repo copy). Falls back to the embedded S&P lists
+    if none is usable, so the screen always has a universe."""
+    best = None
+    for path in paths:
+        if not path or not os.path.exists(path):
+            continue
+        try:
+            with open(path, encoding="utf-8") as f:
+                doc = json.load(f)
+        except Exception as e:
+            LOG.warning(f"Index membership file {path} unreadable ({e}); ignoring it")
+            continue
+        problem = validate_index_members(doc)
+        if problem:
+            LOG.warning(f"Index membership file {path} rejected: {problem}")
+            continue
+        # Later paths win ties, so a hand-fixed repo copy dated today beats a
+        # state copy refreshed earlier the same day.
+        if best is None or str(doc.get("checked_at", "")) >= str(best[1].get("checked_at", "")):
+            best = (path, doc)
+    if best is None:
+        LOG.error("No valid index membership file - falling back to the embedded S&P 500 + S&P 400 lists")
+        return _fallback_members()
+    LOG.info(f"Index membership from {best[0]} (checked {best[1].get('checked_at')})")
+    return best[1]
+
+
+def index_meta(members: dict) -> Dict[str, dict]:
+    """Display metadata per index code (name, short label, URL slug, as-of)."""
+    out = {}
+    for code in INDEX_ORDER:
+        ix = (members.get("indexes") or {}).get(code)
+        if not ix:
+            continue
+        base = INDEX_FALLBACK_META[code]
+        out[code] = {"name": ix.get("name") or base["name"], "short": ix.get("short") or base["short"],
+                     "slug": ix.get("slug") or base["slug"], "as_of": ix.get("as_of")}
+    return out
+
+
+def get_universe(cfg: Config) -> Tuple[List[str], Dict[str, List[str]], dict]:
+    """The scan universe: every member of the selected indexes, once each,
+    plus any --extra-tickers. Returns (tickers, membership, members_doc) where
+    membership maps each ticker to the index codes it belongs to."""
+    members = load_index_members(cfg.index_members_paths)
+    membership: Dict[str, List[str]] = {}
+    for code in INDEX_ORDER:
+        if code not in cfg.indexes:
+            continue
+        for t in (members.get("indexes", {}).get(code) or {}).get("tickers", []):
+            membership.setdefault(t, []).append(code)
+    base = list(membership)
     extras = [t.strip().upper() for t in cfg.extra_tickers if t.strip()]
+    extras = [t for t in extras if TICKER_RE.match(t)]
     universe = list(dict.fromkeys(base + extras))  # de-dupe, keep order
-    LOG.info(f"Universe: {len(base)} index constituents"
-              + (f" + {len(extras)} extra ticker(s) {extras}" if extras else ""))
-    return universe
+    counts = ", ".join(f"{c} {sum(1 for v in membership.values() if c in v)}" for c in INDEX_ORDER if c in cfg.indexes)
+    LOG.info(f"Universe: {len(base)} unique index members ({counts})"
+             + (f" + {len(extras)} extra ticker(s) {extras}" if extras else ""))
+    return universe, membership, members
 
 
 # --------------------------------------------------------------------------
@@ -807,7 +892,7 @@ def score_minervini(ind: dict, rs_rating: Optional[int]) -> Tuple[int, List[Tupl
 
     rs_label = f"RS Rating >= 70 (currently {rs_rating})" if rs_rating is not None else "RS Rating >= 70 (unavailable)"
     criteria = [
-        ("Price above rising 150-day & 200-day average", c1),
+        ("Price above 150-day & 200-day average", c1),
         ("150-day average above 200-day average", c2),
         ("200-day average trending up vs. 1 month ago", c3),
         ("50-day average above both 150-day & 200-day", c4),
@@ -996,8 +1081,11 @@ def company_profile(fund: dict) -> Optional[dict]:
         hq = f"{city}, {country}"
     else:
         hq = city or country or None
+    # No business description: Yahoo's summaries are licensed third-party
+    # text, and republishing them on a public, ad-supported site is neither
+    # allowed nor useful (the same paragraph sits on thousands of other sites).
+    # The site writes its own one-line profile from the facts below instead.
     prof = {
-        "summary": trim_summary(fund.get("longBusinessSummary")) or None,
         "website": fund.get("website") or None,
         "employees": _clean_num(fund.get("fullTimeEmployees")),
         "hq": hq,
@@ -1063,7 +1151,7 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
     an empty result. Returns
     (section1_df, section2_df, market_status, total_scored, qualifying_count, stats)
     where stats describes data coverage for the publish gate in main()."""
-    universe = get_universe(cfg)
+    universe, membership, members_doc = get_universe(cfg)
     LOG.info(f"Universe size: {len(universe)} tickers (+ benchmark {cfg.benchmark})")
 
     daily_hist = fetch_daily_history(universe, cfg)
@@ -1133,13 +1221,12 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
 
         qualifies = mini_passed >= min_needed
 
-        price_now = intr["last_price"]
-        target = _clean_num(fund.get("targetMeanPrice"))
         rows.append({
             "_Profile": company_profile(fund),
             "_Earnings": earnings_info(fund),
             "_MiniBits": sum(1 << i for i, (_, met) in enumerate(mini_criteria) if met),
             "_MarketCap": _clean_num(fund.get("marketCap")),
+            "_Indexes": list(membership.get(t, [])),
             "Ticker": t,
             # Company identity: already present in the fundamentals payload we
             # fetch, previously discarded. Showing a bare ticker with no company
@@ -1210,11 +1297,9 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
                 "roe_pct": _pct(fund.get("returnOnEquity")),
                 "short_pct_float": _pct(fund.get("shortPercentOfFloat")),
                 "beta": _num(fund.get("beta")),
-                "analyst_rating": fund.get("recommendationKey") or None,
-                "analyst_mean": _num(fund.get("recommendationMean")),
-                "analyst_count": _clean_num(fund.get("numberOfAnalystOpinions")),
-                "target_mean": _num(target),
-                "target_upside_pct": _pct(target / price_now - 1.0) if target and price_now else None,
+                # Analyst ratings and price targets are deliberately NOT
+                # published: they are licensed third-party opinions, and
+                # "Strong Buy" labels on an educational screen read as advice.
             },
         })
 
@@ -1231,7 +1316,8 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
         "session_date": session_dates.mode().iloc[0] if not session_dates.empty else None,
     }
 
-    extras = {"closes": closes, "benchmark": cfg.benchmark}
+    extras = {"closes": closes, "benchmark": cfg.benchmark, "membership": membership,
+              "index_meta": index_meta(members_doc), "members_doc": members_doc}
 
     if not rows:
         empty = pd.DataFrame()
@@ -1272,6 +1358,10 @@ def run_scan(cfg: Config) -> Tuple[pd.DataFrame, pd.DataFrame, str, int, int, di
         stats["sectors"], stats["industries"] = compute_group_stats(pool, top_tickers)
     except Exception as e:
         LOG.warning(f"Sector stats skipped: {e}")
+    try:
+        stats["indexes"] = compute_index_stats(pool, indicators, membership, index_meta(members_doc), cfg)
+    except Exception as e:
+        LOG.warning(f"Index stats skipped: {e}")
     try:
         bench = closes.get(cfg.benchmark)
         spark_dates = ([pd.Timestamp(ts).date().isoformat() for ts in bench.index[-126:]]
@@ -1360,6 +1450,35 @@ def compute_group_stats(pool: pd.DataFrame, top_tickers: set) -> Tuple[List[dict
         industries.append({"name": name, "sector": g["Sector"].iloc[0], **summarize(g)})
     industries.sort(key=lambda s: (s["avg_rs"] or 0), reverse=True)
     return sectors, industries[:12]
+
+
+def compute_index_stats(pool: pd.DataFrame, indicators: Dict[str, dict],
+                        membership: Dict[str, List[str]], meta: Dict[str, dict], cfg: Config) -> Dict[str, dict]:
+    """Breadth and leadership inside each index: how many members pass all 8
+    Trend Template criteria, how many clear the screen's own gate, how many
+    sit above their 50-day average, and which members rank highest."""
+    order = pool.sort_values(["_TrendN", "MomentumScore"], ascending=[False, False])
+    out: Dict[str, dict] = {}
+    for code in INDEX_ORDER:
+        if code not in cfg.indexes or code not in meta:
+            continue
+        members = [t for t, codes in membership.items() if code in codes]
+        if not members:
+            continue
+        mset = set(members)
+        g = order[order["Ticker"].isin(mset)]
+        inds = [indicators[t] for t in members if t in indicators]
+        above50 = sum(1 for v in inds if v["last_close"] > v["sma50"])
+        out[code] = {
+            **meta[code],
+            "members": len(members),
+            "scored": int(len(g)),
+            "pass8": int((g["_TrendN"] == 8).sum()),
+            "qualified": int((g["Qualifies"] == "Yes").sum()),
+            "pct_above_50": round(above50 / len(inds) * 100, 1) if inds else None,
+            "leaders": list(g["Ticker"].head(5)),
+        }
+    return out
 
 
 def publish_problem(stats: dict, cfg: Config) -> Optional[str]:
@@ -1466,6 +1585,7 @@ def _rows_for_json(df: pd.DataFrame, score_col: str,
             "spark": _opt(row, "_Spark"),
             "universe_rank": {"momentum": _opt(row, "_MomRank"), "quality": _opt(row, "_QualRank")},
             "history": list_stats.get(row["Ticker"]),
+            "indexes": _opt(row, "_Indexes") or None,
         }
         out.append({**{k: v for k, v in extra.items() if v is not None}, **{
             "ticker": row["Ticker"],
@@ -1545,7 +1665,7 @@ def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: s
         "qualifying_count": qualifying_count,
         "min_trend_needed": min_needed,
         # Market-wide context (optional; absent if it could not be computed).
-        **{k: stats[k] for k in ("breadth", "sectors", "industries", "spark_dates") if stats.get(k)},
+        **{k: stats[k] for k in ("breadth", "sectors", "industries", "indexes", "spark_dates") if stats.get(k)},
         "section1": _rows_for_json(section1, "MomentumScore", list_stats),
         "section2": _rows_for_json(section2, "QualityScore", list_stats),
     }
@@ -1558,10 +1678,17 @@ def export_json(section1: pd.DataFrame, section2: pd.DataFrame, market_status: s
 # --------------------------------------------------------------------------
 
 UNIVERSE_FIELDS = ["t", "n", "s", "i", "p", "c", "rv", "rs", "tn", "tb", "q", "ms", "qs", "mr", "qr",
-                   "r3", "r12", "hi", "adr", "s50", "s150", "s200", "h52", "l52", "mc", "ed"]
+                   "r3", "r12", "hi", "adr", "s50", "s150", "s200", "h52", "l52", "mc", "ed", "ix"]
 
 
-def build_universe_payload(pool: pd.DataFrame, generated_at: datetime, session_date) -> dict:
+def index_bits(codes) -> int:
+    """Index membership as a bitmask over INDEX_ORDER (bit 0 = S&P 500)."""
+    codes = codes if isinstance(codes, (list, tuple)) else []
+    return sum(1 << i for i, c in enumerate(INDEX_ORDER) if c in codes)
+
+
+def build_universe_payload(pool: pd.DataFrame, generated_at: datetime, session_date,
+                           index_info: Optional[Dict[str, dict]] = None) -> dict:
     """Every scored stock in compact column form (~100 KB), so visitors can
     look up any of the ~900 names - not just the 20 that made the lists.
     The top-20 keep their full breakdown in latest.json."""
@@ -1588,11 +1715,15 @@ def build_universe_payload(pool: pd.DataFrame, generated_at: datetime, session_d
             m.get("ret_3m_pct"), m.get("ret_12m_pct"), m.get("pct_off_52w_high"), m.get("adr20_pct"),
             m.get("sma50"), m.get("sma150"), m.get("sma200"), m.get("wk52_high"), m.get("wk52_low"),
             round(mc / 1e9, 2) if mc else None, e.get("days") if e else None,
+            index_bits(r.get("_Indexes")),
         ])
     return {
         "generated_at": generated_at.isoformat(),
         "session_date": session_date,
         "fields": UNIVERSE_FIELDS,
+        # Bit i of "ix" = membership of index_codes[i].
+        "index_codes": list(INDEX_ORDER),
+        "index_meta": index_info or {},
         "sectors": sectors,
         "industries": industries,
         "rows": rows,
@@ -1608,17 +1739,19 @@ def build_companies_payload(fundamentals: Dict[str, dict], existing: Optional[di
             continue
         p = company_profile(f) or {}
         name = f.get("longName") or f.get("shortName")
-        if not (name or p.get("summary")):
+        if not name:
             continue
         entry = {"n": name, "s": f.get("sector"), "i": f.get("industry"),
-                 "d": trim_summary(f.get("longBusinessSummary"), 420) or None,
                  "w": p.get("website"), "hq": p.get("hq"), "e": p.get("employees")}
         entry = {k: v for k, v in entry.items() if v is not None}
         # Never replace a richer old entry with a thinner one from a partial
         # Yahoo response.
         old = comp.get(t) or {}
-        if len(entry) >= len(old) or "d" in entry:
+        if len(entry) >= len(old):
             comp[t] = {**old, **entry}
+    # Drop any business descriptions written by older versions (see
+    # company_profile for why they are no longer published).
+    comp = {t: {k: v for k, v in e.items() if k != "d"} for t, e in comp.items()}
     return {"c": dict(sorted(comp.items()))}
 
 
@@ -1807,6 +1940,9 @@ def update_history(path: str, session_date: Optional[str], generated_at: datetim
         day["breadth"] = {k: v for k, v in stats["breadth"].items() if k != "trend_dist"}
     if stats.get("sectors"):
         day["sectors"] = {s["name"]: s["qualified"] for s in stats["sectors"]}
+    if stats.get("indexes"):
+        day["indexes"] = {c: {"n": v["scored"], "pass8": v["pass8"], "qualified": v["qualified"],
+                              "above50": v["pct_above_50"]} for c, v in stats["indexes"].items()}
     changed = upsert_history_day(history, day)
 
     # Names for every ticker ever listed (the History page shows them).
@@ -1996,10 +2132,54 @@ def run_selftest() -> None:
     e2 = earnings_info({"earningsTimestamp": ts_prev}, today)
     check("Earnings dates resolve to days-until and days-since",
           e1 == {"next": "2026-11-04", "days": 5, "estimate": True} and e2 == {"last": "2026-10-27", "days_ago": 3})
-    rich = {"c": {"Z": {"n": "Zed Corp", "d": "Zed makes things.", "s": "Technology"}}}
+    rich = {"c": {"Z": {"n": "Zed Corp", "d": "Zed makes things.", "s": "Technology", "hq": "Austin, TX"}}}
     merged = build_companies_payload({"Z": {"shortName": "Zed"}}, rich)
-    check("A thin Yahoo response never erases a stored company description",
-          merged["c"]["Z"].get("d") == "Zed makes things.")
+    check("A thin Yahoo response never erases stored company facts",
+          merged["c"]["Z"].get("hq") == "Austin, TX" and merged["c"]["Z"].get("s") == "Technology")
+    check("Third-party business descriptions are never published",
+          "d" not in merged["c"]["Z"]
+          and "summary" not in (company_profile({"longBusinessSummary": "Text.", "city": "X"}) or {}))
+
+    # --- index membership ---------------------------------------------------
+    def _doc(**counts):
+        sizes = {"SP500": 503, "SP400": 400, "NDX": 101, "DJIA": 30, "DJTA": 20, "DJUA": 15}
+        sizes.update(counts)
+        mk = lambda code, n: [f"{code[:2]}{chr(65 + i // 26)}{chr(65 + i % 26)}" for i in range(n)]
+        return {"checked_at": "2026-11-04",
+                "indexes": {c: {"tickers": mk(c, n)} for c, n in sizes.items()}}
+    check("A complete membership file passes validation", validate_index_members(_doc()) is None)
+    check("A membership file with a truncated index is rejected",
+          "SP500" in (validate_index_members(_doc(SP500=120)) or ""))
+    bad = _doc(); bad["indexes"]["DJIA"]["tickers"][0] = "brk.b"
+    check("A membership file with a malformed ticker is rejected", validate_index_members(bad) is not None)
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        good_old, good_new, broken = (os.path.join(td, n) for n in ("a.json", "b.json", "c.json"))
+        d_old, d_new = _doc(), _doc()
+        d_new["checked_at"] = "2026-11-11"
+        d_new["indexes"]["NDX"]["tickers"][0] = "ZZZZ"
+        for path, d in ((good_old, d_old), (good_new, d_new)):
+            with open(path, "w") as f:
+                json.dump(d, f)
+        with open(broken, "w") as f:
+            f.write("{not json")
+        picked = load_index_members([broken, good_old, good_new])
+        check("The freshest valid membership file wins; unreadable ones are skipped",
+              picked.get("checked_at") == "2026-11-11")
+        check("With no usable membership file the embedded S&P lists are used",
+              load_index_members([broken, os.path.join(td, "missing.json")]).get("fallback") is True)
+        cfg_ix = Config(index_members_paths=[good_new], extra_tickers=["xyz", "bad ticker!"])
+        uni, mem, _ = get_universe(cfg_ix)
+        # The fake S&P 500 and S&P 400 lists share their first 400 symbols
+        # (both start "SP..."), so those must come back tagged with both.
+        check("Each stock is scanned once and tagged with every index it belongs to",
+              len(uni) == len(set(uni)) and "XYZ" in uni and "BAD TICKER!" not in uni
+              and mem.get("SPAA") == ["SP500", "SP400"] and mem.get("SPTA") == ["SP500"]
+              and mem.get("DJAA") == ["DJIA", "DJTA", "DJUA"])
+    check("Index bitmask follows INDEX_ORDER", index_bits(["SP500", "DJIA"]) == 0b1001 and index_bits(None) == 0)
+    with open(INDEX_MEMBERS_REPO, encoding="utf-8") as f:
+        repo_doc = json.load(f)
+    check("The committed universe/index_members.json is valid", validate_index_members(repo_doc) is None)
 
     # --- per-stock detail file (static stock pages) ---------------------------
     spark_days = [pd.Timestamp(ts).date().isoformat() for ts in strong.index[-126:]]
@@ -2033,10 +2213,14 @@ def run_selftest() -> None:
 # --------------------------------------------------------------------------
 
 def parse_args() -> argparse.Namespace:
-    p = argparse.ArgumentParser(description="Full S&P 500 + S&P 400 momentum/value scanner - one manual run, prints a top-10 twice")
+    p = argparse.ArgumentParser(description="Momentum/value scanner over the S&P 500, S&P 400, Nasdaq-100 and Dow Jones Averages - one manual run, prints a top-10 twice")
     p.add_argument("--selftest", action="store_true", help="Run built-in logic tests (no network) and exit")
     p.add_argument("--sp500-only", action="store_true",
-                   help="Scan just the S&P 500 (skip the S&P 400 MidCap add-on) for a smaller/faster run")
+                   help="Scan just the S&P 500 for a smaller/faster run (same as --indexes SP500)")
+    p.add_argument("--indexes", type=str, default=None,
+                   help="Comma-separated index codes to scan (default: all of " + ",".join(INDEX_ORDER) + ")")
+    p.add_argument("--index-members", type=str, default=None,
+                   help="Path to an index membership file to use instead of the defaults")
     p.add_argument("--extra-tickers", type=str, default=None,
                    help="Comma-separated extra tickers to add on top of the universe, e.g. non-index small/mid caps")
     p.add_argument("--min-price", type=float, default=5.0)
@@ -2071,12 +2255,16 @@ def main() -> None:
         strict_trend_template=args.strict_trend,
         min_trend_criteria=args.min_trend_criteria,
         fundamentals_ttl_hours=args.fundamentals_ttl_hours,
-        include_sp400=not args.sp500_only,
+        indexes=(("SP500",) if args.sp500_only else
+                 tuple(c.strip().upper() for c in args.indexes.split(",") if c.strip().upper() in INDEX_ORDER)
+                 if args.indexes else INDEX_ORDER),
+        index_members_paths=([args.index_members] if args.index_members else
+                             ["docs/data/index_members.json", INDEX_MEMBERS_REPO]),
         extra_tickers=[t.strip() for t in args.extra_tickers.split(",")] if args.extra_tickers else [],
         min_coverage=args.min_coverage,
     )
 
-    universe_desc = "S&P 500 + S&P 400 MidCap (~900 tickers)" if cfg.include_sp400 else "S&P 500 only (~500 tickers)"
+    universe_desc = ", ".join(INDEX_FALLBACK_META[c]["short"] for c in cfg.indexes) + " (each stock once)"
     print("Educational tool only - not financial advice. Data may be delayed ~15-20 minutes.")
     print(f"Universe: {universe_desc}. Pulling it fresh - this can take a few minutes.\n")
 
@@ -2144,7 +2332,8 @@ def publish(section1: pd.DataFrame, section2: pd.DataFrame, market_status: str, 
     if extras.get("pool") is not None:
         try:
             write_json_atomic(os.path.join(data_dir, "universe.json"),
-                              build_universe_payload(extras["pool"], generated_at, stats.get("session_date")))
+                              build_universe_payload(extras["pool"], generated_at, stats.get("session_date"),
+                                                     extras.get("index_meta")))
         except Exception as e:
             LOG.warning(f"Could not write universe.json: {e}")
         try:

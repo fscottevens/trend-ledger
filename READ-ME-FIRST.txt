@@ -1,102 +1,82 @@
-STONKS RUN - MOVE TO CLOUDFLARE HOSTING  (update of Nov 4, 2026)
-================================================================
+STONKS RUN - INDEX EXPANSION + LAUNCH READINESS  (update of Nov 5, 2026)
+=======================================================================
 
 WHAT CHANGED
 ------------
-The site moves from GitHub Pages to Cloudflare (the same account that already
-runs the scan scheduler and holds the stonks.run domain). Each scan now:
+1. The screen now covers six indexes, each stock once:
+     S&P 500 (503) - S&P MidCap 400 (400) - Nasdaq-100 (101)
+     Dow Jones Industrial Average (30) - Dow Transportation (20) - Dow Utilities (15)
+   = 919 unique tickers (was 902, of which 15 had left their index and 30
+   current members were missing - e.g. RDDT, MRVL, HUBS, TOST, ROKU, FERG).
+   Membership lives in universe/index_members.json and is re-checked about
+   once a week by the workflow, with safety checks. Nothing to maintain by
+   hand except the Dow 30 (the run summary warns you when it changes,
+   roughly once a year).
+2. New pages: stonks.run/indexes/ plus one per index (/indexes/dow-30,
+   /indexes/nasdaq-100, ...), an Index Scoreboard on the home page, and index
+   badges on every stock page and pop-up.
+3. Launch fixes (details in the "Global launch readiness review" doc):
+   - "Passing Trend Template" now shows stocks passing ALL 8 criteria; the
+     screen's looser 6-of-8 gate is labelled as such.
+   - Yahoo's business descriptions and analyst ratings/price targets are no
+     longer published (licensing + "reads like advice" risk). Each stock gets
+     a one-line profile written by the site from facts instead.
+   - Fonts are served from stonks.run, not Google Fonts (EU privacy rule).
+   - Privacy policy and terms updated for visitors outside the US; a
+     "Privacy & cookie settings" link in every footer.
+   - Accessibility: low-contrast grey text fixed, heading order, ARIA.
+   - Security headers against click-jacking; a 30-day backup of the scan
+     history on every run.
+   The rankings themselves are unchanged on purpose.
 
-  1. restores the scan state from a new "data" branch
-  2. runs the scanner (unchanged rankings)
-  3. saves the state back to the "data" branch (one commit, replaced each run,
-     so the repo stops growing by ~380 KB every hour)
-  4. builds the site with tools/build_site.py:
-       - clean addresses (stonks.run/history instead of history.html; the
-         old addresses redirect permanently, so no links break)
-       - the two lists are baked into the home page, so Google and slow
-         phones see real rankings instead of an empty "Loading" table
-       - one page per stock (stonks.run/stock/nvda), ~890 of them, plus a
-         directory at stonks.run/stock/ - new search traffic + ad space
-       - sitemap, robots.txt and security/caching headers
-  5. deploys to Cloudflare
-
-Nothing changes for visitors until you flip the switch in PART 4. Until then
-stonks.run keeps running on GitHub Pages exactly as today, and the Cloudflare
-copy runs side by side at a preview address for you to check.
-
-Steps 2-6 work from a phone browser. Only PART 1 may need the computer,
-depending on how the code reached GitHub.
+Steps 2-6 work from a phone browser. Step 1 needs the computer.
 
 
-PART 1 - MAKE SURE THE NEW WORKFLOW IS IN PLACE
------------------------------------------------
-Open https://github.com/fscottevens/trend-ledger/blob/main/.github/workflows/scan.yml
-It should contain a step called "Save scan state to the data branch".
-
-If it does NOT (GitHub sometimes refuses workflow files from tools), the new
-version is in scan.yml.COPY-INTO-.github-workflows. On the computer:
+STEP 1 - PUT THE UPDATE ON GITHUB  (computer, ~3 minutes)
+---------------------------------------------------------
+The new files are already in C:\Users\fscot\Documents\trend-ledger.
+Open a Command Prompt there:
 
   cd C:\Users\fscot\Documents\trend-ledger
   git pull
   copy /Y scan.yml.COPY-INTO-.github-workflows .github\workflows\scan.yml
-  findstr /C:"data branch" .github\workflows\scan.yml
+  findstr /C:"Refresh index membership" .github\workflows\scan.yml
   git add -A
-  git commit -m "Workflow: build and deploy the site to Cloudflare"
+  git commit -m "Add Nasdaq-100 and Dow Jones indexes, index pages, launch fixes"
   git push
 
-(The findstr must print a line. If it prints nothing, the copy failed.)
+The findstr must print a line. If it prints nothing, the copy failed - stop.
+If "git pull" complains that a file in docs\data would be overwritten, run
+  git checkout -- docs/data
+and then "git pull" again.
 
 
-PART 2 - CLOUDFLARE API TOKEN  (about 3 minutes)
-------------------------------------------------
-1. Go to https://dash.cloudflare.com/profile/api-tokens
-   (profile icon, top right > My Profile > API Tokens).
-2. Create Token > find the "Edit Cloudflare Workers" template > Use template.
-3. Account Resources:  Include > your account.
-   Zone Resources:     Include > Specific zone > stonks.run
-4. Continue to summary > Create Token. COPY the token (shown only once).
-
-Then add it to GitHub:
-5. https://github.com/fscottevens/trend-ledger/settings/secrets/actions
-   > New repository secret
-       Name:   CLOUDFLARE_API_TOKEN
-       Secret: (paste the token)
-   > Add secret
-
-
-PART 3 - FIRST RUN + CHECK THE PREVIEW  (about 10 minutes, mostly waiting)
--------------------------------------------------------------------------
+STEP 2 - RUN IT ONCE AND CHECK THE PREVIEW  (~10 minutes, mostly waiting)
+------------------------------------------------------------------------
 1. https://github.com/fscottevens/trend-ledger/actions > "Scheduled scan"
    > Run workflow > Run workflow.
-2. Wait for the green check (~5-6 minutes). In the run, the "Deploy to
-   Cloudflare" step ends with a line like
-       https://stonks-run.fscottevens.workers.dev
-3. Open that address and check:
-     - the home page shows both lists
-     - "Stocks" in the menu opens the directory; a stock page opens from it
-     - clicking a ticker on the home page opens its stock page; clicking the
-       rest of the row still opens the pop-up breakdown
-   (The preview hides itself from Google, so it can't compete with stonks.run.)
-
-If the run fails at "Restore scan state" or "Save scan state", nothing was
-lost: the site keeps its last data. Send me the error text from that step.
+   The first run downloads company data for ~45 new stocks, so it can take
+   a few minutes longer than usual.
+2. When it is green, open https://stonks-run.fscottevens.workers.dev and check:
+     - the home page has the "Index Scoreboard" near the bottom
+     - https://stonks-run.fscottevens.workers.dev/indexes/ lists six indexes
+     - a stock page (e.g. /stock/msft) shows S&P 500, Nasdaq-100 and Dow 30 badges
+3. If you set a repository VARIABLE called EXTRA_TICKERS earlier (for the
+   Nasdaq names), delete it: Settings > Secrets and variables > Actions >
+   Variables. The Nasdaq-100 is built in now. (Leaving it does no harm.)
 
 
-PART 4 - FLIP THE SWITCH  (2 minutes + a few minutes for DNS)
-------------------------------------------------------------
+STEP 3 - FLIP THE SWITCH TO CLOUDFLARE  (2 minutes + a few minutes for DNS)
+--------------------------------------------------------------------------
+stonks.run is still served by GitHub Pages, so Google and AdSense don't yet
+see the stock pages, index pages or the pre-rendered lists.
 1. https://github.com/fscottevens/trend-ledger/settings/variables/actions
    > New repository variable
        Name:  SITE_HOST
        Value: cloudflare
 2. Actions > "Scheduled scan" > Run workflow again.
-   This deploy attaches stonks.run and www.stonks.run to the Cloudflare
-   Worker. Cloudflare replaces the old GitHub Pages DNS records by itself.
-3. After the run is green, open https://stonks.run/stock/ . If it loads,
-   stonks.run is now served by Cloudflare (GitHub Pages has no such page).
-   Give it 5 minutes and refresh if it 404s at first.
-
-From now on the scans stop committing data to main. Your git pulls get much
-smaller.
+3. When it is green, open https://stonks.run/indexes/ . If it loads, stonks.run
+   is served by Cloudflare. Give it 5 minutes and refresh if it 404s at first.
 
 IF SOMETHING LOOKS WRONG AFTER THE SWITCH (rollback)
   a. Delete the SITE_HOST variable (or set it to github).
@@ -105,54 +85,64 @@ IF SOMETHING LOOKS WRONG AFTER THE SWITCH (rollback)
   c. Cloudflare > stonks.run > DNS: add back the GitHub Pages records
        A     stonks.run  185.199.108.153   (and .109.153, .110.153, .111.153)
        CNAME www         fscottevens.github.io
-  GitHub Pages keeps the last data it had until the next scan commits again.
 
 
-PART 5 - AFTER THE SWITCH  (any time, ~15 minutes total)
--------------------------------------------------------
+STEP 4 - AFTER THE SWITCH  (~15 minutes)
+----------------------------------------
 A. Turn off GitHub Pages:
-   https://github.com/fscottevens/trend-ledger/settings/pages
-   > Source: change "Deploy from a branch" to None (or Unpublish).
-
-B. Redirect www to the main address (so Google sees one site, not two):
-   Cloudflare > stonks.run > Rules > Redirect Rules > Create rule
-   > use the template "Redirect from WWW to root" > Deploy.
-   While you're in the stonks.run zone: SSL/TLS > Edge Certificates >
-   "Always Use HTTPS" > On.
-
-C. Visitor analytics (free, no cookies, no consent banner needed):
-   Cloudflare > Analytics & Logs > Web Analytics > Add a site > stonks.run.
-   - If it offers automatic setup, choose it. Done.
-   - If it shows a code snippet instead, copy the token value from it
-     (the part after "token": ) into a GitHub repository VARIABLE named
-     CF_WEB_ANALYTICS_TOKEN. The next scan adds it to every page.
-   Use one or the other, not both.
-
-D. Google Search Console (tells Google about all the new pages):
-   https://search.google.com/search-console > Add property > Domain
-   > stonks.run > verify through Cloudflare (it offers a one-click option),
-   or copy the TXT record it shows into Cloudflare > stonks.run > DNS.
+   https://github.com/fscottevens/trend-ledger/settings/pages > Source: None.
+B. www -> main address: Cloudflare > stonks.run > Rules > Redirect Rules >
+   Create rule > template "Redirect from WWW to root" > Deploy.
+   Then SSL/TLS > Edge Certificates > "Always Use HTTPS" > On.
+C. Analytics (free, no cookies): Cloudflare > Analytics & Logs >
+   Web Analytics > Add a site > stonks.run > automatic setup.
+D. Google Search Console: https://search.google.com/search-console >
+   Add property > Domain > stonks.run > verify through Cloudflare.
    Then Sitemaps > enter  sitemap.xml  > Submit.
 
-E. AdSense consent message (required to show ads to EU/UK/Swiss visitors):
-   AdSense > Privacy & messaging > European regulations > Create message
-   > Publish. It uses the AdSense code already on every page.
 
-F. Then request the AdSense review (Sites > stonks.run).
+STEP 5 - ADSENSE CONSENT MESSAGES  (the last item before resubmitting)
+---------------------------------------------------------------------
+AdSense > Privacy & messaging:
+  - European regulations > Create message > choose stonks.run > Publish.
+    Required to show ads to visitors in the EU/EEA, UK and Switzerland.
+  - US state regulations > Create message > stonks.run > Publish.
+    Shows the "Do not sell or share" opt-out the privacy policy describes.
+Both use the AdSense code already on every page; nothing to change in the
+site. The footer link "Privacy & cookie settings" reopens the message.
+(If you sign in to Google in the Claude app's browser, Claude can do this.)
+
+
+STEP 6 - REQUEST THE ADSENSE REVIEW
+-----------------------------------
+AdSense > Sites > stonks.run > Request review. Best done a few days after
+Step 3 so Google has crawled the new pages (Search Console > Pages shows it).
+Strongly recommended before you submit: put your real name (or an LLC name)
+and a two-line bio on the About page. Finance sites are held to a higher
+trust bar, and the privacy policy should name who runs the site.
 
 
 OPTIONAL SWITCHES (GitHub repository variables)
 -----------------------------------------------
-  SITE_HOST                 github (default) | cloudflare   - see PART 4
-  CF_WEB_ANALYTICS_TOKEN    see PART 5C
+  SITE_HOST                 github (default) | cloudflare   - see STEP 3
+  CF_WEB_ANALYTICS_TOKEN    only if Web Analytics shows a snippet instead of
+                            automatic setup: paste the token value from it
   GOOGLE_SITE_VERIFICATION  only if Search Console asks for an HTML tag
-                            instead of DNS: paste the content="..." value
-  EXTRA_TICKERS             extra tickers to scan, comma-separated, e.g. the
-                            Nasdaq-100 names the S&P lists miss (see the
-                            screener review in the Stonks Run project)
+  EXTRA_TICKERS             extra tickers beyond the six indexes, comma-separated
 
-Do NOT delete the "data" branch on GitHub. After the switch it holds the only
-live copy of the screen history.
+Do NOT delete the "data" branch on GitHub. It holds the live screen history
+(each run also keeps a 30-day backup copy under the run's "Artifacts").
+
+
+INDEX MEMBERSHIP (for reference)
+--------------------------------
+Each week the workflow step "Refresh index membership" compares the lists
+with Wikipedia's constituent tables (S&P 500, S&P 400, Dow Transports, Dow
+Utilities) and Nasdaq's own Nasdaq-100 list. A list that looks wrong (too
+many changes at once, wrong count, odd symbols) is ignored and last week's is
+kept; you'll see a yellow warning on the run summary. When the summary says
+the Dow 30 changed, edit the DJIA tickers in universe/index_members.json,
+update its "checked_at" date to today, and push.
 
 
 THE SCAN SCHEDULER (unchanged, for reference)

@@ -22,10 +22,8 @@
 
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css?v=7">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
      crossorigin="anonymous"></script>
 </head>
@@ -49,7 +47,7 @@
   <div class="wrap masthead-inner">
     <div>
       <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
-      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P &middot; Nasdaq-100 &middot; Dow</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html">Screen</a>
         <a href="history.html">History</a>
@@ -111,7 +109,7 @@
     it is what the Trend Template is really screening against.</p>
 
     <div class="criterion" id="c1">
-      <h4><span class="cnum">01</span> Price is above both the 150-day and 200-day moving averages</h4>
+      <h3><span class="cnum">01</span> Price is above both the 150-day and 200-day moving averages</h3>
       <p>The most basic long-term trend filter. If a stock trades below its own long-term average price, it is by definition
       in a downtrend on that horizon, whatever the recent daily action looks like.</p>
       <p class="why">What it screens out: stocks in structural decline, and stocks attempting a bottom that has not yet
@@ -119,7 +117,7 @@
     </div>
 
     <div class="criterion" id="c2">
-      <h4><span class="cnum">02</span> The 150-day average is above the 200-day average</h4>
+      <h3><span class="cnum">02</span> The 150-day average is above the 200-day average</h3>
       <p>This confirms the intermediate trend agrees with the long-term one. The medium-horizon cost basis sitting above
       the long-horizon cost basis means the more recent buyers paid <em>more</em> &mdash; demand has been increasing over
       time rather than fading.</p>
@@ -128,7 +126,7 @@
     </div>
 
     <div class="criterion" id="c3">
-      <h4><span class="cnum">03</span> The 200-day average is itself trending upward</h4>
+      <h3><span class="cnum">03</span> The 200-day average is itself trending upward</h3>
       <p>A stock can be above a <em>declining</em> 200-day average during a sharp bounce in an otherwise broken chart. This
       criterion requires the long-term average to be rising &mdash; typically measured over at least the past month. This
       screen compares the 200-day average now against its level roughly one month ago.</p>
@@ -137,7 +135,7 @@
     </div>
 
     <div class="criterion" id="c4">
-      <h4><span class="cnum">04</span> The 50-day average is above both the 150-day and 200-day averages</h4>
+      <h3><span class="cnum">04</span> The 50-day average is above both the 150-day and 200-day averages</h3>
       <p>This is the "proper order" condition. When the short-term average leads the intermediate, which leads the
       long-term, the moving averages are stacked in the sequence that characterizes a healthy, established advance.</p>
       <p class="why">What it screens out: choppy, directionless stocks where the averages are tangled together with no
@@ -145,7 +143,7 @@
     </div>
 
     <div class="criterion" id="c5">
-      <h4><span class="cnum">05</span> Price is above the 50-day average</h4>
+      <h3><span class="cnum">05</span> Price is above the 50-day average</h3>
       <p>The near-term confirmation. A stock can satisfy the four longer-horizon criteria while currently pulling back
       hard. Requiring price above the 50-day means the stock is not in the middle of a meaningful short-term correction.</p>
       <p class="why">What it screens out: names in an otherwise fine uptrend that are currently correcting. Note that this
@@ -154,7 +152,7 @@
     </div>
 
     <div class="criterion" id="c6">
-      <h4><span class="cnum">06</span> Price is at least 30% above its 52-week low</h4>
+      <h3><span class="cnum">06</span> Price is at least 30% above its 52-week low</h3>
       <p>A stock that has only just lifted off its lows has not yet proven sustained demand. The 30% threshold is a
       rough proxy for "this recovery has real participation behind it, not just a bounce."</p>
       <p class="why">What it screens out: early-stage recoveries that have not proven themselves. This deliberately means
@@ -163,7 +161,7 @@
     </div>
 
     <div class="criterion" id="c7">
-      <h4><span class="cnum">07</span> Price is within 25% of its 52-week high</h4>
+      <h3><span class="cnum">07</span> Price is within 25% of its 52-week high</h3>
       <p>Perhaps the most counterintuitive rule for newer traders: this framework wants stocks near their highs, not
       stocks that look "cheap" after a fall. A stock making new highs has no overhead supply at all &mdash; nobody who owns
       it is underwater.</p>
@@ -172,7 +170,7 @@
     </div>
 
     <div class="criterion" id="c8">
-      <h4><span class="cnum">08</span> Relative Strength Rating of 70 or higher</h4>
+      <h3><span class="cnum">08</span> Relative Strength Rating of 70 or higher</h3>
       <p>Relative strength here means performance <em>versus other stocks</em>, not the RSI oscillator that shares a
       similar name. The rating places a stock's trailing price performance in a percentile from 1 to 99 against a
       comparison universe. A rating of 70 means it has outperformed roughly 70% of the field.</p>
@@ -230,7 +228,7 @@
 
       <div class="rail-card">
         <h3>The Screen</h3>
-        <p>See the frameworks on this page applied to every S&amp;P 500 and S&amp;P 400 stock, updated hourly during
+        <p>See the frameworks on this page applied to every S&amp;P 500, S&amp;P 400, Nasdaq-100 and Dow stock, updated hourly during
         market hours.</p>
         <a href="index.html" class="discord-link">Open the screen &rarr;</a>
       </div>
@@ -254,6 +252,7 @@
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>
       <a href="privacy.html">Privacy Policy</a>
+      <a href="privacy.html#choices" data-consent-link>Privacy &amp; cookie settings</a>
       <a href="terms.html">Terms &amp; Disclaimer</a>
       <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="mailto:stonksrun@gmail.com">Contact</a>
@@ -261,7 +260,7 @@
     <div>
       <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
       investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
-      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are simplified approximations built
       from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
       <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
       relying on anything here.

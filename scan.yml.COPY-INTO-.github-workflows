@@ -85,7 +85,7 @@ jobs:
           git ls-remote --exit-code --heads origin data > /dev/null 2>&1 || rc=$?
           if [ $rc -eq 0 ]; then
             git fetch -q --no-tags --depth=1 origin data || { echo "::error::Could not fetch the data branch."; exit 1; }
-            for f in latest.json history.json universe.json companies.json stocks.json; do
+            for f in latest.json history.json universe.json companies.json stocks.json index_members.json; do
               if git cat-file -e "FETCH_HEAD:$f" 2>/dev/null; then git show "FETCH_HEAD:$f" > "docs/data/$f"; fi
             done
             echo "Restored scan state from the data branch ($(git log -1 --format=%s FETCH_HEAD))."
@@ -128,6 +128,16 @@ jobs:
         if: github.event_name != 'push' && steps.guard.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
+      # Which stocks are in which index (S&P 500, S&P 400, Nasdaq-100, the Dow
+      # averages). Checked about once a week against Wikipedia's constituent
+      # tables and Nasdaq's own list; the result is saved with the scan state.
+      # Never fails the run: a bad or unreachable source just keeps last
+      # week's lists and shows a warning on the run summary.
+      - name: Refresh index membership (weekly)
+        if: github.event_name != 'push' && steps.guard.outputs.skip != 'true'
+        continue-on-error: true
+        run: python tools/refresh_index_members.py --if-older-than-days 6
+
       # Fundamentals (company name, sector, P/E, growth...) change at most
       # daily, but the cache file lived only inside each throwaway runner, so
       # EVERY run re-downloaded all ~900 of them - the heaviest and most
@@ -149,9 +159,10 @@ jobs:
         # you - and every later step is skipped, so the site keeps the last
         # good data instead of an empty screen.
         env:
-          # Optional repository variable: extra tickers on top of the S&P 500 +
-          # S&P 400, comma-separated (e.g. the Nasdaq-100 names those indexes
-          # miss - see READ-ME-FIRST.txt). Empty = no extras.
+          # Optional repository variable: extra tickers on top of the index
+          # universe (S&P 500, S&P 400, Nasdaq-100, Dow averages),
+          # comma-separated. Empty = no extras. Not needed for the Nasdaq-100
+          # any more - it is part of the universe now.
           EXTRA_TICKERS: ${{ vars.EXTRA_TICKERS }}
         run: python sepa_scanner.py --json-out docs/data/latest.json --fundamentals-ttl-hours 20 --extra-tickers "$EXTRA_TICKERS"
 
@@ -184,7 +195,7 @@ jobs:
               sys.exit(1)
           EOF
           STATE="$(mktemp -d)"
-          for f in latest.json history.json universe.json companies.json stocks.json; do
+          for f in latest.json history.json universe.json companies.json stocks.json index_members.json; do
             if [ -f "docs/data/$f" ]; then cp "docs/data/$f" "$STATE/"; fi
           done
           cd "$STATE"
@@ -285,3 +296,19 @@ jobs:
 
           echo "::error::Could not push scan data after 5 attempts."
           exit 1
+
+      # Off-site copy of the scan state, kept 30 days, in case a bad save ever
+      # reaches the data branch (which holds a single commit by design).
+      # Download it from the run's summary page if you ever need to roll back.
+      - name: Back up scan state
+        if: always() && steps.scan.outcome == 'success'
+        continue-on-error: true
+        uses: actions/upload-artifact@v5
+        with:
+          name: scan-state-${{ github.run_id }}
+          path: |
+            docs/data/history.json
+            docs/data/companies.json
+            docs/data/index_members.json
+          retention-days: 30
+          if-no-files-found: ignore

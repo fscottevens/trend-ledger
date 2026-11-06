@@ -22,10 +22,8 @@
 
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css?v=7">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
      crossorigin="anonymous"></script>
 </head>
@@ -49,7 +47,7 @@
   <div class="wrap masthead-inner">
     <div>
       <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
-      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P &middot; Nasdaq-100 &middot; Dow</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html">Screen</a>
         <a href="history.html">History</a>
@@ -75,9 +73,13 @@
     much, and an automated screen that does not disclose its approximations is asking for more trust than it has earned.</p>
 
     <h2>What the screen does</h2>
-    <p>An automated scan runs on a schedule during U.S. market hours. Each run evaluates every constituent of the S&amp;P
-    500 and S&amp;P 400 MidCap indices &mdash; roughly 900 stocks &mdash; against several published trading frameworks,
-    then publishes two ranked lists of ten stocks each.</p>
+    <p>An automated scan runs on a schedule during U.S. market hours. Each run evaluates every member of six U.S. stock
+    indexes &mdash; the S&amp;P 500, the S&amp;P MidCap 400, the Nasdaq-100, and the Dow Jones Industrial, Transportation
+    and Utility Averages &mdash; against several published trading frameworks, then publishes two ranked lists of ten
+    stocks each. The indexes overlap heavily (most Dow and Nasdaq-100 members are also in the S&amp;P 500), so the
+    combined universe is roughly 920 distinct stocks. Each is scanned once and tagged with every index it belongs to, and
+    every stock is scored with exactly the same rules whatever index it comes from. The
+    <a href="indexes/" data-built-only>index pages</a> group the results by index.</p>
 
     <p>The two lists draw from the same evaluated pool but rank by different weightings. <strong>Momentum Leaders</strong>
     emphasizes intraday price and volume signals. <strong>Trend Quality &amp; Value</strong> emphasizes fundamental and
@@ -90,10 +92,11 @@
       <tr><td>Price and volume</td><td>Yahoo Finance, via the open-source <code>yfinance</code> library</td></tr>
       <tr><td>Fundamentals</td><td>Yahoo Finance company data, where published</td></tr>
       <tr><td>Company name &amp; sector</td><td>Yahoo Finance company profile, where published</td></tr>
-      <tr><td>Business description, HQ, employees, market cap</td><td>Yahoo Finance company profile, where published; the description is shortened to its opening sentences</td></tr>
-      <tr><td>Earnings dates &amp; analyst consensus</td><td>Yahoo Finance; dates may be estimates until the company confirms them, and analyst figures are third-party opinions shown for context</td></tr>
+      <tr><td>Headquarters, employees, market cap</td><td>Yahoo Finance company profile, where published. The one-line company profile on each page is written by the site from these facts; third-party business descriptions are not republished</td></tr>
+      <tr><td>Earnings dates</td><td>Yahoo Finance; dates may be estimates until the company confirms them</td></tr>
+      <tr><td>Analyst ratings &amp; price targets</td><td>Not shown. They are third-party opinions, and this site publishes only mechanical measurements</td></tr>
       <tr><td>Screen history</td><td>The last scan of each trading session, kept permanently; see <a href="#history">screen history</a> below</td></tr>
-      <tr><td>Index membership</td><td>A fixed list updated manually; see "known limitations" below</td></tr>
+      <tr><td>Index membership</td><td>S&amp;P 500, S&amp;P 400, Dow Transportation and Dow Utility members from Wikipedia&rsquo;s constituent tables; Nasdaq-100 members from Nasdaq&rsquo;s own list; checked weekly with automatic sanity checks. Dow Industrials changes (about one a year) are flagged for a manual update</td></tr>
       <tr><td>Scan frequency</td><td>Hourly during U.S. market hours on weekdays, plus one scan shortly after the close</td></tr>
       <tr><td>Data latency</td><td>Typically 15&ndash;20 minutes behind live prices</td></tr>
       <tr><td>History window</td><td>Approximately 15 months of daily bars per stock</td></tr>
@@ -131,9 +134,9 @@
     months, with additional weight on six, nine, and twelve months), then percentile-ranked from 1 to 99.</p>
 
     <p><strong>The important caveat:</strong> that percentile is calculated <em>within the scanned universe only</em> &mdash;
-    roughly 900 large and mid-cap stocks. It is not ranked against the entire market. A stock showing RS 90 here has
-    outperformed about 90% of the S&amp;P 500 and 400, which is not the same as outperforming 90% of all publicly traded
-    stocks. Commercial providers such as Investor's Business Daily use proprietary calculations against a broader universe;
+    roughly 920 large and mid-cap stocks. It is not ranked against the entire market. A stock showing RS 90 here has
+    outperformed about 90% of the scanned index members, which is not the same as outperforming 90% of all publicly
+    traded stocks. Commercial providers such as Investor's Business Daily use proprietary calculations against a broader universe;
     our numbers are not equivalent and should not be compared directly.</p>
 
     <h2>How the other frameworks are scored</h2>
@@ -202,13 +205,17 @@
       identical to the scanner.</li>
       <li><strong>No news or event awareness.</strong> Litigation, regulatory action, management changes, accounting
       concerns &mdash; none of this is visible in price data.</li>
-      <li><strong>Manually maintained index membership.</strong> The constituent list is fixed in code and updated
-      periodically. Between updates, recently added index members may be missing and removed ones may linger.</li>
+      <li><strong>Index membership can lag by up to a week.</strong> Membership is checked weekly against public sources,
+      so a stock added to or removed from an index may be missing, or linger, for a few days after the change takes
+      effect. A check that looks wrong (too many changes at once, malformed symbols) is rejected and the previous lists
+      are kept.</li>
       <li><strong>No backtesting.</strong> The <a href="history.html">History</a> page records how listed stocks performed
       <em>after</em> the live screen published them, starting August 26, 2026. That is a short forward record, not a tested
       strategy, and it measures today's index members only.</li>
-      <li><strong>Large-cap and mid-cap only.</strong> Small-caps, micro-caps, ADRs, and recent IPOs are outside the scanned
-      universe.</li>
+      <li><strong>Index members only.</strong> Small-caps, micro-caps and stocks outside the six indexes are not scanned.
+      A few foreign companies listed in the U.S. are included through the Nasdaq-100. Recent listings need about ten
+      months of trading history before the 200-day average and 52-week criteria can be measured, so very recent IPOs
+      cannot be scored yet even when an index has added them.</li>
       <li><strong>Company names and sectors come from the same third-party feed</strong> as the fundamentals, and are
       occasionally missing or out of date. They are shown for identification convenience, not as authoritative
       classification.</li>
@@ -243,7 +250,7 @@
 
       <div class="rail-card">
         <h3>The Screen</h3>
-        <p>See the frameworks on this page applied to every S&amp;P 500 and S&amp;P 400 stock, updated hourly during
+        <p>See the frameworks on this page applied to every S&amp;P 500, S&amp;P 400, Nasdaq-100 and Dow stock, updated hourly during
         market hours.</p>
         <a href="index.html" class="discord-link">Open the screen &rarr;</a>
       </div>
@@ -267,6 +274,7 @@
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>
       <a href="privacy.html">Privacy Policy</a>
+      <a href="privacy.html#choices" data-consent-link>Privacy &amp; cookie settings</a>
       <a href="terms.html">Terms &amp; Disclaimer</a>
       <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="mailto:stonksrun@gmail.com">Contact</a>
@@ -274,7 +282,7 @@
     <div>
       <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
       investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
-      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are simplified approximations built
       from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
       <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
       relying on anything here.

@@ -1,7 +1,8 @@
 # Stonks Run
 
-An automated, educational stock screen. It scans every S&P 500 and S&P 400 MidCap
-constituent (~900 tickers) hourly during US market hours and ranks them against
+An automated, educational stock screen. It scans every member of the S&P 500, S&P
+MidCap 400, Nasdaq-100 and the Dow Jones Industrial, Transportation and Utility
+Averages (~920 unique tickers) hourly during US market hours and ranks them against
 several published trading frameworks, then publishes the results as a static site on Cloudflare.
 
 **Live site:** https://stonks.run
@@ -54,6 +55,8 @@ Nothing here needs a paid server:
 |---|---|
 | `sepa_scanner.py` | The scanner. Single file, no local imports. |
 | `requirements.txt` | Python dependencies. |
+| `universe/index_members.json` | Which tickers belong to which index (the scan universe). Refreshed weekly by the workflow; the refreshed copy is saved with the scan state. |
+| `tools/refresh_index_members.py` | Weekly membership refresh with sanity checks (`--selftest` runs offline tests). |
 | `.github/workflows/scan.yml` | Scan, save state, build and deploy. Triggered by the Worker; GitHub cron as backup; page edits on `main` redeploy without scanning. |
 | `scheduler/scan-trigger.js` | Cloudflare Worker that triggers the scan on schedule. |
 | `scheduler/wrangler.toml` | Optional: deploy the Worker from the command line. |
@@ -67,7 +70,8 @@ Nothing here needs a paid server:
 | `docs/data/universe.json` | Every scored stock in compact form, for lookup and the watchlist. |
 | `docs/data/companies.json` | Company profiles; rewritten only when something changes. |
 | `tools/backfill_history.py` | One-off: rebuilds `history.json` from the git history of `latest.json`. |
-| `tools/build_site.py` | Builds the deployable site into `dist/`: clean URLs, pre-rendered lists, a page per stock, sitemap, Cloudflare headers/redirects. |
+| `tools/build_site.py` | Builds the deployable site into `dist/`: clean URLs, pre-rendered lists, a page per stock, a page per index, sitemap, Cloudflare headers/redirects. |
+| `docs/fonts/` | Self-hosted web fonts (SIL Open Font License); no request goes to Google Fonts. |
 | `wrangler.jsonc` | Cloudflare Worker config for the site (static assets only). |
 | `docs/data/stocks.json` | Full detail for every scored stock; build input for the stock pages (kept on the `data` branch, never deployed). |
 | `docs/ads.txt` | AdSense seller authorization. |
@@ -96,7 +100,9 @@ Useful flags:
 
 | Flag | Effect |
 |---|---|
-| `--sp500-only` | Skip the S&P 400, scan ~500 tickers instead of ~900 |
+| `--indexes SP500,NDX` | Scan only these indexes (codes: SP500, SP400, NDX, DJIA, DJTA, DJUA) |
+| `--sp500-only` | Scan just the S&P 500 (~500 tickers instead of ~920) |
+| `--index-members PATH` | Use a specific membership file |
 | `--strict-trend` | Require all 8 Minervini criteria instead of 6 |
 | `--min-trend-criteria N` | Set the Trend Template threshold explicitly |
 | `--extra-tickers A,B` | Add tickers outside the index universe |
@@ -141,7 +147,7 @@ empty are retried twice with a pause first.
 
 `fundamentals_cache.json` (company name, sector, P/E, growth, ...) is carried
 between runs with `actions/cache` and refreshed once a day (`--fundamentals-ttl-hours 20`),
-instead of re-downloading ~900 company profiles every run.
+instead of re-downloading ~920 company profiles every run.
 
 ### History and the other site files
 
@@ -193,9 +199,15 @@ normal. A red banner means scans really have stopped. Check, in order:
    change - `pip install -U yfinance` and run `python sepa_scanner.py` locally.
 
 **A ticker fails to download.**
-Logged as a single summary line, not a crash. Index membership is hardcoded in
-`sepa_scanner.py` and updated manually — see the docstring at the top of that file
-for how to refresh it.
+Logged as a single summary line, not a crash. Index membership lives in
+`universe/index_members.json` and is refreshed weekly by the workflow step
+"Refresh index membership" (its warnings appear on the run summary). To fix a list
+by hand, edit the file, bump its `checked_at` date so it is newer than the copy
+saved with the scan state, and push. The Dow Jones Industrial Average is never
+changed automatically: the refresh only warns when Wikipedia's member list differs.
+
+**`sepa_scanner.py` (and `tools/refresh_index_members.py`) `--selftest`** run
+offline and should both print ALL SELF-TESTS PASSED before any push.
 
 **Local push rejected after a scan ran.**
 Run `git pull` first. The bot commits to the same branch you do.

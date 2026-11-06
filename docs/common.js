@@ -80,13 +80,91 @@
       F.forEach((k, i) => { o[k] = row[i]; });
       o.sector = o.s != null ? u.sectors[o.s] : '';
       o.industry = o.i != null ? u.industries[o.i] : '';
+      o.indexes = SR.indexCodes(o.ix, u.index_codes);
       return o;
     });
+    if (u.index_meta) Object.assign(SR.INDEX_META, u.index_meta);
     u.byTicker = {};
     u.list.forEach(o => { u.byTicker[o.t] = o; });
     return u;
   };
   SR.loadUniverse = () => SR.loadOnce('data/universe.json').then(SR.parseUniverse);
+
+  /* ---------------- index membership ----------------
+     The universe is the combined membership of six indexes; every stock is
+     tagged with the ones it belongs to (bit i of universe "ix" = code i). */
+  SR.INDEX_ORDER = ['SP500', 'SP400', 'NDX', 'DJIA', 'DJTA', 'DJUA'];
+  SR.INDEX_META = {
+    SP500: { name: 'S&P 500', short: 'S&P 500', slug: 'sp-500' },
+    SP400: { name: 'S&P MidCap 400', short: 'S&P 400', slug: 'sp-400' },
+    NDX: { name: 'Nasdaq-100', short: 'Nasdaq-100', slug: 'nasdaq-100' },
+    DJIA: { name: 'Dow Jones Industrial Average', short: 'Dow 30', slug: 'dow-30' },
+    DJTA: { name: 'Dow Jones Transportation Average', short: 'Dow Transports', slug: 'dow-transports' },
+    DJUA: { name: 'Dow Jones Utility Average', short: 'Dow Utilities', slug: 'dow-utilities' }
+  };
+  SR.indexCodes = function (bits, codes) {
+    const order = codes || SR.INDEX_ORDER;
+    const n = Number(bits) || 0;
+    return order.filter((c, i) => n & (1 << i));
+  };
+  /* Chips that link to /indexes/<slug> on the built site, plain labels elsewhere. */
+  SR.indexChips = function (codes) {
+    return (codes || []).filter(c => SR.INDEX_META[c]).map(c => {
+      const m = SR.INDEX_META[c];
+      return (global.SR_STATIC && global.SR_STATIC.stockPages)
+        ? '<a class="chip ix-chip" href="/indexes/' + SR.esc(m.slug) + '">' + SR.esc(m.short) + '</a>'
+        : '<span class="chip ix-chip">' + SR.esc(m.short) + '</span>';
+    }).join('');
+  };
+  /* A factual one-line company profile written from structured fields (the
+     site does not republish third-party business descriptions). Must match
+     profile_sentence() in tools/build_site.py. */
+  SR.shortName = function (name) {
+    let s = String(name || '').trim();
+    s = s.replace(/,?\s+(Inc\.?|Incorporated|Corporation|Corp\.?|Company|Co\.?|Ltd\.?|Limited|plc|PLC|N\.V\.|S\.A\.|L\.P\.|LP|Holdings?|Group|Technologies|Trust)$/, '');
+    s = s.replace(/,?\s+(Inc\.?|Corporation|Corp\.?|Holdings?|Group|plc)$/, '');
+    return s.replace(/[,&\s]+$/, '').trim() || String(name || '');
+  };
+  SR.profileSentence = function (p) {
+    const esc = SR.esc;
+    const ind = p.industry || '', sec = p.sector || '';
+    const nm = esc(SR.shortName(p.name || p.ticker));
+    let s;
+    if (ind && sec && ind.toLowerCase() !== sec.toLowerCase()) s = nm + ' is classified in the ' + esc(ind) + ' industry, part of the ' + esc(sec) + ' sector';
+    else if (ind || sec) s = nm + ' is classified in the ' + esc(ind || sec) + (ind ? ' industry' : ' sector');
+    else s = nm + ' is a U.S.-listed company';
+    s += (p.hq ? ', and is headquartered in ' + esc(p.hq) : '') + '.';
+    const size = [];
+    if (p.market_cap != null && !isNaN(p.market_cap)) size.push('a market value of about ' + SR.fmtCap(p.market_cap));
+    if (p.employees > 0) size.push('roughly ' + SR.fmtNum(p.employees, 0) + ' employees');
+    if (size.length) s += ' It has ' + size.join(' and ') + '.';
+    const names = (p.indexes || []).filter(c => SR.INDEX_META[c]).map(c => esc(SR.INDEX_META[c].name));
+    if (names.length) s += ' It is a member of the ' + (names.length === 1 ? names[0] : names.slice(0, -1).join(', ') + ' and ' + names[names.length - 1]) + '.';
+    return s;
+  };
+
+  /* Links to pages that exist only on the built site (stock and index pages)
+     are marked data-built-only in the source; on the plain docs/ copy they
+     become plain text instead of dead links. */
+  function unlinkBuiltOnly() {
+    if (global.SR_STATIC && global.SR_STATIC.stockPages) return;
+    document.querySelectorAll('a[data-built-only]').forEach(a => a.replaceWith(document.createTextNode(a.textContent)));
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', unlinkBuiltOnly);
+  else unlinkBuiltOnly();
+
+  /* "Privacy & cookie settings" (footer): reopens Google's consent message so
+     a visitor can change or withdraw a choice. Where Google's consent platform
+     isn't active, the link simply opens the privacy policy's choices section. */
+  document.addEventListener('click', function (e) {
+    const a = e.target && e.target.closest ? e.target.closest('a[data-consent-link]') : null;
+    if (!a) return;
+    const fc = global.googlefc;
+    if (fc && typeof fc.showRevocationMessage === 'function') {
+      e.preventDefault();
+      try { fc.showRevocationMessage(); } catch (err) { global.location.href = a.href; }
+    }
+  });
 
   /* Address of a stock's static page (/stock/nvda). Those pages exist only on
      the Cloudflare build: tools/build_site.py sets window.SR_STATIC there. On
@@ -99,7 +177,7 @@
 
   /* Minervini criteria in the scanner's fixed order (bit i = criterion i). */
   SR.CRITERIA = [
-    'Price above rising 150-day & 200-day average',
+    'Price above 150-day & 200-day average',
     '150-day average above 200-day average',
     '200-day average trending up vs. 1 month ago',
     '50-day average above both 150-day & 200-day',

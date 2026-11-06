@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stonks Run — Systematic Momentum &amp; Trend Stock Screen</title>
-<meta name="description" content="An automated educational stock screen ranking the S&amp;P 500 and S&amp;P 400 against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
+<meta name="description" content="An automated educational stock screen ranking the S&amp;P 500, S&amp;P 400, Nasdaq-100 and Dow Jones stocks against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
 <link rel="canonical" href="https://stonks.run/">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#05070A">
@@ -12,20 +12,18 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Stonks Run">
 <meta property="og:title" content="Stonks Run — Systematic Momentum &amp; Trend Stock Screen">
-<meta property="og:description" content="An automated educational stock screen ranking the S&amp;P 500 and S&amp;P 400 against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
+<meta property="og:description" content="An automated educational stock screen ranking the S&amp;P 500, S&amp;P 400, Nasdaq-100 and Dow Jones stocks against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
 <meta property="og:url" content="https://stonks.run/">
 <meta property="og:image" content="https://stonks.run/social-card.png">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Stonks Run — Systematic Momentum &amp; Trend Stock Screen">
-<meta name="twitter:description" content="An automated educational stock screen ranking the S&amp;P 500 and S&amp;P 400 against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
+<meta name="twitter:description" content="An automated educational stock screen ranking the S&amp;P 500, S&amp;P 400, Nasdaq-100 and Dow Jones stocks against Minervini&#x27;s Trend Template, O&#x27;Neil&#x27;s CANSLIM, and momentum criteria from Zanger and Qullamaggie. Updated during market hours.">
 <meta name="twitter:image" content="https://stonks.run/social-card.png">
 
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css?v=7">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
      crossorigin="anonymous"></script>
 </head>
@@ -40,7 +38,7 @@
       "@id": "https://stonks.run/#website",
       "url": "https://stonks.run/",
       "name": "Stonks Run",
-      "description": "An automated educational stock screen ranking the S&P 500 and S&P 400 against published trading frameworks.",
+      "description": "An automated educational stock screen ranking the S&P 500, S&P 400, Nasdaq-100 and Dow Jones stocks against published trading frameworks.",
       "publisher": {"@id": "https://stonks.run/#org"},
       "inLanguage": "en-US"
     },
@@ -69,7 +67,7 @@
   <div class="wrap masthead-inner">
     <div>
       <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
-      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P &middot; Nasdaq-100 &middot; Dow</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html" class="active" aria-current="page">Screen</a>
         <a href="history.html">History</a>
@@ -90,17 +88,18 @@
 <main id="main-content">
   <section class="intro" id="how-it-works">
     <h2>How This Works</h2>
-    <p>Roughly 900 stocks &mdash; every S&amp;P 500 and S&amp;P 400 constituent &mdash; are re-scanned automatically each
-    hour during market hours and ranked against several published trading frameworks: Minervini's Trend Template,
+    <p>Roughly 920 U.S.-listed stocks &mdash; every member of the S&amp;P 500, S&amp;P MidCap 400, Nasdaq-100 and the Dow
+    Jones Industrial, Transportation and Utility Averages &mdash; are re-scanned automatically each hour during market
+    hours and ranked against several published trading frameworks: Minervini's Trend Template,
     O'Neil's CANSLIM, and momentum criteria associated with Dan Zanger and Qullamaggie. Nothing is hand-picked. If a name
     appears here, it is because it scored here.</p>
     <p>The results split into two deliberately different views. <strong>Momentum Leaders</strong> ranks on live intraday
     price and volume &mdash; the breakout and relative-strength signals short-term traders watch. <strong>Trend Quality
     &amp; Value</strong> re-ranks the same pool on fundamentals and traditional valuation instead. Why both exist is
     covered in <a href="momentum-vs-value.html">Momentum vs. Value</a>.</p>
-    <p>Neither list is a signal to buy or sell anything. Select any stock to see what the company does and precisely why it
+    <p>Neither list is a signal to buy or sell anything. Select any stock to see what the company is and precisely why it
     ranked where it did &mdash; every moving average, return period, and criterion met or missed. You can also look up any
-    of the ~900 scanned stocks, and the <a href="history.html">History</a> page shows every past list and what happened next. If this is your first visit, start with
+    of the ~920 scanned stocks, see how each <a href="indexes/" data-built-only>index</a> is doing, and the <a href="history.html">History</a> page shows every past list and what happened next. If this is your first visit, start with
     <a href="reading-the-screen.html">How to Read the Screen</a>, which covers what this data does <em>not</em> tell you.</p>
   </section>
 
@@ -125,7 +124,7 @@
 
       <div class="lookup" role="search">
         <label for="lookup-input">Look up any scanned stock</label>
-        <input id="lookup-input" type="search" autocomplete="off" spellcheck="false"
+        <input id="lookup-input" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
           placeholder="Ticker or company, e.g. NVDA"
           role="combobox" aria-expanded="false" aria-controls="lookup-results" aria-autocomplete="list">
         <div class="lookup-results" id="lookup-results" role="listbox" hidden></div>
@@ -158,6 +157,15 @@
         lone outlier. Hover a sector for detail.</p>
       </div>
       <div id="sector-mount"></div>
+
+      <div class="section-head" id="indexes" hidden>
+        <p class="section-eyebrow">04</p>
+        <h2 class="section-title">Index Scoreboard</h2>
+        <p class="section-sub">How much of each index is in a strong trend: members passing all 8 Trend Template
+        criteria, and the share above their 50-day average. A stock in several indexes counts in each.
+        <a href="indexes/" data-built-only>Every member, ranked &rarr;</a></p>
+      </div>
+      <div id="index-board"></div>
 
 
     </div>
@@ -195,7 +203,7 @@
 
       <div class="rail-card">
         <h3>Trend Template</h3>
-        <p>Each segment is one of Minervini's 8 criteria: price above rising 150/200-day averages, 50-day above both, price
+        <p>Each segment is one of Minervini's 8 criteria: price above the 150- and 200-day averages, 50-day above both, price
         30%+ off its 52-week low and within 25% of its high, and
         <span data-tip="Ranks a stock's price performance against every other stock in the scan, 1 (worst) to 99 (best)." tabindex="0">RS Rating</span>
         &ge; 70. <a href="trend-template.html">Full explanation &rarr;</a></p>
@@ -225,7 +233,7 @@
   </div>
 </div>
 
-<script src="common.js?v=2"></script>
+<script src="common.js?v=3"></script>
 <script>
 const DATA_URL = 'data/latest.json';
 const REFRESH_MS = 5 * 60 * 1000; // poll for fresh data every 5 minutes
@@ -282,7 +290,7 @@ function parseHashTicker() {
 }
 
 function trendBarHtml(n) {
-  let out = '<span class="trend-bar" aria-label="' + n + ' of 8 Trend Template criteria met">';
+  let out = '<span class="trend-bar" role="img" aria-label="' + n + ' of 8 Trend Template criteria met">';
   for (let i = 0; i < 8; i++) out += '<span class="seg' + (i < n ? ' on' : '') + '"></span>';
   return out + '</span>';
 }
@@ -431,8 +439,6 @@ function maDistance(price, ma) {
   return { text: (d >= 0 ? '+' : '') + d.toFixed(1) + '% vs price', cls: d >= 0 ? 'm-above' : 'm-below' };
 }
 
-const RATING_LABEL = { strong_buy: 'Strong Buy', buy: 'Buy', hold: 'Hold', underperform: 'Underperform', sell: 'Sell', none: null };
-
 function metricsGridHtml(m, price, lite) {
   if (!m) return '';
   let html = '<div class="modal-group-title">Technicals</div>';
@@ -494,20 +500,11 @@ function metricsGridHtml(m, price, lite) {
   } else {
     html += '<div class="modal-group-sub">No fundamental data was available for this stock in this scan. Missing fields are skipped rather than counted against a stock.</div>';
   }
-
-  const rating = RATING_LABEL[m.analyst_rating] || null;
-  if (rating || m.target_mean != null) {
-    const parts = [];
-    if (rating) parts.push('consensus <b>' + rating + '</b>' + (m.analyst_count ? ' from ' + m.analyst_count + ' analysts' : ''));
-    if (m.target_mean != null) parts.push('mean price target <b>' + fmtMoney(m.target_mean) + '</b>' +
-      (m.target_upside_pct != null ? ' (<span class="' + SR.chgClass(m.target_upside_pct) + '">' + fmtPct(m.target_upside_pct, 1) + '</span> vs. price)' : ''));
-    html += '<div class="analyst-line">Wall Street view: ' + parts.join(' &middot; ') +
-      '. <span class="ml-note">Third-party estimates via Yahoo Finance, not ours.</span></div>';
-  }
   return html;
 }
 
-/* Company profile: who the business is and what it does. */
+/* Company profile: who the business is, in one factual line written from
+   structured data (third-party business descriptions are not republished). */
 function safeUrl(u) {
   try { const x = new URL(u); return (x.protocol === 'https:' || x.protocol === 'http:') ? x : null; } catch (e) { return null; }
 }
@@ -516,9 +513,12 @@ function companyBlockHtml(r, prof) {
   const chips = [];
   if (r.sector) chips.push('<span class="chip teal">' + esc(r.sector) + '</span>');
   if (r.industry) chips.push('<span class="chip">' + esc(r.industry) + '</span>');
-  const summary = prof.summary
-    ? '<p class="company-summary">' + esc(prof.summary) + '</p>'
-    : '<p class="company-summary" style="color:var(--text-faint)">No business description was available from the data source for this company.</p>';
+  const ixChips = SR.indexChips(r.indexes);
+  if (ixChips) chips.push(ixChips);
+  const summary = '<p class="company-summary">' + SR.profileSentence({
+    name: r.company, ticker: r.ticker, industry: r.industry, sector: r.sector, hq: prof.hq,
+    employees: prof.employees, market_cap: prof.market_cap != null ? prof.market_cap : r.market_cap, indexes: r.indexes
+  }) + '</p>';
   const facts = [];
   if (prof.hq) facts.push('HQ <b>' + esc(prof.hq) + '</b>');
   if (prof.employees) facts.push('Employees <b>' + fmtNum(prof.employees, 0) + '</b>');
@@ -610,6 +610,7 @@ function liteRow(u) {
     metrics: { sma50: u.s50, sma150: u.s150, sma200: u.s200, wk52_high: u.h52, wk52_low: u.l52,
                ret_3m_pct: u.r3, ret_12m_pct: u.r12, adr20_pct: u.adr, pct_off_52w_high: u.hi },
     earnings: u.ed != null ? { days: u.ed } : null,
+    indexes: u.indexes || [],
   };
 }
 
@@ -662,7 +663,7 @@ function openDetailModal(r, rows, index, listName) {
     (r.company ? '<div class="modal-company">' + esc(r.company) + '</div>' : '') +
     '<div class="modal-price-row">' + fmtMoney(r.price) + ' &nbsp; <span class="' + chgClass + '"' + tipAttr('chg') + '>' + fmtPct(r.pct_chg) + '</span></div>' +
     scoreRow + actions +
-    '<div id="co-block">' + (r.lite || !r.profile ? companyBlockHtml(r, null).replace('No business description was available from the data source for this company.', 'Loading company profile&hellip;') : companyBlockHtml(r, r.profile)) + '</div>' +
+    '<div id="co-block">' + companyBlockHtml(r, r.lite || !r.profile ? null : r.profile) + '</div>' +
     earningsHtml(r.earnings) +
     buildReadout(r) +
     chartBlockHtml(r) +
@@ -688,7 +689,7 @@ function openDetailModal(r, rows, index, listName) {
       '<a href="https://finance.yahoo.com/quote/' + encodeURIComponent(r.ticker) +
       '/chart" target="_blank" rel="noopener noreferrer">Open full chart on Yahoo Finance &rarr;</a>' +
       '<span class="ml-note">External site. Verify price action against a real-time source; prices here are delayed.</span></div>' +
-    '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news or your own circumstances. Company descriptions and analyst figures come from Yahoo Finance. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
+    '<div class="modal-footnote">This breakdown describes what the data shows against published screening criteria. It is not a recommendation, and it does not account for company news or your own circumstances. Prices and company data come from Yahoo Finance and may contain errors. Prices are delayed. See <a href="methodology.html">methodology</a> and <a href="terms.html">terms</a>.</div>';
 
   const box = document.getElementById('modal-content');
   box.innerHTML = html;
@@ -712,11 +713,7 @@ function openDetailModal(r, rows, index, listName) {
       const co = c[r.ticker];
       const slot = document.getElementById('co-block');
       if (!slot || document.getElementById('modal-ticker').textContent !== r.ticker) return;
-      slot.innerHTML = companyBlockHtml(r, co ? { summary: co.d, website: co.w, hq: co.hq, employees: co.e } : null);
-      if (!Object.keys(c).length) {   // profiles file not published yet (first deploy)
-        const p = slot.querySelector('.company-summary');
-        if (p) p.textContent = 'Company profiles switch on after the next scheduled scan.';
-      }
+      if (co) slot.innerHTML = companyBlockHtml(r, { website: co.w, hq: co.hq, employees: co.e });
     });
   }
 }
@@ -881,20 +878,23 @@ function renderPulse(data) {
   const b = data.breadth || null;
   const days = (HISTORY && HISTORY.days) || [];
   const prior = days.filter(d => d.date < (data.session_date || '9999')).slice(-1)[0];
-  const series = days.filter(d => d.date !== data.session_date).slice(-39).map(d => d.qualified);
-  series.push(data.qualifying_count);
+  /* "Passing" means all 8 criteria. The screen's own gate (>= 6 of 8) is a
+     looser bar and is labelled as such, so the two numbers are never mixed. */
+  const full = b && b.trend_8 != null ? b.trend_8 : null;
+  const fullOf = d => (d.breadth && d.breadth.trend_8 != null ? d.breadth.trend_8 : null);
+  const series = days.filter(d => d.date !== data.session_date).slice(-39).map(fullOf).filter(v => v != null);
+  if (full != null) series.push(full);
 
   let delta = '';
-  if (prior && prior.qualified != null) {
-    const d = data.qualifying_count - prior.qualified;
+  if (prior && full != null && fullOf(prior) != null) {
+    const d = full - fullOf(prior);
     delta = '<span class="' + (d > 0 ? 'delta-up' : d < 0 ? 'delta-down' : '') + '">' + (d > 0 ? '&#9650;' : d < 0 ? '&#9660;' : '') +
       (d === 0 ? 'unchanged' : Math.abs(d)) + '</span> vs ' + SR.fmtDay(prior.date);
   }
-  const pctQ = data.total_scored ? (data.qualifying_count / data.total_scored * 100) : null;
   const tiles = [];
-  tiles.push('<div class="tile"><div class="tile-label">Passing Trend Template</div>' +
-    '<div class="tile-value">' + fmtNum(data.qualifying_count, 0) + '<small>/ ' + fmtNum(data.total_scored, 0) + '</small></div>' +
-    '<div class="tile-sub">' + (delta || (pctQ != null ? pctQ.toFixed(0) + '% of scanned stocks' : '')) + '</div>' +
+  tiles.push('<div class="tile"><div class="tile-label"' + tipAttr('trend') + '>Pass all 8 criteria</div>' +
+    '<div class="tile-value">' + (full == null ? '—' : fmtNum(full, 0) + '<small>/ ' + fmtNum(data.total_scored, 0) + '</small>') + '</div>' +
+    '<div class="tile-sub">' + (delta ? delta + ' &middot; ' : '') + fmtNum(data.qualifying_count, 0) + ' meet &ge; ' + data.min_trend_needed + ' of 8</div>' +
     (series.length > 2 ? SR.sparkline(series, { width: 140, height: 26 }) : '') + '</div>');
   const meterTile = (label, v, sub) => '<div class="tile"><div class="tile-label">' + label + '</div>' +
     '<div class="tile-value">' + (v == null ? '—' : v.toFixed(0) + '<small>%</small>') + '</div>' +
@@ -910,6 +910,28 @@ function renderPulse(data) {
     '<a href="history.html#breadth">Breadth over time &rarr;</a></div>' +
     '<div class="tiles">' + tiles.join('') + '</div>';
   host.hidden = false;
+}
+
+/* ---------- index scoreboard ----------
+   Breadth inside each index the universe is built from. Same markup as
+   index_board_html() in tools/build_site.py, which pre-renders it. */
+function renderIndexBoard(data) {
+  const host = document.getElementById('index-board');
+  const head = document.getElementById('indexes');
+  if (!host) return;
+  const ix = data.indexes || {};
+  const codes = SR.INDEX_ORDER.filter(c => ix[c] && ix[c].scored);
+  if (!codes.length) { if (head) head.hidden = true; host.innerHTML = ''; return; }
+  if (head) head.hidden = false;
+  const linked = !!(window.SR_STATIC && window.SR_STATIC.stockPages);
+  host.innerHTML = '<div class="ix-board">' + codes.map(c => {
+    const v = ix[c], n = v.scored, p8 = v.pass8 || 0;
+    const inner = '<span class="ix-name">' + esc(v.short || c) + '</span>' +
+      '<span class="ix-stat"><b>' + p8 + '</b> of ' + n + ' pass 8/8</span>' +
+      '<span class="ix-meter" aria-hidden="true"><span style="width:' + (n ? p8 / n * 100 : 0).toFixed(0) + '%"></span></span>' +
+      '<span class="ix-sub">' + (v.pct_above_50 != null ? v.pct_above_50.toFixed(0) + '% above 50-day' : '&nbsp;') + '</span>';
+    return linked ? '<a class="ix-card" href="/indexes/' + esc(v.slug) + '">' + inner + '</a>' : '<div class="ix-card">' + inner + '</div>';
+  }).join('') + '</div>';
 }
 
 /* ---------- sector & industry leadership ---------- */
@@ -987,7 +1009,7 @@ function setupLookup() {
     results = scored.slice(0, 8).map(x => x[2]);
     sel = results.length ? 0 : -1;
     if (!results.length) {
-      box.innerHTML = '<div class="lk-empty">No scanned stock matches &ldquo;' + esc(q) + '&rdquo;. The scan covers S&amp;P 500 and S&amp;P 400 constituents.</div>';
+      box.innerHTML = '<div class="lk-empty">No scanned stock matches &ldquo;' + esc(q) + '&rdquo;. The scan covers members of the S&amp;P 500, S&amp;P 400, Nasdaq-100 and the Dow Jones Averages.</div>';
     } else {
       box.innerHTML = results.map((u, i) =>
         '<div class="lk-row" role="option" id="lk-' + i + '" aria-selected="' + (i === sel) + '" data-t="' + esc(u.t) + '">' +
@@ -1166,18 +1188,20 @@ async function loadData() {
         'where relative strength sits &mdash; they are not confirmed setups, and a day like this is itself information ' +
         'about market conditions. <a href="reading-the-screen.html">What this means &rarr;</a></div>';
     } else {
+      const full = data.breadth && data.breadth.trend_8 != null ? data.breadth.trend_8 : null;
       summaryEl.className = 'scan-summary';
       summaryEl.innerHTML =
-        '<span class="label">Universe scanned</span> &nbsp; <strong>' + data.total_scored + '</strong> stocks &nbsp;&middot;&nbsp; ' +
-        '<span class="label">Fully qualified</span> &nbsp; <strong>' + q + '</strong> (&ge; ' +
-        data.min_trend_needed + '/8 Trend Template) &nbsp;&middot;&nbsp; ' +
-        '<span class="label">Remaining names shown are the closest available candidates</span>';
+        '<span class="label">Stocks scored</span> &nbsp; <strong>' + data.total_scored + '</strong> &nbsp;&middot;&nbsp; ' +
+        '<span class="label">Pass all 8 Trend Template criteria</span> &nbsp; <strong>' + (full == null ? '&mdash;' : full) + '</strong> &nbsp;&middot;&nbsp; ' +
+        '<span class="label">Clear the screen&rsquo;s gate (&ge; ' + data.min_trend_needed + '/8)</span> &nbsp; <strong>' + q + '</strong>' +
+        (q < 20 ? ' &nbsp;&middot;&nbsp; <span class="label">Fewer than 20 qualify, so the lists are filled with the closest candidates</span>' : '');
     }
 
     updateTicker(data);
     renderTable('section1-mount', data.section1, 'Score', 'Momentum Leaders', 1);
     renderTable('section2-mount', data.section2, 'Score', 'Trend Quality & Value', 2);
     renderPulse(data);
+    renderIndexBoard(data);
     renderSectors(data);
     renderWatchlist();
   } catch (e) {
@@ -1220,6 +1244,7 @@ window.addEventListener('hashchange', () => { const t = parseHashTicker(); if (t
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>
       <a href="privacy.html">Privacy Policy</a>
+      <a href="privacy.html#choices" data-consent-link>Privacy &amp; cookie settings</a>
       <a href="terms.html">Terms &amp; Disclaimer</a>
       <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="mailto:stonksrun@gmail.com">Contact</a>
@@ -1227,7 +1252,7 @@ window.addEventListener('hashchange', () => { const t = parseHashTicker(); if (t
     <div>
       <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
       investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
-      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are simplified approximations built
       from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
       <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
       relying on anything here.

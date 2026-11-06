@@ -22,10 +22,8 @@
 
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css?v=7">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
      crossorigin="anonymous"></script>
 </head>
@@ -36,7 +34,7 @@
   "@context": "https://schema.org",
   "@type": "Dataset",
   "name": "Stonks Run screen history",
-  "description": "Daily final results of an automated momentum and trend stock screen over the S&P 500 and S&P 400, with subsequent price performance versus the S&P 500.",
+  "description": "Daily final results of an automated momentum and trend stock screen over the S&P 500, S&P 400, Nasdaq-100 and Dow Jones Averages, with subsequent price performance versus the S&P 500.",
   "url": "https://stonks.run/history.html",
   "creator": {"@type": "Organization", "name": "Stonks Run", "url": "https://stonks.run/"},
   "temporalCoverage": "2026-08-26/..",
@@ -47,7 +45,7 @@
   <div class="wrap masthead-inner">
     <div>
       <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
-      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P &middot; Nasdaq-100 &middot; Dow</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html">Screen</a>
         <a href="history.html" class="active" aria-current="page">History</a>
@@ -191,7 +189,7 @@
   </div>
 </div>
 
-<script src="common.js?v=2"></script>
+<script src="common.js?v=3"></script>
 <script>
 const esc = SR.esc, fmtPct = SR.fmtPct, fmtNum = SR.fmtNum, fmtMoney = SR.fmtMoney;
 const H_KEYS = ['1', '5', '10', '20'];
@@ -563,8 +561,11 @@ function openTickerModal(t) {
     const slot = document.getElementById('co-slot');
     if (!slot || document.getElementById('modal-ticker').textContent !== t) return;
     const chips = [co && co.s || sectorOf(t), co && co.i].filter(Boolean).map((x, i) => '<span class="chip' + (i === 0 ? ' teal' : '') + '">' + esc(x) + '</span>').join('');
+    const nm = (HIST.names && HIST.names[t]) || [];
     slot.innerHTML = '<div class="company-block">' + (chips ? '<div class="company-chips">' + chips + '</div>' : '') +
-      '<p class="company-summary"' + (co && co.d ? '>' + esc(co.d) : ' style="color:var(--text-faint)">No business description is available for this company yet.') + '</p></div>';
+      '<p class="company-summary">' + SR.profileSentence({ name: (co && co.n) || nm[0] || t, ticker: t,
+        sector: (co && co.s) || nm[1] || sectorOf(t), industry: (co && co.i) || nm[2], hq: co && co.hq,
+        employees: co && co.e }) + '</p></div>';
   });
 }
 function closeModal() {
@@ -629,6 +630,7 @@ SR.loadHistory().then(h => {
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>
       <a href="privacy.html">Privacy Policy</a>
+      <a href="privacy.html#choices" data-consent-link>Privacy &amp; cookie settings</a>
       <a href="terms.html">Terms &amp; Disclaimer</a>
       <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="mailto:stonksrun@gmail.com">Contact</a>

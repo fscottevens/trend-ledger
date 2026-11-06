@@ -13,8 +13,9 @@ WHAT IT DOES
   3. Pre-renders the screen's two lists into index.html, so search engines
      (and visitors, before JavaScript runs) see real rankings instead of an
      empty "Loading" table.
-  4. Generates one static page per scored stock (/stock/nvda) and a stock
-     directory (/stock/), each with its own title, description and links.
+  4. Generates one static page per scored stock (/stock/nvda), a stock
+     directory (/stock/), and one page per index (/indexes/dow-30, ...), each
+     with its own title, description and links.
   5. Writes sitemap.xml, robots.txt, and Cloudflare's _headers/_redirects.
   6. Checks that every internal link in dist/ points at a real file.
 
@@ -51,7 +52,7 @@ ET = ZoneInfo("America/New_York")
 
 # Minervini criteria in the scanner's fixed order (bit i of universe "tb").
 CRITERIA = [
-    "Price above rising 150-day & 200-day average",
+    "Price above 150-day & 200-day average",
     "150-day average above 200-day average",
     "200-day average trending up vs. 1 month ago",
     "50-day average above both 150-day & 200-day",
@@ -60,15 +61,25 @@ CRITERIA = [
     "Within 25% of 52-week high",
     "RS Rating >= 70",
 ]
-RATING_LABEL = {"strong_buy": "Strong Buy", "buy": "Buy", "hold": "Hold",
-                "underperform": "Underperform", "sell": "Sell"}
 MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 WDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 # Never deployed: CNAME is GitHub Pages' domain file; stocks.json is a build
 # input (~3 MB) that visitors' browsers never need.
 SKIP_FILES = {"CNAME", ".gitkeep", ".DS_Store"}
-SKIP_DATA_FILES = {"stocks.json"}
+SKIP_DATA_FILES = {"stocks.json", "index_members.json"}
+FONTS_VERSION = "1"  # bump if docs/fonts/ changes
+
+# Index codes in the scanner's fixed order (bit i of universe "ix").
+INDEX_ORDER = ["SP500", "SP400", "NDX", "DJIA", "DJTA", "DJUA"]
+INDEX_DEFAULT = {
+    "SP500": {"name": "S&P 500", "short": "S&P 500", "slug": "sp-500"},
+    "SP400": {"name": "S&P MidCap 400", "short": "S&P 400", "slug": "sp-400"},
+    "NDX": {"name": "Nasdaq-100", "short": "Nasdaq-100", "slug": "nasdaq-100"},
+    "DJIA": {"name": "Dow Jones Industrial Average", "short": "Dow 30", "slug": "dow-30"},
+    "DJTA": {"name": "Dow Jones Transportation Average", "short": "Dow Transports", "slug": "dow-transports"},
+    "DJUA": {"name": "Dow Jones Utility Average", "short": "Dow Utilities", "slug": "dow-utilities"},
+}
 
 WARNINGS: List[str] = []
 
@@ -171,7 +182,7 @@ def short_name(name: str) -> str:
     s = re.sub(r",?\s+(Inc\.?|Incorporated|Corporation|Corp\.?|Company|Co\.?|Ltd\.?|Limited|plc|PLC|N\.V\.|S\.A\.|"
                r"L\.P\.|LP|Holdings?|Group|Technologies|Trust)$", "", s)
     s = re.sub(r",?\s+(Inc\.?|Corporation|Corp\.?|Holdings?|Group|plc)$", "", s)
-    return s.rstrip(",").strip() or (name or "")
+    return s.rstrip(",& ").strip() or (name or "")
 
 
 def title_name(name: str, limit: int = 26) -> str:
@@ -222,7 +233,9 @@ class SiteData:
         self.details = details.get("stocks", {}) or {}
         self.detail_dates = details.get("spark_dates") or []
         uni = load_json(data_dir / "universe.json", {}) or {}
-        self.universe = self._parse_universe(uni)
+        self.index_codes = uni.get("index_codes") or INDEX_ORDER
+        self.universe = self._parse_universe(uni, self.index_codes)
+        self.index_info = self._index_info(data_dir, uni)
         self.session_date = (self.latest.get("session_date") or uni.get("session_date")
                              or self.history.get("as_of"))
         self.generated_at = self.latest.get("generated_at") or uni.get("generated_at")
@@ -238,9 +251,10 @@ class SiteData:
         # Tickers that left the index keep their history, but get no page:
         # there is no current data to show for them.
         self.tickers = [u["t"] for u in self.universe]
+        self.stock_index = {u["t"]: u["indexes"] for u in self.universe}
 
     @staticmethod
-    def _parse_universe(u: dict) -> List[dict]:
+    def _parse_universe(u: dict, codes: List[str]) -> List[dict]:
         fields = u.get("fields") or []
         sectors = u.get("sectors") or []
         inds = u.get("industries") or []
@@ -249,7 +263,34 @@ class SiteData:
             o = dict(zip(fields, row))
             o["sector"] = sectors[o["s"]] if is_num(o.get("s")) and o["s"] < len(sectors) else ""
             o["industry"] = inds[o["i"]] if is_num(o.get("i")) and o["i"] < len(inds) else ""
+            bits = int(o.get("ix") or 0) if is_num(o.get("ix")) else 0
+            o["indexes"] = [c for i, c in enumerate(codes) if bits & (1 << i)]
             out.append(o)
+        return out
+
+    def _index_info(self, data_dir: Path, uni: dict) -> Dict[str, dict]:
+        """Per index: display names, the 'about' blurb and source from the
+        membership file, plus today's breadth from latest.json. Only indexes
+        that actually have scored members are returned."""
+        files = [load_json(data_dir / "index_members.json"),
+                 load_json(data_dir.parent.parent / "universe" / "index_members.json")]
+        files = [f for f in files if isinstance(f, dict) and isinstance(f.get("indexes"), dict)]
+        members = max(files, key=lambda d: str(d.get("checked_at", ""))) if files else {"indexes": {}}
+        stats = self.latest.get("indexes") or {}
+        meta = uni.get("index_meta") or {}
+        out = {}
+        for code in INDEX_ORDER:
+            rows = [u for u in self.universe if code in u["indexes"]]
+            if not rows:
+                continue
+            f = members["indexes"].get(code) or {}
+            out[code] = {**INDEX_DEFAULT[code], **{k: v for k, v in (meta.get(code) or {}).items() if v},
+                         "about": f.get("about"), "source": f.get("source"),
+                         "provider": "Nasdaq, Inc." if code == "NDX" else "S&P Dow Jones Indices",
+                         "verified": members.get("checked_at"),
+                         "as_of": f.get("as_of") or (meta.get(code) or {}).get("as_of"),
+                         "members": f.get("count") or len(f.get("tickers") or []) or len(rows),
+                         "stats": stats.get(code) or {}, "rows": rows}
         return out
 
     def stock(self, u: dict) -> dict:
@@ -303,6 +344,7 @@ class SiteData:
             "mr": u.get("mr"), "qr": u.get("qr"),
             "m": m, "profile": prof, "earnings": earnings, "spark": spark, "spark_dates": dates,
             "signals": signals, "fw": fw, "list": lst, "record": self.records.get(t),
+            "indexes": u.get("indexes") or row.get("indexes") or [],
         }
 
 
@@ -342,7 +384,7 @@ def ticker_records(history: dict) -> Dict[str, dict]:
 
 def trend_bar(n: int) -> str:
     segs = "".join(f'<span class="seg{" on" if i < n else ""}"></span>' for i in range(8))
-    return f'<span class="trend-bar" aria-label="{n} of 8 Trend Template criteria met">{segs}</span>'
+    return f'<span class="trend-bar" role="img" aria-label="{n} of 8 Trend Template criteria met">{segs}</span>'
 
 
 def status_class(status: Optional[str]) -> str:
@@ -686,22 +728,9 @@ def fundamentals_html(m: dict, price) -> str:
     add("beta", "Beta", lambda v: fmt_num(v, 2))
     if not cells:
         return ""
-    out = ('<h2 id="fundamentals">Fundamentals</h2><p class="sp-sub">Traditional valuation and quality metrics, '
-           'where published. Missing fields are skipped rather than counted against a stock.</p>'
-           f'<div class="metric-grid">{"".join(cells)}</div>')
-    rating = RATING_LABEL.get(m.get("analyst_rating"))
-    if rating or is_num(m.get("target_mean")):
-        parts = []
-        if rating:
-            parts.append(f"consensus <b>{rating}</b>" + (f" from {int(m['analyst_count'])} analysts"
-                                                          if is_num(m.get("analyst_count")) else ""))
-        if is_num(m.get("target_mean")):
-            up = m.get("target_upside_pct")
-            parts.append(f"mean price target <b>{fmt_money(m['target_mean'])}</b>"
-                         + (f' (<span class="{chg_class(up)}">{fmt_pct(up, 1)}</span> vs. price)' if is_num(up) else ""))
-        out += ('<div class="analyst-line">Wall Street view: ' + " &middot; ".join(parts) +
-                '. <span class="ml-note">Third-party estimates via Yahoo Finance, not ours.</span></div>')
-    return out
+    return ('<h2 id="fundamentals">Fundamentals</h2><p class="sp-sub">Traditional valuation and quality metrics, '
+            'where published. Missing fields are skipped rather than counted against a stock.</p>'
+            f'<div class="metric-grid">{"".join(cells)}</div>')
 
 
 def signals_html(vm: dict) -> str:
@@ -721,16 +750,60 @@ def signals_html(vm: dict) -> str:
             + "".join(blocks))
 
 
-def company_html(vm: dict) -> str:
+def profile_sentence(vm: dict, info: Optional[Dict[str, dict]] = None) -> str:
+    """A factual one-line profile written from structured data (no third-party
+    prose): what the company is, where it is based, how big it is, and which
+    indexes it belongs to."""
+    prof = vm.get("profile") or {}
+    name = esc(short_name(vm.get("name") or vm.get("t") or ""))
+    ind, sec = vm.get("industry") or "", vm.get("sector") or ""
+    # Industry labels are data-provider categories ("Semiconductors",
+    # "Banks - Regional"), so they are quoted as categories, not as adjectives.
+    if ind and sec and ind.lower() != sec.lower():
+        s = f"{name} is classified in the {esc(ind)} industry, part of the {esc(sec)} sector"
+    elif ind or sec:
+        s = f"{name} is classified in the {esc(ind or sec)} {'industry' if ind else 'sector'}"
+    else:
+        s = f"{name} is a U.S.-listed company"
+    if prof.get("hq"):
+        s += f", and is headquartered in {esc(prof['hq'])}"
+    s += "."
+    size = []
+    if is_num(prof.get("market_cap")):
+        size.append(f"a market value of about {fmt_cap(prof['market_cap'])}")
+    if is_num(prof.get("employees")) and prof["employees"] > 0:
+        size.append(f"roughly {fmt_num(prof['employees'], 0)} employees")
+    if size:
+        s += " It has " + " and ".join(size) + "."
+    codes = vm.get("indexes") or []
+    if codes:
+        names = [esc(((info or {}).get(c) or INDEX_DEFAULT.get(c, {})).get("name", c)) for c in codes]
+        joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + " and " + names[-1]
+        s += f" It is a member of the {joined}."
+    return s
+
+
+def index_chips(codes: List[str], info: Dict[str, dict]) -> str:
+    chips = []
+    for c in codes or []:
+        ix = info.get(c) or INDEX_DEFAULT.get(c)
+        if not ix:
+            continue
+        label = esc(ix["short"])
+        chips.append(f'<a class="chip ix-chip" href="/indexes/{esc(ix["slug"])}">{label}</a>' if c in info
+                     else f'<span class="chip ix-chip">{label}</span>')
+    return "".join(chips)
+
+
+def company_html(vm: dict, info: Optional[Dict[str, dict]] = None) -> str:
     prof = vm["profile"] or {}
     chips = []
     if vm["sector"]:
         chips.append(f'<span class="chip teal">{esc(vm["sector"])}</span>')
     if vm["industry"]:
         chips.append(f'<span class="chip">{esc(vm["industry"])}</span>')
-    summary = (f'<p class="company-summary">{esc(prof["summary"])}</p>' if prof.get("summary") else
-               '<p class="company-summary" style="color:var(--text-faint)">No business description was available '
-               'from the data source for this company.</p>')
+    chips.append(index_chips(vm.get("indexes") or [], info or {}))
+    summary = f'<p class="company-summary">{profile_sentence(vm, info)}</p>'
     facts = []
     if prof.get("hq"):
         facts.append(f"HQ <b>{esc(prof['hq'])}</b>")
@@ -862,6 +935,7 @@ def stock_page(vm: dict, data: SiteData, shell: "Shell", by_ticker: Dict[str, di
       <a href="/stock/">Stocks</a> <span aria-hidden="true">&rsaquo;</span> <span>{esc(t)}</span></nav>
     <p class="article-eyebrow">{esc(vm['sector'] or 'Stock')}{(' &middot; ' + esc(vm['industry'])) if vm['industry'] else ''}</p>
     <h1>{esc(name)} <span class="sp-ticker">({esc(t)})</span></h1>
+    {(f'<div class="sp-indexes">{index_chips(vm["indexes"], data.index_info)}</div>') if vm["indexes"] else ''}
     <div class="article-meta">{as_of}. Prices delayed ~15&ndash;20 minutes.</div>
     <div class="sp-price">{fmt_money(price)} <span class="{chg_class(vm['chg'])}">{fmt_pct(vm['chg'])}</span></div>
     {status}
@@ -885,7 +959,7 @@ def stock_page(vm: dict, data: SiteData, shell: "Shell", by_ticker: Dict[str, di
     <h2 id="record">Screen Record</h2>
     {record_html(vm, data)}
     <h2 id="company">About {esc(short_name(name))}</h2>
-    {company_html(vm)}
+    {company_html(vm, data.index_info)}
     {peer_html}
     <div class="modal-links">
       <a href="/#t={esc(t)}">Open {esc(t)} on the live screen &rarr;</a>
@@ -895,7 +969,7 @@ def stock_page(vm: dict, data: SiteData, shell: "Shell", by_ticker: Dict[str, di
     </div>
     <div class="modal-footnote">This page describes what the data shows against published screening criteria. It is
     not a recommendation to buy or sell {esc(t)}, and it does not account for company news or your own
-    circumstances. Company descriptions and analyst figures come from Yahoo Finance. See the
+    circumstances. Prices and company data come from Yahoo Finance and may be delayed or contain errors. See the
     <a href="/methodology">methodology</a> and <a href="/terms">terms</a>.</div>
     </article>
     {shell.rail(data, exclude=t)}"""
@@ -944,18 +1018,18 @@ def former_stock_page(t: str, data: SiteData, shell: "Shell") -> str:
     name = (names[0] if names else None) or co.get("n") or t
     vm = {"t": t, "slug": slug(t), "name": name, "sector": (names[1] if len(names) > 1 else "") or co.get("s") or "",
           "industry": (names[2] if len(names) > 2 else "") or co.get("i") or "", "mr": None, "qr": None,
-          "record": data.records.get(t),
-          "profile": {"summary": co.get("d"), "website": co.get("w"), "hq": co.get("hq"), "employees": co.get("e")}}
+          "record": data.records.get(t), "indexes": [],
+          "profile": {"website": co.get("w"), "hq": co.get("hq"), "employees": co.get("e")}}
     title = f"{t}: {short_name(name)} screen history | Stonks Run"
-    desc = f"{name} ({t}) is no longer in the S&P 500/400 universe the screen scans. Its past record on the lists."
+    desc = f"{name} ({t}) is no longer in any index the screen scans. Its past record on the lists."
     body = f"""
     <article class="article col-main stock-page">
     <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Screen</a> <span aria-hidden="true">&rsaquo;</span>
       <a href="/stock/">Stocks</a> <span aria-hidden="true">&rsaquo;</span> <span>{esc(t)}</span></nav>
     <p class="article-eyebrow">{esc(vm['sector'] or 'Former constituent')}</p>
     <h1>{esc(name)} <span class="sp-ticker">({esc(t)})</span></h1>
-    <div class="sp-onlist sp-off">No longer in the scanned universe &mdash; it left the S&amp;P 500/400 (or was
-    acquired or renamed), so the screen has no current data on it. Its record while it was scanned is below.</div>
+    <div class="sp-onlist sp-off">No longer in the scanned universe &mdash; it left the indexes the screen covers (or
+    was acquired or renamed), so the screen has no current data on it. Its record while it was scanned is below.</div>
     <h2 id="record">Screen Record</h2>
     {record_html(vm, data)}
     <h2 id="company">About {esc(short_name(name))}</h2>
@@ -999,9 +1073,11 @@ def directory_page(data: SiteData, shell: "Shell", vms: List[dict]) -> str:
     <p class="article-eyebrow">Directory</p>
     <h1>Every Stock on the Screen</h1>
     <div class="article-meta">{len(vms)} stocks{(' &middot; data from the ' + fmt_day_long(sd) + ' session') if sd else ''}</div>
-    <p>The screen scores every S&amp;P 500 and S&amp;P 400 stock that clears its price and liquidity filters, every
-    hour the market is open. Each stock has its own page with the full Trend Template checklist, moving averages,
-    relative strength, framework signals, fundamentals and its record on the screen&rsquo;s lists.</p>
+    <p>The screen scores every member of the S&amp;P 500, S&amp;P MidCap 400, Nasdaq-100 and the three Dow Jones
+    Averages that clears its price and liquidity filters, every hour the market is open &mdash; each stock once, however
+    many of those indexes it belongs to. Each stock has its own page with the full Trend Template checklist, moving
+    averages, relative strength, framework signals, fundamentals and its record on the screen&rsquo;s lists.</p>
+    {('<p class="dir-jump">By index: ' + ' &middot; '.join(f'<a href="/indexes/{esc(ix["slug"])}">{esc(ix["short"])}</a>' for ix in data.index_info.values()) + '</p>') if data.index_info else ''}
     <div class="lookup" role="search"><label for="dir-filter">Filter by ticker or company</label>
     <input id="dir-filter" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. NVDA or bank"></div>
     <p class="dir-jump">{jump}</p>
@@ -1028,6 +1104,166 @@ def directory_page(data: SiteData, shell: "Shell", vms: List[dict]) -> str:
                       tail=script)
 
 
+INDEX_FILTER_JS = """<script>
+(function () {
+  var box = document.getElementById('dir-filter');
+  if (!box) return;
+  var rows = Array.prototype.slice.call(document.querySelectorAll('tr[data-q]'));
+  box.addEventListener('input', function () {
+    var q = box.value.trim().toLowerCase();
+    rows.forEach(function (r) { r.hidden = q && r.getAttribute('data-q').indexOf(q) < 0; });
+  });
+})();
+</script>"""
+
+
+def index_page(code: str, data: SiteData, shell: "Shell") -> str:
+    """One index: what it is, how broad the strength inside it is today, which
+    members are on today's lists, and every member ranked."""
+    ix = data.index_info[code]
+    rows = sorted(ix["rows"], key=lambda u: (-(int(u.get("tn") or 0)), u.get("mr") or 10**6))
+    n, members, st = len(rows), ix["members"], ix["stats"]
+    p8 = sum(1 for u in rows if int(u.get("tn") or 0) == 8)
+    gate = data.latest.get("min_trend_needed") or 6
+    qual = sum(1 for u in rows if u.get("q"))
+    a50 = st.get("pct_above_50")
+    if not is_num(a50):
+        a50s = [u for u in rows if is_num(u.get("p")) and is_num(u.get("s50"))]
+        a50 = (sum(1 for u in a50s if u["p"] > u["s50"]) / len(a50s) * 100) if a50s else None
+    rs_vals = [u["rs"] for u in rows if is_num(u.get("rs"))]
+    med_rs = sorted(rs_vals)[len(rs_vals) // 2] if rs_vals else None
+    sd = data.session_date
+    on_lists = [(t, l) for t, l in data.on_list.items() if code in (data.stock_index.get(t) or [])]
+    on_lists.sort(key=lambda x: (x[1]["sec"], x[1]["rank"]))
+    list_name = {1: "Momentum Leaders", 2: "Trend Quality &amp; Value"}
+
+    url = f"{shell.site}/indexes/{ix['slug']}"
+    label = ix["name"] if len(ix["name"]) <= 22 else ix["short"]
+    title = f"{label} Stocks Ranked by Trend & Momentum | Stonks Run"
+    desc = (f"All {n} {ix['name']} stocks the screen scores, ranked by Minervini's Trend Template and momentum: "
+            f"{p8} pass all 8 criteria" + (f" as of {fmt_day(sd, True)}" if sd else "")
+            + ". RS Rating, moving averages and each stock's full breakdown.")
+
+    tiles = (
+        '<div class="tiles sp-tiles">'
+        f'<div class="tile"><div class="tile-label">Pass all 8 criteria</div><div class="tile-value">{p8}'
+        f'<small>/ {n}</small></div><div class="meter"><span style="width:{(p8 / n * 100) if n else 0:.0f}%"></span></div>'
+        f'<div class="tile-sub">{(p8 / n * 100) if n else 0:.0f}% of members scored</div></div>'
+        f'<div class="tile"><div class="tile-label">Clear the gate (&ge; {gate}/8)</div><div class="tile-value">{qual}'
+        f'<small>/ {n}</small></div><div class="tile-sub">the screen&rsquo;s qualifying bar</div></div>'
+        f'<div class="tile"><div class="tile-label">Above 50-day average</div><div class="tile-value">'
+        f'{(f"{a50:.0f}<small>%</small>") if is_num(a50) else "&mdash;"}</div><div class="tile-sub">short-term participation</div></div>'
+        f'<div class="tile"><div class="tile-label">Median RS Rating</div><div class="tile-value">'
+        f'{med_rs if is_num(med_rs) else "&mdash;"}<small>/99</small></div><div class="tile-sub">vs. the whole scanned universe</div></div>'
+        '</div>')
+
+    if on_lists:
+        items = "".join(
+            f'<li><a class="tk-link" href="/stock/{slug(t)}">{esc(t)}</a> {esc(short_name(l["row"].get("company") or ""))} '
+            f'&mdash; #{l["rank"]} on {list_name[l["sec"]]}</li>' for t, l in on_lists)
+        today = (f'<h2 id="on-lists">On Today&rsquo;s Lists</h2><p class="sp-sub">{len(on_lists)} of the screen&rsquo;s '
+                 f'20 names today are {esc(ix["short"])} members.</p><ul class="ix-onlist">{items}</ul>')
+    else:
+        today = (f'<h2 id="on-lists">On Today&rsquo;s Lists</h2><p class="sp-sub">No {esc(ix["short"])} member is among '
+                 'the screen&rsquo;s 20 names today. The ranking below still shows where each one stands.</p>')
+
+    body_rows = "".join(
+        f'<tr data-q="{esc((u["t"] + " " + (u.get("n") or "") + " " + (u.get("sector") or "")).lower())}">'
+        f'<td class="rank">{i + 1}</td><td><a class="tk-link" href="/stock/{slug(u["t"])}">{esc(u["t"])}</a></td>'
+        f'<td class="co">{esc(u.get("n"))}</td><td class="co">{esc(u.get("sector"))}</td>'
+        f'<td>{trend_bar(int(u.get("tn") or 0))} {int(u.get("tn") or 0)}/8</td>'
+        f'<td class="num">{u["rs"] if is_num(u.get("rs")) else "&mdash;"}</td>'
+        f'<td class="num {chg_class(u.get("c"))}">{fmt_pct(u.get("c"))}</td>'
+        f'<td class="num">{"#" + str(u["mr"]) if is_num(u.get("mr")) else "&mdash;"}</td></tr>'
+        for i, u in enumerate(rows))
+    missing = members - n
+    coverage = (f"The screen scores {n} of its {members} members today"
+                + (f"; {missing} {'is' if missing == 1 else 'are'} left out by the price and liquidity filters, "
+                   "too short a trading history (about ten months are needed) or missing data." if missing > 0 else ".") if members else f"The screen scores {n} members today.")
+    others = " &middot; ".join(f'<a href="/indexes/{esc(o["slug"])}">{esc(o["short"])}</a>'
+                               for c, o in data.index_info.items() if c != code)
+    src_html = (f" Index provider: {esc(ix['provider'])}."
+                + (f" Membership last verified {fmt_day(ix['verified'], True)}"
+                   " (<a href=\"/methodology\">how</a>)." if ix.get("verified") else ""))
+
+    body = f"""
+    <article class="article col-main dir-page">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Screen</a> <span aria-hidden="true">&rsaquo;</span>
+      <a href="/indexes/">Indexes</a> <span aria-hidden="true">&rsaquo;</span> <span>{esc(ix['short'])}</span></nav>
+    <p class="article-eyebrow">Index</p>
+    <h1>{esc(ix['name'])}: Every Member Ranked by Trend &amp; Momentum</h1>
+    <div class="article-meta">{n} stocks{(' &middot; data from the ' + fmt_day_long(sd) + ' session') if sd else ''}
+    &middot; updated {fmt_ts_et(data.generated_at)}</div>
+    <p>{esc(ix.get('about') or '')} {coverage}{src_html}</p>
+    {tiles}
+    {today}
+    <h2 id="ranking">All Members, Ranked</h2>
+    <p class="sp-sub">Sorted the way the screen sorts: Trend Template criteria met first, then momentum score.
+    &ldquo;Mom. rank&rdquo; is the stock&rsquo;s place among all {data.total_scored} stocks scored, not just this
+    index. RS Rating is measured against that same universe.</p>
+    <div class="lookup" role="search"><label for="dir-filter">Filter by ticker, company or sector</label>
+    <input id="dir-filter" type="search" autocomplete="off" spellcheck="false" placeholder="e.g. AAPL or energy"></div>
+    <div class="table-scroll"><table class="data-table"><thead><tr><th class="num">#</th><th>Ticker</th><th>Company</th>
+    <th>Sector</th><th>Trend</th><th class="num">RS</th><th class="num">%Chg</th><th class="num">Mom. rank</th></tr></thead>
+    <tbody>{body_rows}</tbody></table></div>
+    <p class="dir-jump">Other indexes: {others}</p>
+    <div class="modal-footnote">Index membership is used only to group stocks; the screen ranks every stock with the same
+    rules whatever index it is in. Inclusion in an index, or a high rank here, is not a recommendation. Index names are
+    trademarks of their owners (S&amp;P Dow Jones Indices, Nasdaq, Inc.), which are not affiliated with this site.
+    See the <a href="/methodology">methodology</a> and <a href="/terms">terms</a>.</div>
+    </article>
+    {shell.rail(data)}"""
+    jsonld = {"@context": "https://schema.org", "@graph": [
+        {"@type": "CollectionPage", "@id": url, "url": url, "name": f"{ix['name']} stocks ranked by trend and momentum",
+         "description": desc, "inLanguage": "en-US", "isPartOf": {"@id": f"{shell.site}/#website"},
+         **({"dateModified": sd} if sd else {})},
+        {"@type": "BreadcrumbList", "itemListElement": [
+            {"@type": "ListItem", "position": 1, "name": "Screen", "item": f"{shell.site}/"},
+            {"@type": "ListItem", "position": 2, "name": "Indexes", "item": f"{shell.site}/indexes/"},
+            {"@type": "ListItem", "position": 3, "name": ix["short"], "item": url}]}]}
+    return shell.page(title=title, desc=desc, path=f"/indexes/{ix['slug']}", body=body, jsonld=jsonld,
+                      active="/stock/", tail=INDEX_FILTER_JS)
+
+
+def indexes_hub_page(data: SiteData, shell: "Shell") -> str:
+    cards = []
+    for code, ix in data.index_info.items():
+        rows = ix["rows"]
+        n = len(rows)
+        p8 = sum(1 for u in rows if int(u.get("tn") or 0) == 8)
+        top = sorted(rows, key=lambda u: (-(int(u.get("tn") or 0)), u.get("mr") or 10**6))[:5]
+        lead = ", ".join(f'<a class="tk-link" href="/stock/{slug(u["t"])}">{esc(u["t"])}</a>' for u in top)
+        cards.append(f'<section class="ix-hub"><h2 id="{esc(ix["slug"])}"><a href="/indexes/{esc(ix["slug"])}">'
+                     f'{esc(ix["name"])}</a></h2><p>{esc(ix.get("about") or "")}</p>'
+                     f'<p class="sp-sub">{n} scored &middot; <b>{p8}</b> pass all 8 Trend Template criteria '
+                     f'({(p8 / n * 100) if n else 0:.0f}%) &middot; highest ranked: {lead}</p></section>')
+    unique = len(data.universe)
+    sd = data.session_date
+    title = "Stock Indexes on the Screen: S&P 500, Nasdaq-100, Dow | Stonks Run"
+    desc = ("How the S&P 500, S&P MidCap 400, Nasdaq-100 and the Dow Jones Industrial, Transportation and Utility "
+            "Averages score on Minervini's Trend Template today, with every member ranked.")
+    body = f"""
+    <article class="article col-main dir-page">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="/">Screen</a> <span aria-hidden="true">&rsaquo;</span> <span>Indexes</span></nav>
+    <p class="article-eyebrow">Directory</p>
+    <h1>The Indexes Behind the Screen</h1>
+    <div class="article-meta">{unique} unique stocks{(' &middot; data from the ' + fmt_day_long(sd) + ' session') if sd else ''}</div>
+    <p>The screen&rsquo;s universe is the combined membership of six widely followed US indexes. Many large companies
+    belong to several of them &mdash; Microsoft is in the S&amp;P 500, the Nasdaq-100 and the Dow 30 &mdash; so each
+    stock is scanned once and tagged with every index it belongs to. Every stock is ranked with exactly the same
+    rules; the index pages simply group them, so you can see how much of each index is in a strong trend.</p>
+    {''.join(cards)}
+    <div class="modal-footnote">Index names are trademarks of their owners (S&amp;P Dow Jones Indices, Nasdaq, Inc.),
+    which are not affiliated with this site. Membership is refreshed weekly from public sources and may briefly lag an
+    announced change.</div>
+    </article>
+    {shell.rail(data)}"""
+    jsonld = {"@context": "https://schema.org", "@type": "CollectionPage", "url": f"{shell.site}/indexes/",
+              "name": "Stock indexes on the Stonks Run screen", "description": desc,
+              "isPartOf": {"@id": f"{shell.site}/#website"}}
+    return shell.page(title=title, desc=desc, path="/indexes/", body=body, jsonld=jsonld, active="/stock/")
+
+
 # --------------------------------------------------------------------------
 # Page shell (head, masthead, footer) - taken from the built learn page so
 # generated pages always match the hand-edited ones.
@@ -1041,9 +1277,10 @@ class Shell:
         self.masthead = re.search(r'<header class="masthead">.*?</header>', learn_html, re.S).group(0)
         self.masthead = re.sub(r'\s*class="active" aria-current="page"', "", self.masthead)
         self.footer = re.search(r"<footer>.*?</footer>", learn_html, re.S).group(0)
-        fonts = re.search(r'<link href="https://fonts\.googleapis\.com/css2[^>]*>', index_src)
+        fonts = re.search(r'<link[^>]+href="(?:/)?fonts/fonts\.css[^"]*"[^>]*>', index_src)
         ads = re.search(r'<script async src="https://pagead2\.googlesyndication\.com[^>]*>\s*</script>', index_src, re.S)
-        self.fonts = fonts.group(0) if fonts else ""
+        self.fonts = (re.sub(r'href="(?:/)?fonts/fonts\.css[^"]*"', f'href="/fonts/fonts.css?v={FONTS_VERSION}"',
+                             fonts.group(0)) if fonts else "")
         self.ads = ads.group(0) if ads else ""
         self.css = ""
         self.js = ""
@@ -1075,6 +1312,7 @@ class Shell:
       <div class="rail-card">
         <h3>Browse</h3>
         <p><a href="/stock/">All stocks by sector &rarr;</a></p>
+        <p><a href="/indexes/">Stocks by index &rarr;</a></p>
         <p><a href="/history">Screen history &amp; track record &rarr;</a></p>
       </div>
     </aside>"""
@@ -1107,8 +1345,6 @@ class Shell:
 <meta name="twitter:image" content="{self.site}/social-card.png">
 <link rel="icon" href="/favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="/favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 {self.fonts}
 <link rel="stylesheet" href="{self.css}">
 {self.ads}
@@ -1166,6 +1402,9 @@ def rewrite_html(text: str, pages: List[str], site: str, css_url: str, js_url: s
     text = re.sub(r'href="styles\.css(\?[^"]*)?"', f'href="{css_url}"', text)
     text = re.sub(r'src="common\.js(\?[^"]*)?"', f'src="{js_url}"', text)
     text = re.sub(r'href="favicon\.png"', 'href="/favicon.png"', text)
+    text = re.sub(r'href="fonts/fonts\.css"', f'href="/fonts/fonts.css?v={FONTS_VERSION}"', text)
+    text = re.sub(r'href="(indexes|stock)/"', r'href="/\1/"', text)
+    text = re.sub(r'href="fonts/([\w-]+\.woff2)"', r'href="/fonts/\1"', text)
     text = re.sub(r"""(["'])data/(\w+\.json)""", r"\1/data/\2", text)
     # "Stocks" in the main and footer navigation (only there - not in body
     # text that happens to link to History), right after History.
@@ -1173,6 +1412,9 @@ def rewrite_html(text: str, pages: List[str], site: str, css_url: str, js_url: s
         return re.sub(r'(<a href="/history"[^>]*>History</a>)', r'\1\n        <a href="/stock/">Stocks</a>',
                       nav.group(0), count=1)
     text = re.sub(r'<nav class="(?:quicknav|footer-links)".*?</nav>', add_stocks, text, flags=re.S)
+    # "Indexes" in the footer only (the main bar has no room on phones).
+    text = re.sub(r'(<nav class="footer-links".*?<a href="/stock/">Stocks</a>)',
+                  r'\1\n        <a href="/indexes/">Indexes</a>', text, count=1, flags=re.S)
     return text
 
 
@@ -1189,6 +1431,37 @@ def replace_once(text: str, old: str, new: str, what: str) -> str:
         warn(f"Pre-render: could not find the {what} placeholder in index.html; left it to JavaScript.")
         return text
     return text.replace(old, new, 1)
+
+
+def scan_summary_html(L: dict) -> str:
+    """Same sentence the live page writes (renderSummary in index.html)."""
+    q, n = L.get("qualifying_count") or 0, L.get("total_scored") or 0
+    full = (L.get("breadth") or {}).get("trend_8")
+    tail = (' &nbsp;&middot;&nbsp; <span class="label">Fewer than 20 qualify, so the lists are filled with the closest '
+            'candidates</span>') if q < 20 else ""
+    return (f'<div id="scan-summary" class="scan-summary"><span class="label">Stocks scored</span> &nbsp; '
+            f'<strong>{n}</strong> &nbsp;&middot;&nbsp; <span class="label">Pass all 8 Trend Template criteria</span>'
+            f' &nbsp; <strong>{full if is_num(full) else "&mdash;"}</strong> &nbsp;&middot;&nbsp; '
+            f'<span class="label">Clear the screen&rsquo;s gate (&ge; {L.get("min_trend_needed", 6)}/8)</span> &nbsp; '
+            f'<strong>{q}</strong>{tail}</div>')
+
+
+def index_board_html(data: SiteData) -> str:
+    """Home-page scoreboard: breadth and leaders inside each index."""
+    cards = []
+    for code, ix in data.index_info.items():
+        st = ix["stats"]
+        n = st.get("scored") or len(ix["rows"])
+        p8 = st.get("pass8")
+        if p8 is None:
+            p8 = sum(1 for u in ix["rows"] if int(u.get("tn") or 0) == 8)
+        a50 = st.get("pct_above_50")
+        cards.append(
+            f'<a class="ix-card" href="/indexes/{esc(ix["slug"])}"><span class="ix-name">{esc(ix["short"])}</span>'
+            f'<span class="ix-stat"><b>{p8}</b> of {n} pass 8/8</span>'
+            f'<span class="ix-meter" aria-hidden="true"><span style="width:{(p8 / n * 100) if n else 0:.0f}%"></span></span>'
+            f'<span class="ix-sub">{(f"{a50:.0f}% above 50-day" if is_num(a50) else "&nbsp;")}</span></a>')
+    return '<div class="ix-board">' + "".join(cards) + "</div>"
 
 
 def prerender_home(text: str, data: SiteData) -> str:
@@ -1213,12 +1486,13 @@ def prerender_home(text: str, data: SiteData) -> str:
         summary = ('<div id="scan-summary" class="scan-summary zero-qualified"><div class="zq-head">No stock currently '
                    'clears the Trend Template gate.</div></div>')
     else:
-        summary = (f'<div id="scan-summary" class="scan-summary"><span class="label">Universe scanned</span> &nbsp; '
-                   f'<strong>{L.get("total_scored")}</strong> stocks &nbsp;&middot;&nbsp; <span class="label">Fully '
-                   f'qualified</span> &nbsp; <strong>{q}</strong> (&ge; {L.get("min_trend_needed")}/8 Trend Template)'
-                   ' &nbsp;&middot;&nbsp; <span class="label">Remaining names shown are the closest available '
-                   'candidates</span></div>')
+        summary = scan_summary_html(L)
     text = replace_once(text, '<div id="scan-summary"></div>', summary, "scan summary")
+    if data.index_info:
+        text = replace_once(text, '<div id="index-board"></div>',
+                            f'<div id="index-board">{index_board_html(data)}</div>', "index scoreboard")
+        text = replace_once(text, '<div class="section-head" id="indexes" hidden>',
+                            '<div class="section-head" id="indexes">', "index scoreboard heading")
     text = replace_once(text, '<div id="section1-mount"></div>',
                         f'<div id="section1-mount">{ledger_table(L.get("section1") or [], 1)}</div>', "momentum list")
     text = replace_once(text, '<div id="section2-mount"></div>',
@@ -1227,7 +1501,7 @@ def prerender_home(text: str, data: SiteData) -> str:
 
 
 def write_sitemap(out: Path, site: str, src_sitemap: Path, pages: List[str], stock_slugs: List[str],
-                  session_date: Optional[str]) -> int:
+                  session_date: Optional[str], index_slugs: Optional[List[str]] = None) -> int:
     meta = {}
     if src_sitemap.exists():
         for block in re.findall(r"<url>(.*?)</url>", src_sitemap.read_text(encoding="utf-8"), re.S):
@@ -1244,6 +1518,9 @@ def write_sitemap(out: Path, site: str, src_sitemap: Path, pages: List[str], sto
         m = meta.get(path, {})
         lastmod = session_date if path in ("/", "/history") and session_date else m.get("lastmod")
         entries.append((path, lastmod, m.get("changefreq") or "monthly", m.get("priority") or "0.5"))
+    if index_slugs:
+        entries.append(("/indexes/", session_date, "daily", "0.8"))
+        entries += [(f"/indexes/{s}", session_date, "daily", "0.7") for s in index_slugs]
     if stock_slugs:
         entries.append(("/stock/", session_date, "daily", "0.8"))
         entries += [(f"/stock/{s}", session_date, "daily", "0.6") for s in stock_slugs]
@@ -1276,6 +1553,14 @@ def write_cloudflare_files(out: Path, site: str, pages: List[str]) -> None:
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(), microphone=(), geolocation=()
   Strict-Transport-Security: max-age=31536000
+  X-Frame-Options: SAMEORIGIN
+  Content-Security-Policy: frame-ancestors 'self'
+
+# Self-hosted web fonts (no request to Google Fonts, so no visitor IP
+# address goes to a third party just to draw text).
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+  Access-Control-Allow-Origin: *
 
 # Fingerprinted by the build (?v=<hash> changes whenever the file does).
 /styles.css
@@ -1409,8 +1694,26 @@ def main() -> int:
             text = re.sub(r'<a class="tk-link" href="/stock/[^"]*">([^<]*)</a>', r"\1", text)
             p.write_text(text, encoding="utf-8")
 
+    index_slugs: List[str] = []
+    if data.index_info:
+        ix_dir = out / "indexes"
+        ix_dir.mkdir(exist_ok=True)
+        for code, ix in data.index_info.items():
+            (ix_dir / f"{ix['slug']}.html").write_text(index_page(code, data, shell), encoding="utf-8")
+            index_slugs.append(ix["slug"])
+        (ix_dir / "index.html").write_text(indexes_hub_page(data, shell), encoding="utf-8")
+    else:
+        warn("No index membership in universe.json yet (first scan after the update fills it); "
+             "index pages skipped.")
+        for p in out.rglob("*.html"):
+            text = p.read_text(encoding="utf-8")
+            text = text.replace('\n        <a href="/indexes/">Indexes</a>', "")
+            text = text.replace('<p><a href="/indexes/">Stocks by index &rarr;</a></p>', "")
+            text = re.sub(r'<a href="/indexes/[^"]*"[^>]*data-built-only[^>]*>(.*?)</a>', r"\1", text, flags=re.S)
+            p.write_text(text, encoding="utf-8")
+
     # 5. Sitemap, robots, Cloudflare headers/redirects.
-    n_urls = write_sitemap(out, site, src / "sitemap.xml", pages, sorted(seen), data.session_date)
+    n_urls = write_sitemap(out, site, src / "sitemap.xml", pages, sorted(seen), data.session_date, index_slugs)
     write_cloudflare_files(out, site, pages)
 
     # 6. Link check.
@@ -1418,7 +1721,7 @@ def main() -> int:
     for m in missing[:25]:
         warn(f"Broken internal link: {m}")
     files = sum(1 for p in out.rglob("*") if p.is_file())
-    print(f"Built {out}/: {files} files, {len(seen)} stock pages, {n_urls} sitemap URLs, "
+    print(f"Built {out}/: {files} files, {len(seen)} stock pages, {len(index_slugs)} index pages, {n_urls} sitemap URLs, "
           f"session {data.session_date or 'n/a'}"
           + (f", stocks.json detail for {len(data.details)} stocks" if data.details else ", no stocks.json yet"))
     if files > 19000:

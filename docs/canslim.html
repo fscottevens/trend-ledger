@@ -22,10 +22,8 @@
 
 <link rel="icon" href="favicon.png" type="image/png">
 <link rel="apple-touch-icon" href="favicon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="styles.css?v=7">
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2712411276486762"
      crossorigin="anonymous"></script>
 </head>
@@ -49,7 +47,7 @@
   <div class="wrap masthead-inner">
     <div>
       <a href="index.html" class="wordmark">Stonks<span> Run</span></a>
-      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P 500 + S&amp;P 400</p>
+      <p class="tagline">Systematic Trend &amp; Momentum Screen &middot; S&amp;P &middot; Nasdaq-100 &middot; Dow</p>
       <nav class="quicknav" aria-label="Main navigation">
         <a href="index.html">Screen</a>
         <a href="history.html">History</a>
@@ -83,7 +81,7 @@
     <h2>The seven factors</h2>
 
     <div class="criterion">
-      <h4><span class="cnum">C</span> Current quarterly earnings</h4>
+      <h3><span class="cnum">C</span> Current quarterly earnings</h3>
       <p>O'Neil looked for strong year-over-year growth in quarterly earnings per share &mdash; his often-cited threshold
       was 25% or better. The reasoning is straightforward: a sharp acceleration in recent profitability is the kind of
       change that attracts institutional attention and re-rates a stock.</p>
@@ -92,7 +90,7 @@
     </div>
 
     <div class="criterion">
-      <h4><span class="cnum">A</span> Annual earnings growth</h4>
+      <h3><span class="cnum">A</span> Annual earnings growth</h3>
       <p>Meaningful growth over several years, commonly cited around 20%+ annually. Where the C factor catches a recent
       inflection, the A factor is meant to distinguish durable growth from a single good quarter driven by a one-off event.</p>
       <p class="why">A company can post one spectacular quarter for many reasons that have nothing to do with the business
@@ -100,7 +98,7 @@
     </div>
 
     <div class="criterion">
-      <h4><span class="cnum">N</span> New highs, new products, new management</h4>
+      <h3><span class="cnum">N</span> New highs, new products, new management</h3>
       <p>The broadest of the seven. O'Neil argued that big advances typically coincide with something genuinely new at the
       company &mdash; and, critically, that the stock should be making <em>new price highs</em> rather than sitting well
       below prior peaks.</p>
@@ -110,7 +108,7 @@
     </div>
 
     <div class="criterion">
-      <h4><span class="cnum">S</span> Supply and demand</h4>
+      <h3><span class="cnum">S</span> Supply and demand</h3>
       <p>Observable primarily through volume. A stock advancing on volume well above its own average suggests genuine
       accumulation rather than drift. O'Neil also considered share count &mdash; a smaller float can move more sharply on
       the same amount of buying.</p>
@@ -119,7 +117,7 @@
     </div>
 
     <div class="criterion">
-      <h4><span class="cnum">L</span> Leader, not laggard</h4>
+      <h3><span class="cnum">L</span> Leader, not laggard</h3>
       <p>Buy the strongest names in a strong group, not the cheap-looking straggler in the same industry. O'Neil expressed
       this through relative strength &mdash; the same percentile-rank concept the Trend Template's eighth criterion uses,
       typically with a higher bar (80+) for leadership.</p>
@@ -128,7 +126,7 @@
     </div>
 
     <div class="criterion">
-      <h4><span class="cnum">I</span> Institutional sponsorship</h4>
+      <h3><span class="cnum">I</span> Institutional sponsorship</h3>
       <p>Large advances generally require large buyers. Funds, pensions, and other institutions move size that individual
       investors cannot. O'Neil wanted to see meaningful institutional ownership, and ideally an <em>increasing</em> number
       of institutional holders.</p>
@@ -138,7 +136,7 @@
     </div>
 
     <div class="criterion">
-      <h4><span class="cnum">M</span> Market direction</h4>
+      <h3><span class="cnum">M</span> Market direction</h3>
       <p>O'Neil considered this the single most important factor, and it is the one most often ignored. His research
       indicated that a large majority of stocks follow the general market's direction. Buying textbook setups during a
       market-wide correction produces a much lower success rate than the same setups in a confirmed uptrend.</p>
@@ -184,7 +182,7 @@
 
       <div class="rail-card">
         <h3>The Screen</h3>
-        <p>See the frameworks on this page applied to every S&amp;P 500 and S&amp;P 400 stock, updated hourly during
+        <p>See the frameworks on this page applied to every S&amp;P 500, S&amp;P 400, Nasdaq-100 and Dow stock, updated hourly during
         market hours.</p>
         <a href="index.html" class="discord-link">Open the screen &rarr;</a>
       </div>
@@ -208,6 +206,7 @@
       <a href="methodology.html">Methodology</a>
       <a href="about.html">About</a>
       <a href="privacy.html">Privacy Policy</a>
+      <a href="privacy.html#choices" data-consent-link>Privacy &amp; cookie settings</a>
       <a href="terms.html">Terms &amp; Disclaimer</a>
       <a href="https://discord.gg/7vAfMWxgN" target="_blank" rel="noopener noreferrer">Discord</a>
       <a href="mailto:stonksrun@gmail.com">Contact</a>
@@ -215,7 +214,7 @@
     <div>
       <strong style="color:var(--text-dim)">Stonks Run</strong> publishes an automated educational stock screen. Nothing on this site is
       investment advice, a recommendation, or an offer to buy or sell any security. Market data may be delayed and may
-      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are public-domain approximations built
+      contain errors. Frameworks referenced (Minervini, O'Neil, Zanger, Qullamaggie) are simplified approximations built
       from published descriptions and are not endorsed by, affiliated with, or reviewed by their originators. Read our
       <a href="terms.html">Terms &amp; Disclaimer</a> and <a href="methodology.html">documented limitations</a> before
       relying on anything here.
